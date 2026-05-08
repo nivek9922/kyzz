@@ -1,31 +1,25 @@
 export const revalidate = 0;
 
-// https://tailwindcomponents.com/component/hoverable-table
-import {  getPaginatedUsers } from "@/actions";
-import { Pagination, Title } from "@/components";
-
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { IoCardOutline } from "react-icons/io5";
+import { getPaginatedUsers } from "@/actions";
+import { titleFont } from "@/config/fonts";
 import { UsersTable } from './ui/UsersTable';
 
-export default async function OrdersPage() {
-
+export default async function AdminUsersPage() {
   const { ok, users = [] } = await getPaginatedUsers();
-
-  if (!ok) {
-    redirect("/auth/login");
-  }
+  if (!ok) redirect("/auth/login");
 
   return (
-    <>
-      <Title title="Mantenimiento de usuarios" />
-
+    <div>
       <div className="mb-10">
-        <UsersTable users={ users } />
-
-        <Pagination totalPages={ 1 } />
+        <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mb-2">Admin</p>
+        <h1 className={`${titleFont.className} text-3xl font-normal text-kyzz-dark`}>
+          Usuarios
+        </h1>
+        <div className="w-6 h-px bg-kyzz-secondary mt-3" />
       </div>
-    </>
+
+      <UsersTable users={users} />
+    </div>
   );
 }

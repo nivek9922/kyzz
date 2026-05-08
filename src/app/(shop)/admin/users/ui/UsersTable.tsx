@@ -7,61 +7,40 @@ interface Props {
   users: User[];
 }
 
-export const UsersTable = ({ users }: Props) => {
+export const UsersTable = ({ users }: Props) => (
+  <div className="flex flex-col divide-y divide-kyzz-secondary border border-kyzz-secondary">
 
+    {/* Header */}
+    <div className="hidden md:grid grid-cols-[1fr_1fr_140px] gap-4 px-5 py-3 bg-kyzz-tertiary">
+      {['Nombre', 'Email', 'Rol'].map((h) => (
+        <p key={h} className="text-[10px] tracking-[0.2em] uppercase text-kyzz-muted">{h}</p>
+      ))}
+    </div>
 
-  return (
-    <table className="min-w-full">
-      <thead className="bg-gray-200 border-b">
-        <tr>
-          <th
-            scope="col"
-            className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-          >
-            Email
-          </th>
-          <th
-            scope="col"
-            className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-          >
-            Nombre completo
-          </th>
-          <th
-            scope="col"
-            className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-          >
-            Role
-          </th>
+    {users.map((user) => (
+      <div
+        key={user.id}
+        className="grid grid-cols-[1fr_auto] md:grid-cols-[1fr_1fr_140px] gap-4 items-center px-5 py-4 hover:bg-kyzz-tertiary/50 transition-colors"
+      >
+        {/* Nombre */}
+        <div className="min-w-0">
+          <p className="text-sm text-kyzz-dark font-medium truncate">{user.name}</p>
+          <p className="text-xs text-kyzz-muted truncate md:hidden">{user.email}</p>
+        </div>
 
-        </tr>
-      </thead>
-      <tbody>
-        {users.map((user) => (
-          <tr
-            key={user.id}
-            className="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100"
-          >
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-              { user.email }
-            </td>
-            <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap">
-              { user.name }
-            </td>
-            <td className="flex items-center text-sm  text-gray-900 font-light px-6 py-4 whitespace-nowrap">
-              
-              <select 
-                value={ user.role }
-                onChange={ e =>  changeUserRole( user.id, e.target.value) }
-                className="text-sm w-full p-2 text-gray-900">
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
-              </select>
+        {/* Email */}
+        <p className="hidden md:block text-xs text-kyzz-muted truncate">{user.email}</p>
 
-            </td>
-            
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-};
+        {/* Role select */}
+        <select
+          value={user.role}
+          onChange={(e) => changeUserRole(user.id, e.target.value)}
+          className="bg-transparent border border-kyzz-secondary text-[11px] tracking-widest uppercase text-kyzz-muted px-3 py-1.5 focus:outline-none focus:border-kyzz-primary transition-colors cursor-pointer hover:border-kyzz-primary"
+        >
+          <option value="admin">Admin</option>
+          <option value="user">Usuario</option>
+        </select>
+      </div>
+    ))}
+  </div>
+);

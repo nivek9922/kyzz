@@ -83,6 +83,22 @@
            focus:outline-none focus:border-kyzz-primary transition-colors duration-200;
   }
 
+  /* Admin sidebar link */
+  .admin-nav-link {
+    @apply flex items-center gap-2.5 px-3 py-2.5
+           text-[11px] tracking-widest uppercase text-kyzz-muted
+           hover:text-kyzz-dark hover:bg-kyzz-tertiary
+           transition-colors duration-200;
+  }
+
+  /* Admin mobile pill */
+  .admin-nav-pill {
+    @apply flex items-center gap-1.5 px-3 py-1.5
+           text-[10px] tracking-widest uppercase text-kyzz-muted
+           border border-kyzz-secondary hover:border-kyzz-primary hover:text-kyzz-primary
+           transition-colors duration-200 whitespace-nowrap;
+  }
+
   /* Navbar link */
   .nav-link {
     @apply text-[11px] tracking-widest uppercase text-kyzz-muted
