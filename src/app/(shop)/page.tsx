@@ -102,7 +102,7 @@ export default async function Home({ searchParams }: Props) {
       {isFirstPage && (
         <section className="bg-kyzz-tertiary py-24 text-center px-6">
           <blockquote className="font-serif text-2xl md:text-4xl text-kyzz-dark max-w-2xl mx-auto leading-snug italic">
-            "Un beso a tu estilo propio.<br />Kyzz nace de la unión y el detalle."
+            &ldquo;Un beso a tu estilo propio.<br />Kyzz nace de la unión y el detalle.&rdquo;
           </blockquote>
           <div className="kyzz-divider mt-8" />
         </section>

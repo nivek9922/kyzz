@@ -52,9 +52,10 @@ export const AddressForm = ({ countries, userStoredAddress = {} }: Props) => {
 
   useEffect(() => {
     if ( address.firstName ) {
-      reset(address)
+      reset(address);
     }
-  },[])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   
 
 
