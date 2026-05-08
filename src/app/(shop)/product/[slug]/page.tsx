@@ -1,9 +1,7 @@
-export const revalidate = 604800; //7 días
+export const revalidate = 604800; // 7 días
 import { Metadata, ResolvingMetadata } from "next";
-
 import { notFound } from "next/navigation";
 
-import { titleFont } from "@/config/fonts";
 import {
   ProductMobileSlideshow,
   ProductSlideshow,
@@ -24,14 +22,7 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  // read route params
-  const slug = params.slug;
-
-  // fetch data
-  const product = await getProductBySlug(slug);
-
-  // optionally access and extend (rather than replace) parent metadata
-  // const previousImages = (await parent).openGraph?.images || []
+  const product = await getProductBySlug(params.slug);
 
   return {
     title: product?.title ?? "Producto no encontrado",
@@ -39,55 +30,74 @@ export async function generateMetadata(
     openGraph: {
       title: product?.title ?? "Producto no encontrado",
       description: product?.description ?? "",
-      // images: [], // https://misitioweb.com/products/image.png
-      images: [ `/products/${ product?.images[0] }`],
+      images: [`/products/${product?.images[0]}`],
     },
   };
 }
 
 export default async function ProductBySlugPage({ params }: Props) {
-  const { slug } = params;
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlug(params.slug);
 
   if (!product) {
     notFound();
   }
 
   return (
-    <div className="mt-5 mb-20 grid grid-cols-1 md:grid-cols-3 gap-3">
-      {/* Slideshow */}
-      <div className="col-span-1 md:col-span-2 ">
-        {/* Mobile Slideshow */}
-        <ProductMobileSlideshow
-          title={product.title}
-          images={product.images}
-          className="block md:hidden"
-        />
+    <div className="max-w-7xl mx-auto px-6 py-12 mb-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
 
-        {/* Desktop Slideshow */}
-        <ProductSlideshow
-          title={product.title}
-          images={product.images}
-          className="hidden md:block"
-        />
-      </div>
+        {/* ── Imágenes ─────────────────────────────────────────── */}
+        <div>
+          <ProductMobileSlideshow
+            title={product.title}
+            images={product.images}
+            className="block md:hidden"
+          />
+          <ProductSlideshow
+            title={product.title}
+            images={product.images}
+            className="hidden md:block"
+          />
+        </div>
 
-      {/* Detalles */}
-      <div className="col-span-1 px-5">
-        <StockLabel slug={product.slug} />
+        {/* ── Información del producto ──────────────────────────── */}
+        <div className="flex flex-col gap-6">
 
-        <h1 className={` ${titleFont.className} antialiased font-bold text-xl`}>
-          {product.title}
-        </h1>
+          {/* Stock */}
+          <StockLabel slug={product.slug} />
 
-        <p className="text-lg mb-5">${product.price}</p>
+          {/* Título y precio */}
+          <div>
+            <h1 className="font-serif text-3xl text-kyzz-dark leading-snug">
+              {product.title}
+            </h1>
+            <p className="mt-3 text-xl text-kyzz-primary font-light">
+              ${product.price.toFixed(2)}
+            </p>
+          </div>
 
-        <AddToCart product={ product } />
+          {/* Separador */}
+          <div className="kyzz-divider" />
 
-        {/* Descripción */}
-        <h3 className="font-bold text-sm">Descripción</h3>
-        <p className="font-light">{product.description}</p>
+          {/* Selector de talla + cantidad + CTA */}
+          <AddToCart product={product} />
+
+          {/* Separador */}
+          <div className="kyzz-divider" />
+
+          {/* Descripción */}
+          <div>
+            <h3 className="text-xs tracking-widest uppercase text-kyzz-muted mb-3">
+              Descripción
+            </h3>
+            <p className="text-sm text-kyzz-dark leading-relaxed">
+              {product.description}
+            </p>
+          </div>
+
+        </div>
       </div>
     </div>
   );
 }
+

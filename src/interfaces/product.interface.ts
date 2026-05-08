@@ -8,8 +8,9 @@ export interface Product {
   slug: string;
   tags: string[];
   title: string;
-  //todo: type: Type;
-  gender: Category;
+  gender: Gender;
+  isFeatured: boolean;
+  categoryId: string;
 }
 
 export interface CartProduct {
@@ -30,6 +31,6 @@ export interface ProductImage {
 }
 
 
-type Category = 'men'|'women'|'kid'|'unisex';
+type Gender = 'men' | 'women' | 'kid' | 'unisex';
 export type Size = 'XS'|'S'|'M'|'L'|'XL'|'XXL'|'XXXL';
-export type Type = 'shirts'|'pants'|'hoodies'|'hats';
+export type Type = 'jeans'|'blusas'|'enterizos'|'chaquetas';

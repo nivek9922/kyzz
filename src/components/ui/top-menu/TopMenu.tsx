@@ -1,98 +1,165 @@
 "use client";
-import { useEffect, useState } from 'react';
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { IoSearchOutline, IoCartOutline, IoPersonOutline } from "react-icons/io5";
+import { IoCartOutline, IoSearchOutline } from "react-icons/io5";
 
 import { titleFont } from "@/config/fonts";
 import { useCartStore, useUIStore } from "@/store";
+import { UserMenu } from "./UserMenu";
+import { SearchOverlay } from "./SearchOverlay";
+
+const CATEGORIES = [
+  { label: "Jeans",      href: "/categoria/jeans" },
+  { label: "Blusas",     href: "/categoria/blusas" },
+  { label: "Enterizos",  href: "/categoria/enterizos" },
+  { label: "Chaquetas",  href: "/categoria/chaquetas" },
+];
 
 export const TopMenu = () => {
+  const openMobileMenu = useUIStore((state) => state.openMobileMenu);
+  const openSearch     = useUIStore((state) => state.openSearch);
+  const totalItems     = useCartStore((state) => state.getTotalItems());
 
-  const openSideMenu = useUIStore((state) => state.openSideMenu);
-  const totalItemsInCart = useCartStore((state) => state.getTotalItems());
+  const [loaded, setLoaded]           = useState(false);
+  const [catsOpen, setCatsOpen]       = useState(false);
+  const catsRef                        = useRef<HTMLDivElement>(null);
 
-  const [loaded, setLoaded] = useState(false);
   useEffect(() => { setLoaded(true); }, []);
 
+  // Cerrar dropdown de categorías en click exterior
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (catsRef.current && !catsRef.current.contains(e.target as Node)) {
+        setCatsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 bg-kyzz-neutral/95 backdrop-blur-sm border-b border-kyzz-secondary">
-      <nav className="max-w-7xl mx-auto px-6 h-16 grid grid-cols-3 items-center">
+    <>
+      <header className="sticky top-0 z-50 bg-kyzz-neutral/95 backdrop-blur-sm border-b border-kyzz-secondary">
+        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 
-        {/* Col 1 — Navegación izquierda */}
-        <div className="hidden md:flex items-center gap-6">
-          <Link
-            href="/gender/women"
-            className="text-xs tracking-widest uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors duration-200"
-          >
-            Colecciones
-          </Link>
+          {/* ── IZQUIERDA ────────────────────────────────────── */}
+          <div className="flex items-center gap-6">
+
+            {/* Hamburguesa — solo mobile */}
+            <button
+              onClick={openMobileMenu}
+              className="md:hidden text-kyzz-dark hover:text-kyzz-primary transition-colors"
+              aria-label="Abrir menú"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            {/* Links de navegación — solo desktop */}
+            <div className="hidden md:flex items-center gap-6">
+
+              <Link href="/gender/women" className="nav-link">
+                Colecciones
+              </Link>
+
+              {/* Dropdown Categorías */}
+              <div className="relative" ref={catsRef}>
+                <button
+                  onClick={() => setCatsOpen((v) => !v)}
+                  className="nav-link flex items-center gap-1"
+                  aria-expanded={catsOpen}
+                >
+                  Categorías
+                  <ChevronIcon open={catsOpen} />
+                </button>
+
+                {catsOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-44 bg-kyzz-neutral border border-kyzz-secondary shadow-xl z-50 fade-in">
+                    {CATEGORIES.map((cat) => (
+                      <Link
+                        key={cat.href}
+                        href={cat.href}
+                        onClick={() => setCatsOpen(false)}
+                        className="block px-5 py-3 text-[11px] tracking-widest uppercase text-kyzz-muted hover:text-kyzz-dark hover:bg-kyzz-tertiary transition-colors"
+                      >
+                        {cat.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Link href="/contacto" className="nav-link">
+                Contacto
+              </Link>
+            </div>
+          </div>
+
+          {/* ── CENTRO — Logo ────────────────────────────────── */}
           <Link
             href="/"
-            className="text-xs tracking-widest uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors duration-200"
+            className="absolute left-1/2 -translate-x-1/2"
+            aria-label="Kyzz — Inicio"
           >
-            Nuestra esencia
-          </Link>
-          <Link
-            href="/"
-            className="text-xs tracking-widest uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors duration-200"
-          >
-            Contacto
-          </Link>
-        </div>
-
-        {/* Col 1 mobile — Menú hamburguesa */}
-        <div className="flex md:hidden">
-          <button
-            onClick={openSideMenu}
-            className="text-kyzz-dark hover:text-kyzz-primary transition-colors"
-            aria-label="Abrir menú"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Col 2 — Logo centrado */}
-        <div className="flex justify-center">
-          <Link href="/" className="group">
-            <span className={`${titleFont.className} text-xl tracking-[0.25em] uppercase text-kyzz-dark group-hover:text-kyzz-primary transition-colors duration-200`}>
+            <span
+              className={`${titleFont.className} text-xl tracking-[0.25em] uppercase text-kyzz-dark hover:text-kyzz-primary transition-colors duration-200`}
+            >
               KYZZ
             </span>
           </Link>
-        </div>
 
-        {/* Col 3 — Iconos derecha */}
-        <div className="flex items-center justify-end gap-4">
-          <Link href="/search" className="text-kyzz-dark hover:text-kyzz-primary transition-colors" aria-label="Buscar">
-            <IoSearchOutline className="w-5 h-5" />
-          </Link>
+          {/* ── DERECHA — Acciones ───────────────────────────── */}
+          <div className="flex items-center gap-4">
 
-          <Link
-            href={(totalItemsInCart === 0 && loaded) ? '/empty' : '/cart'}
-            className="text-kyzz-dark hover:text-kyzz-primary transition-colors relative"
-            aria-label="Carrito"
-          >
-            {loaded && totalItemsInCart > 0 && (
-              <span className="fade-in absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-kyzz-primary text-white text-[10px] flex items-center justify-center font-medium">
-                {totalItemsInCart}
-              </span>
-            )}
-            <IoCartOutline className="w-5 h-5" />
-          </Link>
+            {/* Buscar */}
+            <button
+              onClick={openSearch}
+              className="text-kyzz-dark hover:text-kyzz-primary transition-colors"
+              aria-label="Buscar"
+            >
+              <IoSearchOutline className="w-5 h-5" />
+            </button>
 
-          <button
-            onClick={openSideMenu}
-            className="hidden md:flex text-kyzz-dark hover:text-kyzz-primary transition-colors"
-            aria-label="Perfil"
-          >
-            <IoPersonOutline className="w-5 h-5" />
-          </button>
-        </div>
+            {/* Carrito */}
+            <Link
+              href={loaded && totalItems > 0 ? "/cart" : "/empty"}
+              className="relative text-kyzz-dark hover:text-kyzz-primary transition-colors"
+              aria-label="Carrito"
+            >
+              {loaded && totalItems > 0 && (
+                <span className="fade-in absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-kyzz-primary text-white text-[10px] flex items-center justify-center font-medium">
+                  {totalItems}
+                </span>
+              )}
+              <IoCartOutline className="w-5 h-5" />
+            </Link>
 
-      </nav>
-    </header>
+            {/* UserMenu — solo desktop */}
+            <div className="hidden md:block">
+              <UserMenu />
+            </div>
+
+          </div>
+        </nav>
+      </header>
+
+      {/* Search overlay — renderizado fuera del header */}
+      <SearchOverlay />
+    </>
   );
 };
+
+// ── Helpers ───────────────────────────────────────────────────
+const ChevronIcon = ({ open }: { open: boolean }) => (
+  <svg
+    className={`w-3 h-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+);
 

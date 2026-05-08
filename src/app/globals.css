@@ -48,30 +48,51 @@
 /* ── Botones Kyzz ────────────────────────────────────────── */
 @layer components {
   .btn-primary {
-    @apply bg-kyzz-primary hover:bg-kyzz-dark text-white
-           py-2.5 px-6 text-xs tracking-widest uppercase
-           transition-all duration-300;
+    @apply bg-kyzz-dark hover:bg-kyzz-primary text-white
+           py-3 px-8 text-[11px] tracking-[0.18em] uppercase
+           transition-colors duration-300 inline-flex items-center justify-center;
   }
 
   .btn-primary-outline {
-    @apply border border-kyzz-primary text-kyzz-primary
-           hover:bg-kyzz-primary hover:text-white
-           py-2.5 px-6 text-xs tracking-widest uppercase
-           transition-all duration-300;
+    @apply border border-kyzz-dark text-kyzz-dark
+           hover:bg-kyzz-dark hover:text-white
+           py-3 px-8 text-[11px] tracking-[0.18em] uppercase
+           transition-colors duration-300 inline-flex items-center justify-center;
   }
 
   .btn-secondary {
-    @apply bg-kyzz-secondary hover:bg-kyzz-tertiary text-kyzz-dark
-           py-2 px-4 text-xs tracking-widest uppercase transition-all duration-300;
+    @apply border border-kyzz-secondary text-kyzz-muted
+           hover:border-kyzz-primary hover:text-kyzz-primary
+           py-2.5 px-6 text-[11px] tracking-[0.18em] uppercase transition-colors duration-300;
   }
 
   .btn-disabled {
-    @apply bg-kyzz-secondary text-kyzz-muted cursor-not-allowed
-           py-2 px-4 text-xs tracking-widest uppercase;
+    @apply bg-kyzz-secondary/60 text-kyzz-muted/60 cursor-not-allowed
+           py-3 px-8 text-[11px] tracking-[0.18em] uppercase;
   }
 
   .btn-danger {
-    @apply bg-red-500 hover:bg-red-700 text-white py-2 px-4 transition-all;
+    @apply border border-red-300 text-red-500 hover:bg-red-500 hover:text-white
+           py-2 px-4 text-[11px] tracking-widest uppercase transition-all duration-300;
+  }
+
+  /* Input base */
+  .kyzz-input {
+    @apply w-full bg-transparent border-b border-kyzz-secondary
+           py-2.5 text-sm text-kyzz-dark placeholder-kyzz-muted
+           focus:outline-none focus:border-kyzz-primary transition-colors duration-200;
+  }
+
+  /* Navbar link */
+  .nav-link {
+    @apply text-[11px] tracking-widest uppercase text-kyzz-muted
+           hover:text-kyzz-primary transition-colors duration-200
+           cursor-pointer bg-transparent border-0 p-0;
+  }
+
+  /* Panel / card neutral */
+  .kyzz-panel {
+    @apply bg-kyzz-tertiary border border-kyzz-secondary p-8;
   }
 }
 
@@ -82,6 +103,10 @@
   }
 
   .kyzz-divider {
-    @apply w-10 h-px bg-kyzz-primary mx-auto my-4;
+    @apply w-8 h-px bg-kyzz-secondary mx-auto my-6;
+  }
+
+  .kyzz-divider-left {
+    @apply w-8 h-px bg-kyzz-secondary my-6;
   }
 }

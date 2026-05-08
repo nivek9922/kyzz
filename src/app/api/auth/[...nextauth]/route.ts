@@ -1,4 +1,4 @@
-import { handlers } from '@/auth.config';
+import { handlers } from '@/auth';
 
 
 

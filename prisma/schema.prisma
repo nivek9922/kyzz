@@ -45,6 +45,7 @@ model Product {
   slug        String   @unique
   tags        String[] @default([])
   gender      Gender
+  isFeatured  Boolean  @default(false)
 
   // Relaciones
 
@@ -55,6 +56,7 @@ model Product {
   OrderItem    OrderItem[]
 
   @@index([gender])
+  @@index([isFeatured])
 }
 
 model ProductImage {

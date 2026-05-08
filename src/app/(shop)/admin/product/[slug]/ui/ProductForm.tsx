@@ -23,8 +23,9 @@ interface FormInputs {
   inStock: number;
   sizes: string[];
   tags: string;
-  gender: "men" | "women" | "kid" | "unisex";
+  gender: "women" | "unisex";
   categoryId: string;
+  isFeatured: boolean;
 
   images?: FileList;
 }
@@ -43,9 +44,10 @@ export const ProductForm = ({ product, categories }: Props) => {
   } = useForm<FormInputs>({
     defaultValues: {
       ...product,
+      gender: (product.gender as FormInputs['gender']) ?? 'women',
       tags: product.tags?.join(", "),
       sizes: product.sizes ?? [],
-
+      isFeatured: product.isFeatured ?? false,
       images: undefined,
     },
   });
@@ -76,6 +78,7 @@ export const ProductForm = ({ product, categories }: Props) => {
     formData.append("tags", productToSave.tags);
     formData.append("categoryId", productToSave.categoryId);
     formData.append("gender", productToSave.gender);
+    formData.append("isFeatured", productToSave.isFeatured ? "true" : "false");
     
     if ( images ) {
       for ( let i = 0; i < images.length; i++  ) {
@@ -100,73 +103,72 @@ export const ProductForm = ({ product, categories }: Props) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="grid px-5 mb-16 grid-cols-1 sm:px-0 sm:grid-cols-2 gap-3"
+      className="grid px-5 mb-16 grid-cols-1 sm:px-0 sm:grid-cols-2 gap-6"
     >
       {/* Textos */}
-      <div className="w-full">
-        <div className="flex flex-col mb-2">
-          <span>Título</span>
+      <div className="w-full space-y-4">
+
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Título</label>
           <input
             type="text"
-            className="p-2 border rounded-md bg-gray-200"
+            className="kyzz-input"
             {...register("title", { required: true })}
           />
         </div>
 
-        <div className="flex flex-col mb-2">
-          <span>Slug</span>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Slug</label>
           <input
             type="text"
-            className="p-2 border rounded-md bg-gray-200"
+            className="kyzz-input"
             {...register("slug", { required: true })}
           />
         </div>
 
-        <div className="flex flex-col mb-2">
-          <span>Descripción</span>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Descripción</label>
           <textarea
             rows={5}
-            className="p-2 border rounded-md bg-gray-200"
+            className="kyzz-input resize-none"
             {...register("description", { required: true })}
-          ></textarea>
+          />
         </div>
 
-        <div className="flex flex-col mb-2">
-          <span>Price</span>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Precio (COP)</label>
           <input
             type="number"
-            className="p-2 border rounded-md bg-gray-200"
+            className="kyzz-input"
             {...register("price", { required: true, min: 0 })}
           />
         </div>
 
-        <div className="flex flex-col mb-2">
-          <span>Tags</span>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Tags (separados por coma)</label>
           <input
             type="text"
-            className="p-2 border rounded-md bg-gray-200"
+            className="kyzz-input"
             {...register("tags", { required: true })}
           />
         </div>
 
-        <div className="flex flex-col mb-2">
-          <span>Gender</span>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Género</label>
           <select
-            className="p-2 border rounded-md bg-gray-200"
+            className="kyzz-input bg-transparent"
             {...register("gender", { required: true })}
           >
             <option value="">[Seleccione]</option>
-            <option value="men">Men</option>
-            <option value="women">Women</option>
-            <option value="kid">Kid</option>
+            <option value="women">Mujer</option>
             <option value="unisex">Unisex</option>
           </select>
         </div>
 
-        <div className="flex flex-col mb-2">
-          <span>Categoria</span>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Categoría</label>
           <select
-            className="p-2 border rounded-md bg-gray-200"
+            className="kyzz-input bg-transparent"
             {...register("categoryId", { required: true })}
           >
             <option value="">[Seleccione]</option>
@@ -178,73 +180,84 @@ export const ProductForm = ({ product, categories }: Props) => {
           </select>
         </div>
 
-        <button className="btn-primary w-full">Guardar</button>
+        {/* Destacado */}
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            className="w-4 h-4 accent-kyzz-primary"
+            {...register("isFeatured")}
+          />
+          <span className="text-sm text-kyzz-dark">Colección Especial (destacado)</span>
+        </label>
+
+        <button className="btn-primary w-full mt-2">Guardar producto</button>
       </div>
 
       {/* Selector de tallas y fotos */}
-      <div className="w-full">
-        <div className="flex flex-col mb-2">
-          <span>Inventario</span>
+      <div className="w-full space-y-4">
+
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Inventario</label>
           <input
             type="number"
-            className="p-2 border rounded-md bg-gray-200"
+            className="kyzz-input"
             {...register("inStock", { required: true, min: 0 })}
           />
         </div>
 
-        {/* As checkboxes */}
-        <div className="flex flex-col">
-          <span>Tallas</span>
-          <div className="flex flex-wrap">
+        {/* Tallas */}
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Tallas</span>
+          <div className="flex flex-wrap gap-2">
             {sizes.map((size) => (
-              // bg-blue-500 text-white <--- si está seleccionado
               <div
                 key={size}
                 onClick={() => onSizeChanged(size)}
                 className={clsx(
-                  "p-2 border cursor-pointer rounded-md mr-2 mb-2 w-14 transition-all text-center",
+                  "w-11 h-11 border flex items-center justify-center cursor-pointer text-sm transition-all",
                   {
-                    "bg-blue-500 text-white": getValues("sizes").includes(size),
+                    "bg-kyzz-dark text-white border-kyzz-dark": getValues("sizes").includes(size),
+                    "border-kyzz-secondary text-kyzz-muted hover:border-kyzz-primary": !getValues("sizes").includes(size),
                   }
                 )}
               >
-                <span>{size}</span>
+                {size}
               </div>
             ))}
           </div>
+        </div>
 
-          <div className="flex flex-col mb-2">
-            <span>Fotos</span>
-            <input
-              type="file"
-              { ...register('images') }
-              multiple
-              className="p-2 border rounded-md bg-gray-200"
-              accept="image/png, image/jpeg, image/avif"
-            />
-          </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Fotos</label>
+          <input
+            type="file"
+            { ...register('images') }
+            multiple
+            className="kyzz-input text-sm"
+            accept="image/png, image/jpeg, image/avif"
+          />
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {product.ProductImage?.map((image) => (
-              <div key={image.id}>
-                <ProductImage
-                  alt={product.title ?? ""}
-                  src={ image.url }
-                  width={300}
-                  height={300}
-                  className="rounded-t shadow-md"
-                />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+          {product.ProductImage?.map((image) => (
+            <div key={image.id}>
+              <ProductImage
+                alt={product.title ?? ""}
+                src={ image.url }
+                width={300}
+                height={300}
+                className="object-cover w-full aspect-[3/4]"
+              />
 
-                <button
-                  type="button"
-                  onClick={() => deleteProductImage(image.id, image.url)}
-                  className="btn-danger w-full rounded-b-xl"
-                >
-                  Eliminar
-                </button>
-              </div>
-            ))}
-          </div>
+              <button
+                type="button"
+                onClick={() => deleteProductImage(image.id, image.url)}
+                className="w-full mt-1 text-[11px] tracking-widest uppercase text-kyzz-muted hover:text-red-500 transition-colors py-1 border border-kyzz-secondary hover:border-red-300"
+              >
+                Eliminar
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </form>

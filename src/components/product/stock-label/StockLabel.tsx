@@ -1,8 +1,7 @@
 "use client";
 
+import { useEffect, useState, useCallback } from "react";
 import { getStockBySlug } from "@/actions";
-import { titleFont } from "@/config/fonts";
-import { useEffect, useState } from "react";
 
 interface Props {
   slug: string;
@@ -12,30 +11,26 @@ export const StockLabel = ({ slug }: Props) => {
   const [stock, setStock] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    getStock();
-  }, [slug]);
-
-  const getStock = async () => {
+  const fetchStock = useCallback(async () => {
     const inStock = await getStockBySlug(slug);
     setStock(inStock);
     setIsLoading(false);
-  };
+  }, [slug]);
+
+  useEffect(() => {
+    fetchStock();
+  }, [fetchStock]);
+
+  if (isLoading) {
+    return (
+      <div className="h-5 w-24 bg-kyzz-secondary animate-pulse rounded" />
+    );
+  }
 
   return (
-    <>
-      {isLoading ? (
-        <h1
-          className={` ${titleFont.className} antialiased font-bold text-lg bg-gray-200 animate-pulse `}
-        >
-          &nbsp;
-        </h1>
-      ) : (
-        <h1 className={` ${titleFont.className} antialiased font-bold text-lg`}>
-          Stock: {stock}
-        </h1>
-      )}
-    </>
+    <p className="text-xs tracking-widest uppercase text-kyzz-muted">
+      {stock > 0 ? `${stock} disponibles` : "Agotado"}
+    </p>
   );
 };
+

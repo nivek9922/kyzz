@@ -25,7 +25,8 @@ const productSchema = z.object({
   categoryId: z.string().uuid(),
   sizes: z.coerce.string().transform( val => val.split(',') ),
   tags: z.string(),
-  gender: z.nativeEnum(Gender), 
+  gender: z.nativeEnum(Gender),
+  isFeatured: z.coerce.boolean().optional().default(false),
 });
 
 

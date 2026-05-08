@@ -3,7 +3,7 @@ export const revalidate = 60;
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { getPaginatedProductsWithImages } from '@/actions';
+import { getFeaturedProducts, getPaginatedProductsWithImages } from '@/actions';
 import { Pagination, ProductGrid } from '@/components';
 
 interface Props {
@@ -32,9 +32,13 @@ const features = [
 
 export default async function Home({ searchParams }: Props) {
   const page = searchParams.page ? parseInt(searchParams.page) : 1;
-  const { products, totalPages } = await getPaginatedProductsWithImages({ page });
 
-  if (products.length === 0) redirect('/');
+  const [featuredProducts, { products, totalPages }] = await Promise.all([
+    page === 1 ? getFeaturedProducts(3) : Promise.resolve([]),
+    getPaginatedProductsWithImages({ page, gender: 'women' }),
+  ]);
+
+  if (products.length === 0 && page > 1) redirect('/');
 
   const isFirstPage = page === 1;
 
@@ -43,7 +47,6 @@ export default async function Home({ searchParams }: Props) {
       {/* ── Hero ─────────────────────────────────────────────── */}
       {isFirstPage && (
         <section className="relative w-full h-[82vh] min-h-[520px] bg-kyzz-secondary overflow-hidden flex items-center justify-center">
-          {/* Texto centrado sobre fondo de color hasta tener imagen real */}
           <div className="relative z-10 text-center px-6">
             <p className="text-xs tracking-[0.4em] uppercase text-kyzz-muted mb-4">
               Nueva colección
@@ -55,7 +58,6 @@ export default async function Home({ searchParams }: Props) {
               Explorar colección
             </Link>
           </div>
-          {/* Ornamento de fondo */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none select-none">
             <span className="font-serif text-[32vw] text-kyzz-dark leading-none">K</span>
           </div>
@@ -77,15 +79,34 @@ export default async function Home({ searchParams }: Props) {
         </section>
       )}
 
+      {/* ── Colección Especial (solo primera página) ──────────── */}
+      {isFirstPage && featuredProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 py-16 border-b border-kyzz-secondary">
+          <div className="mb-10">
+            <p className="text-[11px] tracking-[0.3em] uppercase text-kyzz-muted mb-2">
+              Piezas seleccionadas
+            </p>
+            <h2 className="font-serif text-3xl text-kyzz-dark">Colección Especial</h2>
+            <div className="kyzz-divider-left mt-4" />
+          </div>
+          <ProductGrid products={featuredProducts} />
+        </section>
+      )}
+
       {/* ── Colección ─────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         {isFirstPage && (
-          <div className="text-center mb-12">
-            <h2 className="font-serif text-3xl text-kyzz-dark mb-3">Colección Esencial</h2>
-            <div className="kyzz-divider" />
+          <div className="mb-10 flex items-end justify-between">
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-kyzz-muted mb-2">
+                Todas las piezas
+              </p>
+              <h2 className="font-serif text-3xl text-kyzz-dark">Colección</h2>
+              <div className="kyzz-divider-left mt-4" />
+            </div>
             <Link
               href="/gender/women"
-              className="text-xs tracking-widest uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors mt-4 inline-block"
+              className="text-xs tracking-widest uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors"
             >
               Ver todo
             </Link>

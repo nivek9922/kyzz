@@ -1,7 +1,7 @@
 "use server";
 import prisma from "@/lib/prisma";
 
-import { auth } from "@/auth.config";
+import { auth } from "@/auth";
 import { TAX_RATE } from "@/config/constants";
 import type { Address, Size } from "@/interfaces";
 

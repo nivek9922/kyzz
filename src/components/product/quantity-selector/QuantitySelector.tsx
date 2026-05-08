@@ -1,40 +1,35 @@
 'use client';
 
-import { IoAddCircleOutline, IoRemoveCircleOutline } from 'react-icons/io5';
-
 interface Props {
   quantity: number;
-
-  onQuantityChanged: ( value: number ) => void; 
+  onQuantityChanged: (value: number) => void;
 }
 
-
-
-export const QuantitySelector = ( { quantity, onQuantityChanged }: Props ) => {
-
-
-  const onValueChanged = ( value: number ) => {
-    
-    if ( quantity + value < 1 ) return;
-
-    onQuantityChanged( quantity + value );
+export const QuantitySelector = ({ quantity, onQuantityChanged }: Props) => {
+  const onValueChanged = (value: number) => {
+    if (quantity + value < 1) return;
+    onQuantityChanged(quantity + value);
   };
 
-
   return (
-    <div className="flex">
-      <button onClick={ () => onValueChanged( -1 ) }>
-        <IoRemoveCircleOutline size={ 30 } />
+    <div className="flex items-center gap-0">
+      <button
+        onClick={() => onValueChanged(-1)}
+        className="w-9 h-9 flex items-center justify-center border border-kyzz-secondary text-kyzz-muted hover:border-kyzz-primary hover:text-kyzz-primary transition-colors duration-200 text-base leading-none"
+        aria-label="Reducir cantidad"
+      >
+        &minus;
       </button>
-
-      <span className="w-20 mx-3 px-5 bg-gray-100 text-center rounded">
-        { quantity }
+      <span className="w-12 h-9 flex items-center justify-center border-y border-kyzz-secondary text-sm text-kyzz-dark tabular-nums">
+        {quantity}
       </span>
-
-      <button onClick={ () => onValueChanged( +1 ) }>
-        <IoAddCircleOutline size={ 30 } />
+      <button
+        onClick={() => onValueChanged(+1)}
+        className="w-9 h-9 flex items-center justify-center border border-kyzz-secondary text-kyzz-muted hover:border-kyzz-primary hover:text-kyzz-primary transition-colors duration-200 text-base leading-none"
+        aria-label="Aumentar cantidad"
+      >
+        &#43;
       </button>
-
     </div>
   );
 };

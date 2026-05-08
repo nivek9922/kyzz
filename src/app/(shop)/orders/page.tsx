@@ -1,91 +1,64 @@
 export const revalidate = 0;
 
-// https://tailwindcomponents.com/component/hoverable-table
-import { getOrdersByUser } from "@/actions";
-import { Title } from "@/components";
-
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { IoCardOutline } from "react-icons/io5";
+import { IoShirtOutline } from "react-icons/io5";
+
+import { getOrdersByUser } from "@/actions";
+import { titleFont } from "@/config/fonts";
+import { OrderCard } from "./ui/OrderCard";
 
 export default async function OrdersPage() {
   const { ok, orders = [] } = await getOrdersByUser();
 
-  if (!ok) {
-    redirect("/auth/login");
-  }
+  if (!ok) redirect("/auth/login?callbackUrl=/orders");
 
   return (
-    <>
-      <Title title="Orders" />
+    <main className="max-w-3xl mx-auto px-6 py-16">
 
-      <div className="mb-10">
-        <table className="min-w-full">
-          <thead className="bg-gray-200 border-b">
-            <tr>
-              <th
-                scope="col"
-                className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-              >
-                #ID
-              </th>
-              <th
-                scope="col"
-                className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-              >
-                Nombre completo
-              </th>
-              <th
-                scope="col"
-                className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-              >
-                Estado
-              </th>
-              <th
-                scope="col"
-                className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-              >
-                Opciones
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr
-                key={order.id}
-                className="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {order.id.split("-").at(-1)}
-                </td>
-                <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap">
-                  {order.OrderAddress?.firstName} {order.OrderAddress?.lastName}
-                </td>
-                <td className="flex items-center text-sm  text-gray-900 font-light px-6 py-4 whitespace-nowrap">
-                  {order.isPaid ? (
-                    <>
-                      <IoCardOutline className="text-green-800" />
-                      <span className="mx-2 text-green-800">Pagada</span>
-                    </>
-                  ) : (
-                    <>
-                      <IoCardOutline className="text-red-800" />
-                      <span className="mx-2 text-red-800">No Pagada</span>
-                    </>
-                  )}
-                </td>
-                <td className="text-sm text-gray-900 font-light px-6 ">
-                  <Link href={`/orders/${ order.id }`} className="hover:underline">
-                    Ver orden
-                  </Link>
-                </td>
-              </tr>
-            ))}
-
-            
-          </tbody>
-        </table>
+      {/* ── Cabecera ──────────────────────────────────── */}
+      <div className="mb-12">
+        <p className="text-[11px] tracking-[0.3em] uppercase text-kyzz-muted mb-3">
+          Mi cuenta
+        </p>
+        <h1 className={`${titleFont.className} text-4xl font-normal text-kyzz-dark`}>
+          Mis pedidos
+        </h1>
+        <div className="w-8 h-px bg-kyzz-secondary mt-4" />
       </div>
-    </>
+
+      {/* ── Lista de pedidos ──────────────────────────── */}
+      {orders.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {orders.map((order) => (
+            <OrderCard key={order.id} order={order} />
+          ))}
+        </div>
+      )}
+
+    </main>
   );
 }
+
+// ── Empty state ───────────────────────────────────────────────
+const EmptyState = () => (
+  <div className="flex flex-col items-center text-center py-24 gap-6">
+    <div className="w-16 h-16 border border-kyzz-secondary flex items-center justify-center">
+      <IoShirtOutline className="w-7 h-7 text-kyzz-muted" />
+    </div>
+    <div>
+      <p className={`${titleFont.className} text-2xl font-normal text-kyzz-dark mb-2`}>
+        Aún no tienes pedidos
+      </p>
+      <p className="text-sm text-kyzz-muted">
+        Cuando realices tu primera compra, aparecerá aquí.
+      </p>
+    </div>
+    <Link href="/gender/women" className="btn-primary mt-2">
+      Explorar colección
+    </Link>
+  </div>
+);
+
