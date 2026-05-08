@@ -17,10 +17,13 @@
     background-color: #FAF9F6;
   }
   body {
-    @apply bg-kyzz-neutral text-kyzz-dark font-sans antialiased;
+    background-color: var(--kyzz-neutral);
+    color: var(--kyzz-dark);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   h1, h2, h3 {
-    @apply font-serif;
+    font-family: var(--font-noto-serif), Georgia, serif;
   }
 }
 
