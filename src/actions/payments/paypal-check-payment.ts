@@ -24,8 +24,7 @@ export const paypalCheckPayment = async (paypalTransactionId: string) => {
   }
 
   const { status, purchase_units } = resp;
-  console.log({status, purchase_units});
-  const { invoice_id: orderId } = purchase_units[0]; // TODO: invoice ID
+  const { invoice_id: orderId } = purchase_units[0];
 
   if ( status !== 'COMPLETED' ) {
     return {
@@ -34,8 +33,15 @@ export const paypalCheckPayment = async (paypalTransactionId: string) => {
     }
   }
 
-  // TODO: Realizar la actualización en nuestra base de datos
   try {
+    // Idempotencia: verificar si la orden ya fue pagada antes de actualizar
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) {
+      return { ok: false, message: 'Orden no encontrada' };
+    }
+    if (order.isPaid) {
+      return { ok: true }; // ya procesada, respuesta idempotente
+    }
 
     await prisma.order.update({
       where: { id: orderId },
@@ -45,15 +51,9 @@ export const paypalCheckPayment = async (paypalTransactionId: string) => {
       }
     })
 
-
-    // TODO: Revalidar un path
     revalidatePath(`/orders/${ orderId }`);
 
-    return {
-      ok: true
-    }
-
-    
+    return { ok: true }
   } catch (error) {
     console.log(error);
     return {

@@ -2,6 +2,7 @@
 import prisma from "@/lib/prisma";
 
 import { auth } from "@/auth.config";
+import { TAX_RATE } from "@/config/constants";
 import type { Address, Size } from "@/interfaces";
 
 interface ProductToOrder {
@@ -49,8 +50,8 @@ export const placeOrder = async (
       const subTotal = product.price * productQuantity;
 
       totals.subTotal += subTotal;
-      totals.tax += subTotal * 0.15;
-      totals.total += subTotal * 1.15;
+      totals.tax += subTotal * TAX_RATE;
+      totals.total += subTotal * (1 + TAX_RATE);
 
       return totals;
     },

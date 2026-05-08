@@ -1,4 +1,5 @@
 import type { CartProduct } from "@/interfaces";
+import { TAX_RATE } from "@/config/constants";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -38,7 +39,7 @@ export const useCartStore = create<State>()(
           (subTotal, product) => product.quantity * product.price + subTotal,
           0
         );
-        const tax = subTotal * 0.15;
+        const tax = subTotal * TAX_RATE;
         const total = subTotal + tax;
         const itemsInCart = cart.reduce(
           (total, item) => total + item.quantity,
