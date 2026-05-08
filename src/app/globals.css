@@ -46,37 +46,42 @@
 }
 
 /* ── Botones Kyzz ────────────────────────────────────────── */
-.btn-primary {
-  @apply bg-kyzz-primary hover:bg-kyzz-dark text-white
-         py-2.5 px-6 text-xs tracking-widest uppercase
-         transition-all duration-300;
-}
+@layer components {
+  .btn-primary {
+    @apply bg-kyzz-primary hover:bg-kyzz-dark text-white
+           py-2.5 px-6 text-xs tracking-widest uppercase
+           transition-all duration-300;
+  }
 
-.btn-primary-outline {
-  @apply border border-kyzz-primary text-kyzz-primary hover:bg-kyzz-primary hover:text-white
-         py-2.5 px-6 text-xs tracking-widest uppercase
-         transition-all duration-300;
-}
+  .btn-primary-outline {
+    @apply border border-kyzz-primary text-kyzz-primary
+           hover:bg-kyzz-primary hover:text-white
+           py-2.5 px-6 text-xs tracking-widest uppercase
+           transition-all duration-300;
+  }
 
-.btn-secondary {
-  @apply bg-kyzz-secondary hover:bg-kyzz-tertiary text-kyzz-dark
-         py-2 px-4 text-xs tracking-widest uppercase transition-all duration-300;
-}
+  .btn-secondary {
+    @apply bg-kyzz-secondary hover:bg-kyzz-tertiary text-kyzz-dark
+           py-2 px-4 text-xs tracking-widest uppercase transition-all duration-300;
+  }
 
-.btn-disabled {
-  @apply bg-kyzz-secondary text-kyzz-muted cursor-not-allowed
-         py-2 px-4 text-xs tracking-widest uppercase;
-}
+  .btn-disabled {
+    @apply bg-kyzz-secondary text-kyzz-muted cursor-not-allowed
+           py-2 px-4 text-xs tracking-widest uppercase;
+  }
 
-.btn-danger {
-  @apply bg-red-500 hover:bg-red-700 text-white py-2 px-4 transition-all;
+  .btn-danger {
+    @apply bg-red-500 hover:bg-red-700 text-white py-2 px-4 transition-all;
+  }
 }
 
 /* ── Utilidades globales ─────────────────────────────────── */
-.kyzz-section {
-  @apply max-w-6xl mx-auto px-6 py-16;
-}
+@layer utilities {
+  .kyzz-section {
+    @apply max-w-6xl mx-auto px-6 py-16;
+  }
 
-.kyzz-divider {
-  @apply w-10 h-px bg-kyzz-primary mx-auto my-4;
+  .kyzz-divider {
+    @apply w-10 h-px bg-kyzz-primary mx-auto my-4;
+  }
 }
