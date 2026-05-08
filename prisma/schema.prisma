@@ -17,13 +17,6 @@ enum Size {
   XXXL
 }
 
-enum Gender {
-  men
-  women
-  kid
-  unisex
-}
-
 enum Role {
   admin
   user
@@ -44,7 +37,6 @@ model Product {
   sizes       Size[]   @default([])
   slug        String   @unique
   tags        String[] @default([])
-  gender      Gender
   isFeatured  Boolean  @default(false)
 
   // Relaciones
@@ -55,7 +47,6 @@ model Product {
   ProductImage ProductImage[]
   OrderItem    OrderItem[]
 
-  @@index([gender])
   @@index([isFeatured])
 }
 
