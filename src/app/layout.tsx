@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { inter } from "@/config/fonts";
+import { notoSerif, manrope } from "@/config/fonts";
 
 import "./globals.css";
 import { Providers } from "@/components";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s - Kyzz | Shop",
-    default: "Home - Kyzz | Shop",
+    template: "%s | KYZZ",
+    default: "KYZZ — Basics for every you",
   },
-  description: "Una tienda virtual de productos",
+  description: "Básicos que te acompañan todos los días. Calidad premium, diseño atemporal.",
 };
 
 export default function RootLayout({
@@ -18,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
+    <html lang="es" className={`${notoSerif.variable} ${manrope.variable}`}>
+      <body className="font-sans">
         <Providers>{children}</Providers>
       </body>
     </html>

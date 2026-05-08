@@ -3,31 +3,71 @@ import Link from 'next/link';
 
 export const Footer = () => {
   return (
-    <div className="flex w-full justify-center text-xs mb-10">
+    <footer className="bg-kyzz-neutral border-t border-kyzz-secondary mt-24">
+      <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-3 gap-12">
 
-      <Link
-        href='/'
-      >
-        <span className={`${ titleFont.className } antialiased font-bold `}>Kyzz </span>
-        <span>| shop </span>
-        <span>© { new Date().getFullYear() }</span>
-      </Link>
+        {/* Marca */}
+        <div>
+          <span className={`${titleFont.className} text-lg tracking-[0.25em] uppercase text-kyzz-dark`}>
+            KYZZ
+          </span>
+          <p className="mt-2 text-xs tracking-widest uppercase text-kyzz-muted">Accessible Luxury</p>
+          <p className="mt-4 text-sm text-kyzz-muted leading-relaxed max-w-xs">
+            Básicos que te acompañan todos los días. Un beso a tu estilo propio.
+          </p>
+        </div>
 
-      <Link
-        href='/'
-        className="mx-3"
-      >
-        Privacidad & Legal
-      </Link>
+        {/* Links */}
+        <div>
+          <h3 className="text-xs tracking-widest uppercase text-kyzz-dark mb-4">Descubrir</h3>
+          <ul className="space-y-2">
+            {[
+              { label: 'Privacidad', href: '/' },
+              { label: 'Términos', href: '/' },
+              { label: 'Envíos', href: '/' },
+              { label: 'Sostenibilidad', href: '/' },
+            ].map(({ label, href }) => (
+              <li key={label}>
+                <Link href={href} className="text-xs tracking-widest uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors">
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      <Link
-        href='/'
-        className="mx-3"
-      >
-        Ubicaciones
-      </Link>
+        {/* Newsletter */}
+        <div>
+          <h3 className="text-xs tracking-widest uppercase text-kyzz-dark mb-4">Únete a la lista</h3>
+          <p className="text-sm text-kyzz-muted mb-4">
+            Recibe noticias sobre nuevas colecciones y acceso anticipado.
+          </p>
+          <div className="flex border-b border-kyzz-primary">
+            <input
+              type="email"
+              placeholder="Tu correo electrónico"
+              className="flex-1 bg-transparent text-sm text-kyzz-dark placeholder-kyzz-muted py-2 outline-none"
+            />
+            <button className="text-xs tracking-widest uppercase text-kyzz-primary py-2 pl-4 hover:text-kyzz-dark transition-colors">
+              Suscribir
+            </button>
+          </div>
+        </div>
 
+      </div>
 
-    </div>
-  )
-}
+      {/* Bottom bar */}
+      <div className="border-t border-kyzz-secondary">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <p className="text-xs text-kyzz-muted tracking-wide">
+            © {new Date().getFullYear()} KYZZ. Accessible Luxury.
+          </p>
+          <div className="flex gap-1">
+            <span className="text-kyzz-muted text-xs">♡</span>
+            <span className="text-xs text-kyzz-muted tracking-wider">Basics for every you</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
