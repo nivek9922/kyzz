@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { QuantitySelector, SizeSelector } from "@/components";
 import type { CartProduct, Product, Size } from "@/interfaces";
 import { useCartStore } from '@/store';
+import { gaViewItem, gaAddToCart } from '@/lib/gtag';
 
 interface Props {
   product: Product;
@@ -19,6 +20,11 @@ export const AddToCart = ({ product }: Props) => {
   const [size, setSize]         = useState<Size | undefined>();
   const [quantity, setQuantity] = useState<number>(1);
   const [posted, setPosted]     = useState(false);
+
+  // view_item: se dispara cuando el usuario ve la página del producto
+  useEffect(() => {
+    gaViewItem({ id: product.id, name: product.title, price: product.price });
+  }, [product.id, product.title, product.price]);
 
   const buildCartProduct = (): CartProduct => ({
     id:       product.id,
@@ -35,6 +41,7 @@ export const AddToCart = ({ product }: Props) => {
     if (!size) return;
 
     addProductToCart(buildCartProduct());
+    gaAddToCart({ id: product.id, name: product.title, price: product.price, size, quantity });
     toast.success('Agregado al carrito', {
       description: `${product.title} — Talla ${size}`,
       action: {

@@ -8,6 +8,7 @@ import { titleFont } from "@/config/fonts";
 import { placeOrder } from "@/actions";
 import { useAddressStore, useCartStore } from "@/store";
 import { currencyFormat } from "@/utils";
+import { gaBeginCheckout, gaPurchase } from "@/lib/gtag";
 
 export const PlaceOrder = () => {
   const router = useRouter();
@@ -21,7 +22,15 @@ export const PlaceOrder = () => {
   const cart = useCartStore((state) => state.cart);
   const clearCart = useCartStore((state) => state.clearCart);
 
-  useEffect(() => { setLoaded(true); }, []);
+  useEffect(() => {
+    setLoaded(true);
+    // begin_checkout: el usuario llega al resumen de compra
+    gaBeginCheckout({
+      value: total,
+      items: cart.map(p => ({ id: p.id, name: p.title, price: p.price, quantity: p.quantity })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onPlaceOrder = async () => {
     setIsPlacingOrder(true);
@@ -41,6 +50,13 @@ export const PlaceOrder = () => {
       return;
     }
     toast.success('Pedido confirmado', { id: toastId });
+    // purchase: conversión confirmada antes de limpiar el carrito
+    gaPurchase({
+      orderId: resp.order!.id,
+      value:   total,
+      tax,
+      items:   cart.map(p => ({ id: p.id, name: p.title, price: p.price, quantity: p.quantity })),
+    });
     clearCart();
     router.replace("/orders/" + resp.order?.id);
   };
