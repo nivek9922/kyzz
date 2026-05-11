@@ -40,6 +40,10 @@ export { getStockBySlug }                  from './product/get-stock-by-slug';
 export { getPaginatedProductsWithImages }  from './product/product-pagination';
 export { searchProducts }                  from './product/search-products';
 
+// ─── Site Config ─────────────────────────────────────────────
+export { getSiteConfig }    from './site/get-site-config';
+export { updateSiteConfig } from './site/update-site-config';
+
 // ─── User ───────────────────────────────────────────────────
 export { changeUserRole }    from './user/change-user-role';
 export { deleteUser }        from './user/delete-user';

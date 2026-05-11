@@ -8,14 +8,16 @@ import {
   IoPeopleOutline,
   IoAddCircleOutline,
   IoStorefrontOutline,
+  IoSettingsOutline,
 } from 'react-icons/io5';
 
 const NAV = [
-  { label: 'Dashboard',       href: '/admin',          icon: IoGridOutline },
-  { label: 'Productos',        href: '/admin/products', icon: IoStorefrontOutline },
-  { label: 'Pedidos',          href: '/admin/orders',   icon: IoReceiptOutline },
-  { label: 'Usuarios',         href: '/admin/users',    icon: IoPeopleOutline },
-  { label: 'Nuevo producto',   href: '/admin/product/new', icon: IoAddCircleOutline },
+  { label: 'Dashboard',       href: '/admin',                  icon: IoGridOutline },
+  { label: 'Productos',       href: '/admin/products',         icon: IoStorefrontOutline },
+  { label: 'Pedidos',         href: '/admin/orders',           icon: IoReceiptOutline },
+  { label: 'Usuarios',        href: '/admin/users',            icon: IoPeopleOutline },
+  { label: 'Nuevo producto',  href: '/admin/product/new',      icon: IoAddCircleOutline },
+  { label: 'Configuración',   href: '/admin/configuracion',    icon: IoSettingsOutline },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

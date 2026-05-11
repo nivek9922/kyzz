@@ -45,6 +45,43 @@
   animation-name: fadeIn;
 }
 
+@keyframes heroSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes kDrift {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 0.06; transform: scale(1); }
+}
+@keyframes heroBgZoom {
+  from { transform: scale(1.04); }
+  to   { transform: scale(1); }
+}
+
+.hero-label {
+  animation: heroFadeIn 0.8s ease both;
+  animation-delay: 0.1s;
+}
+.hero-title {
+  animation: heroSlideUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.25s;
+}
+.hero-cta {
+  animation: heroFadeIn 0.8s ease both;
+  animation-delay: 0.55s;
+}
+.hero-k {
+  animation: kDrift 1.4s ease both;
+  animation-delay: 0.1s;
+}
+.hero-bg-img {
+  animation: heroBgZoom 8s ease both;
+}
+
 /* ── Botones Kyzz ────────────────────────────────────────── */
 @layer components {
   .btn-primary {

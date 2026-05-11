@@ -139,6 +139,15 @@ model OrderItem {
   productId String
 }
 
+model SiteConfig {
+  id           String   @id @default("main")
+  heroTitle    String   @default("Kyzz: Basics for every you")
+  heroSubtitle String   @default("Nueva colección")
+  heroCta      String   @default("Explorar colección")
+  heroImageUrl String?
+  updatedAt    DateTime @updatedAt
+}
+
 model OrderAddress {
   id         String  @id @default(uuid())
   firstName  String
