@@ -56,7 +56,7 @@ const EmptyState = () => (
         Cuando realices tu primera compra, aparecerá aquí.
       </p>
     </div>
-    <Link href="/gender/women" className="btn-primary mt-2">
+    <Link href="/products" className="btn-primary mt-2">
       Explorar colección
     </Link>
   </div>

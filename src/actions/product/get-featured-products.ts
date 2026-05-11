@@ -2,15 +2,10 @@
 
 import prisma from "@/lib/prisma";
 
-/**
- * Devuelve hasta `limit` productos marcados como destacados (isFeatured = true).
- * El límite de negocio es 3 (colección especial), pero se acepta como parámetro
- * para flexibilidad futura.
- */
-export const getFeaturedProducts = async (limit = 3) => {
+export const getFeaturedProducts = async () => {
   try {
     const products = await prisma.product.findMany({
-      take: limit,
+      take: 3,
       where: { isFeatured: true },
       include: {
         ProductImage: {
@@ -18,7 +13,7 @@ export const getFeaturedProducts = async (limit = 3) => {
           select: { url: true },
         },
       },
-      orderBy: { title: "asc" },
+      orderBy: { createdAt: "asc" },
     });
 
     return products.map((product) => ({

@@ -1,53 +1,57 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { Gender } from "@prisma/client";
 
 interface PaginationOptions {
   page?: number;
   take?: number;
-  gender?: Gender;
   categoryId?: string;
+  query?: string;
 }
 
 export const getPaginatedProductsWithImages = async ({
   page = 1,
   take = 12,
-  gender,
   categoryId,
+  query,
 }: PaginationOptions) => {
   if (isNaN(Number(page))) page = 1;
   if (page < 1) page = 1;
 
   const where = {
-    ...(gender ? { gender } : {}),
     ...(categoryId ? { categoryId } : {}),
+    ...(query ? {
+      OR: [
+        { title: { contains: query, mode: 'insensitive' as const } },
+        { slug: { contains: query, mode: 'insensitive' as const } },
+        { tags: { has: query.toLowerCase() } },
+      ],
+    } : {}),
   };
 
   try {
-    // 1. Obtener los productos
-    const products = await prisma.product.findMany({
-      take: take,
-      skip: (page - 1) * take,
-      include: {
-        ProductImage: {
-          take: 2,
-          select: {
-            url: true,
+    const [products, totalCount] = await Promise.all([
+      prisma.product.findMany({
+        take,
+        skip: (page - 1) * take,
+        include: {
+          ProductImage: {
+            take: 2,
+            select: { url: true },
+          },
+          category: {
+            select: { name: true },
           },
         },
-      },
-      where,
-    });
-
-    // 2. Obtener el total de páginas
-    const totalCount = await prisma.product.count({ where });
-    
-    const totalPages = Math.ceil(totalCount / take);
+        where,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.product.count({ where }),
+    ]);
 
     return {
       currentPage: page,
-      totalPages: totalPages,
+      totalPages: Math.ceil(totalCount / take),
       products: products.map((product) => ({
         ...product,
         images: product.ProductImage.map((image) => image.url),

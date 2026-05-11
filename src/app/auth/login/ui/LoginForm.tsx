@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import clsx from 'clsx';
+import { toast } from 'sonner';
 
 import { authenticate } from "@/actions";
 import { titleFont } from "@/config/fonts";
@@ -14,6 +15,11 @@ export const LoginForm = () => {
   useEffect(() => {
     if (state === 'Success') {
       window.location.replace('/');
+    }
+    if (state === 'CredentialsSignin') {
+      toast.error('Credenciales incorrectas', {
+        description: 'Verifica tu correo y contraseña.',
+      });
     }
   }, [state]);
 
@@ -44,13 +50,6 @@ export const LoginForm = () => {
           name="password"
           autoComplete="current-password"
         />
-      </div>
-
-      {/* Error */}
-      <div aria-live="polite" aria-atomic="true" className="min-h-[1.5rem]">
-        {state === "CredentialsSignin" && (
-          <p className="text-xs text-red-500">Credenciales incorrectas. Vuelve a intentarlo.</p>
-        )}
       </div>
 
       <LoginButton />

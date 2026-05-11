@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { IoPersonOutline } from "react-icons/io5";
-import { logout } from "@/actions";
 
 export const UserMenu = () => {
   const { data: session, status } = useSession();
@@ -88,7 +87,7 @@ export const UserMenu = () => {
           {/* Cerrar sesión */}
           <div className="border-t border-kyzz-secondary">
             <button
-              onClick={() => { logout(); setOpen(false); }}
+              onClick={() => signOut({ callbackUrl: '/' })}
               className="w-full text-left px-5 py-3 text-[11px] tracking-widest uppercase text-kyzz-muted hover:text-red-500 hover:bg-kyzz-tertiary transition-colors"
             >
               Cerrar sesión

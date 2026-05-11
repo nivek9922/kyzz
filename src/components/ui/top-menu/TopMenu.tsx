@@ -10,10 +10,10 @@ import { UserMenu } from "./UserMenu";
 import { SearchOverlay } from "./SearchOverlay";
 
 const CATEGORIES = [
-  { label: "Jeans",      href: "/categoria/jeans" },
-  { label: "Blusas",     href: "/categoria/blusas" },
-  { label: "Enterizos",  href: "/categoria/enterizos" },
-  { label: "Chaquetas",  href: "/categoria/chaquetas" },
+  { label: "Jeans",     href: "/products?category=jeans" },
+  { label: "Blusas",    href: "/products?category=blusas" },
+  { label: "Enterizos", href: "/products?category=enterizos" },
+  { label: "Chaquetas", href: "/products?category=chaquetas" },
 ];
 
 export const TopMenu = () => {
@@ -21,13 +21,12 @@ export const TopMenu = () => {
   const openSearch     = useUIStore((state) => state.openSearch);
   const totalItems     = useCartStore((state) => state.getTotalItems());
 
-  const [loaded, setLoaded]           = useState(false);
-  const [catsOpen, setCatsOpen]       = useState(false);
-  const catsRef                        = useRef<HTMLDivElement>(null);
+  const [loaded, setLoaded]     = useState(false);
+  const [catsOpen, setCatsOpen] = useState(false);
+  const catsRef                  = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setLoaded(true); }, []);
 
-  // Cerrar dropdown de categorías en click exterior
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (catsRef.current && !catsRef.current.contains(e.target as Node)) {
@@ -60,23 +59,28 @@ export const TopMenu = () => {
             {/* Links de navegación — solo desktop */}
             <div className="hidden md:flex items-center gap-6">
 
-              <Link href="/gender/women" className="nav-link">
-                Colecciones
-              </Link>
-
-              {/* Dropdown Categorías */}
+              {/* Dropdown Colecciones */}
               <div className="relative" ref={catsRef}>
                 <button
                   onClick={() => setCatsOpen((v) => !v)}
                   className="nav-link flex items-center gap-1"
                   aria-expanded={catsOpen}
                 >
-                  Categorías
+                  Colecciones
                   <ChevronIcon open={catsOpen} />
                 </button>
 
                 {catsOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-44 bg-kyzz-neutral border border-kyzz-secondary shadow-xl z-50 fade-in">
+                  <div className="absolute top-full left-0 mt-2 w-52 bg-kyzz-neutral border border-kyzz-secondary shadow-xl z-50 fade-in">
+                    {/* Ver todo */}
+                    <Link
+                      href="/products"
+                      onClick={() => setCatsOpen(false)}
+                      className="block px-5 py-3 text-[11px] tracking-widest uppercase text-kyzz-dark hover:bg-kyzz-tertiary transition-colors border-b border-kyzz-secondary"
+                    >
+                      Ver todo
+                    </Link>
+                    {/* Categorías */}
                     {CATEGORIES.map((cat) => (
                       <Link
                         key={cat.href}
@@ -87,6 +91,16 @@ export const TopMenu = () => {
                         {cat.label}
                       </Link>
                     ))}
+                    {/* Separador + colección especial */}
+                    <div className="border-t border-kyzz-secondary">
+                      <Link
+                        href="/coleccion-especial"
+                        onClick={() => setCatsOpen(false)}
+                        className="block px-5 py-3 text-[11px] tracking-widest uppercase text-kyzz-primary hover:bg-kyzz-tertiary transition-colors"
+                      >
+                        ✦ Colección Especial
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
@@ -113,7 +127,6 @@ export const TopMenu = () => {
           {/* ── DERECHA — Acciones ───────────────────────────── */}
           <div className="flex items-center gap-4">
 
-            {/* Buscar */}
             <button
               onClick={openSearch}
               className="text-kyzz-dark hover:text-kyzz-primary transition-colors"
@@ -122,7 +135,6 @@ export const TopMenu = () => {
               <IoSearchOutline className="w-5 h-5" />
             </button>
 
-            {/* Carrito */}
             <Link
               href={loaded && totalItems > 0 ? "/cart" : "/empty"}
               className="relative text-kyzz-dark hover:text-kyzz-primary transition-colors"
@@ -136,22 +148,18 @@ export const TopMenu = () => {
               <IoCartOutline className="w-5 h-5" />
             </Link>
 
-            {/* UserMenu — solo desktop */}
             <div className="hidden md:block">
               <UserMenu />
             </div>
-
           </div>
         </nav>
       </header>
 
-      {/* Search overlay — renderizado fuera del header */}
       <SearchOverlay />
     </>
   );
 };
 
-// ── Helpers ───────────────────────────────────────────────────
 const ChevronIcon = ({ open }: { open: boolean }) => (
   <svg
     className={`w-3 h-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
@@ -162,4 +170,3 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
   </svg>
 );
-

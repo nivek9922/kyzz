@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { login, registerUser } from '@/actions';
 import { useState } from 'react';
@@ -13,23 +14,22 @@ type FormInputs = {
 };
 
 export const RegisterForm = () => {
-  const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>();
 
   const onSubmit: SubmitHandler<FormInputs> = async (data) => {
-    setErrorMessage('');
     setLoading(true);
     const { name, email, password } = data;
 
     const resp = await registerUser(name, email, password);
 
     if (!resp.ok) {
-      setErrorMessage(resp.message);
+      toast.error('No se pudo crear la cuenta', { description: resp.message });
       setLoading(false);
       return;
     }
 
+    toast.success('Cuenta creada', { description: 'Bienvenida a KYZZ.' });
     await login(email.toLowerCase(), password);
     window.location.replace('/');
   };
@@ -79,11 +79,6 @@ export const RegisterForm = () => {
         />
         {errors.password && <p className="text-xs text-red-500">Mínimo 6 caracteres</p>}
       </div>
-
-      {/* Error global */}
-      {errorMessage && (
-        <p className="text-xs text-red-500">{errorMessage}</p>
-      )}
 
       <button
         type="submit"

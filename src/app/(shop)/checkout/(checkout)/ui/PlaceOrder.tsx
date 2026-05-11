@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
+import { toast } from 'sonner';
 import { titleFont } from "@/config/fonts";
 import { placeOrder } from "@/actions";
 import { useAddressStore, useCartStore } from "@/store";
@@ -11,7 +12,6 @@ import { currencyFormat } from "@/utils";
 export const PlaceOrder = () => {
   const router = useRouter();
   const [loaded, setLoaded] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const address = useAddressStore((state) => state.address);
@@ -25,6 +25,7 @@ export const PlaceOrder = () => {
 
   const onPlaceOrder = async () => {
     setIsPlacingOrder(true);
+    const toastId = toast.loading('Confirmando pedido...');
     const productsToOrder = cart.map((product) => ({
       productId: product.id,
       quantity: product.quantity,
@@ -32,10 +33,14 @@ export const PlaceOrder = () => {
     }));
     const resp = await placeOrder(productsToOrder, address);
     if (!resp.ok) {
+      toast.error('No se pudo confirmar el pedido', {
+        id: toastId,
+        description: resp.message,
+      });
       setIsPlacingOrder(false);
-      setErrorMessage(resp.message);
       return;
     }
+    toast.success('Pedido confirmado', { id: toastId });
     clearCart();
     router.replace("/orders/" + resp.order?.id);
   };
@@ -90,10 +95,6 @@ export const PlaceOrder = () => {
           </div>
         </div>
       </div>
-
-      {errorMessage && (
-        <p className="text-red-500 text-xs mt-4">{errorMessage}</p>
-      )}
 
       <p className="text-[10px] text-kyzz-muted mt-6 mb-4 leading-relaxed">
         Al confirmar aceptas nuestros{" "}

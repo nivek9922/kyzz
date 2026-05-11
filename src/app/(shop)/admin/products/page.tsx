@@ -2,18 +2,19 @@ export const revalidate = 0;
 
 import Link from "next/link";
 import { getPaginatedProductsWithImages } from "@/actions";
-import { Pagination, ProductImage } from "@/components";
+import { AdminSearchInput, DeleteProductButton, Pagination, ProductImage, ToggleFeaturedButton } from "@/components";
 import { currencyFormat } from "@/utils";
 import { titleFont } from "@/config/fonts";
 import { IoAddOutline, IoPencilOutline, IoStorefrontOutline } from "react-icons/io5";
 
 interface Props {
-  searchParams: { page?: string };
+  searchParams: { page?: string; q?: string };
 }
 
 export default async function AdminProductsPage({ searchParams }: Props) {
-  const page = searchParams.page ? parseInt(searchParams.page) : 1;
-  const { products, totalPages } = await getPaginatedProductsWithImages({ page });
+  const page  = searchParams.page ? parseInt(searchParams.page) : 1;
+  const query = searchParams.q ?? '';
+  const { products, totalPages } = await getPaginatedProductsWithImages({ page, query });
 
   return (
     <div>
@@ -26,10 +27,13 @@ export default async function AdminProductsPage({ searchParams }: Props) {
           </h1>
           <div className="w-6 h-px bg-kyzz-secondary mt-3" />
         </div>
-        <Link href="/admin/product/new" className="btn-primary flex items-center gap-2">
-          <IoAddOutline size={14} />
-          Nuevo
-        </Link>
+        <div className="flex items-center gap-3">
+          <AdminSearchInput defaultValue={query || undefined} />
+          <Link href="/admin/product/new" className="btn-primary flex items-center gap-2">
+            <IoAddOutline size={14} />
+            Nuevo
+          </Link>
+        </div>
       </div>
 
       {/* ── Lista ─────────────────────────────────────── */}
@@ -38,8 +42,8 @@ export default async function AdminProductsPage({ searchParams }: Props) {
       ) : (
         <div className="flex flex-col divide-y divide-kyzz-secondary border border-kyzz-secondary">
           {/* Header */}
-          <div className="hidden md:grid grid-cols-[80px_1fr_120px_100px_80px_80px_48px] gap-4 px-5 py-3 bg-kyzz-tertiary">
-            {['', 'Producto', 'Precio', 'Categoría', 'Stock', 'Tallas', ''].map((h, i) => (
+          <div className="hidden md:grid grid-cols-[80px_1fr_120px_100px_80px_80px_40px_40px_40px] gap-3 px-5 py-3 bg-kyzz-tertiary">
+            {['', 'Producto', 'Precio', 'Categoría', 'Stock', 'Tallas', '', '', ''].map((h, i) => (
               <p key={i} className="text-[10px] tracking-[0.2em] uppercase text-kyzz-muted">{h}</p>
             ))}
           </div>
@@ -47,7 +51,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
           {products.map((product) => (
             <div
               key={product.id}
-              className="grid grid-cols-[64px_1fr] md:grid-cols-[80px_1fr_120px_100px_80px_80px_48px] gap-4 items-center px-5 py-4 hover:bg-kyzz-tertiary/50 transition-colors group"
+              className="grid grid-cols-[64px_1fr] md:grid-cols-[80px_1fr_120px_100px_80px_80px_40px_40px_40px] gap-3 items-center px-5 py-4 hover:bg-kyzz-tertiary/50 transition-colors group"
             >
               {/* Imagen */}
               <Link href={`/product/${product.slug}`} className="shrink-0">
@@ -77,7 +81,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
 
               {/* Categoría */}
               <p className="hidden md:block text-xs text-kyzz-muted capitalize">
-                {product.gender}
+                {product.category?.name ?? '—'}
               </p>
 
               {/* Stock */}
@@ -90,7 +94,10 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                 {product.sizes.join(', ')}
               </p>
 
-              {/* Acción */}
+              {/* Destacado */}
+              <ToggleFeaturedButton productId={product.id} isFeatured={product.isFeatured} />
+
+              {/* Editar */}
               <Link
                 href={`/admin/product/${product.slug}`}
                 className="hidden md:flex items-center justify-center w-8 h-8 border border-kyzz-secondary text-kyzz-muted hover:border-kyzz-primary hover:text-kyzz-primary transition-colors opacity-0 group-hover:opacity-100"
@@ -98,6 +105,9 @@ export default async function AdminProductsPage({ searchParams }: Props) {
               >
                 <IoPencilOutline size={13} />
               </Link>
+
+              {/* Eliminar */}
+              <DeleteProductButton productId={product.id} productTitle={product.title} />
             </div>
           ))}
         </div>

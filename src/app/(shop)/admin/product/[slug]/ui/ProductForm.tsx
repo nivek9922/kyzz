@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Category, Product, ProductImage as ProductWithImage } from "@/interfaces";
 import Image from "next/image";
 import clsx from "clsx";
+import { toast } from 'sonner';
 import { createUpdateProduct, deleteProductImage } from "@/actions";
 import { useRouter } from 'next/navigation';
 import { ProductImage } from '@/components';
@@ -23,16 +25,21 @@ interface FormInputs {
   inStock: number;
   sizes: string[];
   tags: string;
-  gender: "women" | "unisex";
   categoryId: string;
   isFeatured: boolean;
-
   images?: FileList;
 }
+
+const MAX_IMAGES = 2;
 
 export const ProductForm = ({ product, categories }: Props) => {
 
   const router = useRouter();
+  const [imagePreviews, setImagePreviews]   = useState<string[]>([]);
+  const [savedImages, setSavedImages]       = useState(product.ProductImage ?? []);
+
+  const existingCount = savedImages.length;
+  const maxNewImages  = Math.max(0, MAX_IMAGES - existingCount);
 
   const {
     handleSubmit,
@@ -44,7 +51,6 @@ export const ProductForm = ({ product, categories }: Props) => {
   } = useForm<FormInputs>({
     defaultValues: {
       ...product,
-      gender: (product.gender as FormInputs['gender']) ?? 'women',
       tags: product.tags?.join(", "),
       sizes: product.sizes ?? [],
       isFeatured: product.isFeatured ?? false,
@@ -53,6 +59,26 @@ export const ProductForm = ({ product, categories }: Props) => {
   });
 
   watch("sizes");
+
+  const imagesRegistration = register('images');
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+
+    if (files.length > maxNewImages) {
+      toast.error(
+        maxNewImages === 0
+          ? 'Este producto ya tiene el máximo de imágenes (2)'
+          : `Solo puedes agregar ${maxNewImages} imagen${maxNewImages > 1 ? 'es' : ''} más`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    imagesRegistration.onChange(e);
+    imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    setImagePreviews(files.map((f) => URL.createObjectURL(f)));
+  };
 
   const onSizeChanged = (size: string) => {
     const sizes = new Set(getValues("sizes"));
@@ -77,7 +103,6 @@ export const ProductForm = ({ product, categories }: Props) => {
     formData.append("sizes", productToSave.sizes.toString());
     formData.append("tags", productToSave.tags);
     formData.append("categoryId", productToSave.categoryId);
-    formData.append("gender", productToSave.gender);
     formData.append("isFeatured", productToSave.isFeatured ? "true" : "false");
     
     if ( images ) {
@@ -88,14 +113,20 @@ export const ProductForm = ({ product, categories }: Props) => {
 
 
 
-    const { ok, product:updatedProduct } = await createUpdateProduct(formData);
+    const toastId = toast.loading(product.id ? 'Guardando cambios...' : 'Creando producto...');
+    const { ok, product: updatedProduct } = await createUpdateProduct(formData);
 
-    if ( !ok ) {
-      alert('Producto no se pudo actualizar');
+    if (!ok) {
+      toast.error('No se pudo guardar el producto', {
+        id: toastId,
+        description: 'Revisa los campos e intenta de nuevo.',
+      });
       return;
     }
 
-    router.replace(`/admin/product/${ updatedProduct?.slug }`)
+    toast.success(product.id ? 'Producto actualizado' : 'Producto creado', { id: toastId });
+    setImagePreviews([]);
+    router.replace(`/admin/product/${updatedProduct?.slug}`);
 
 
   };
@@ -151,18 +182,6 @@ export const ProductForm = ({ product, categories }: Props) => {
             className="kyzz-input"
             {...register("tags", { required: true })}
           />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Género</label>
-          <select
-            className="kyzz-input bg-transparent"
-            {...register("gender", { required: true })}
-          >
-            <option value="">[Seleccione]</option>
-            <option value="women">Mujer</option>
-            <option value="unisex">Unisex</option>
-          </select>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -228,37 +247,84 @@ export const ProductForm = ({ product, categories }: Props) => {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Fotos</label>
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Fotos</label>
+            <span className="text-[10px] text-kyzz-muted">{existingCount + imagePreviews.length} / {MAX_IMAGES}</span>
+          </div>
           <input
             type="file"
-            { ...register('images') }
-            multiple
-            className="kyzz-input text-sm"
-            accept="image/png, image/jpeg, image/avif"
+            {...imagesRegistration}
+            onChange={handleImageChange}
+            multiple={maxNewImages > 1}
+            disabled={maxNewImages === 0}
+            className={`kyzz-input text-sm ${maxNewImages === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
+            accept="image/png, image/jpeg, image/jpg, image/webp, image/avif"
           />
+          <p className="text-[10px] text-kyzz-muted">
+            {maxNewImages === 0
+              ? 'Límite alcanzado — elimina una imagen para agregar otra'
+              : `Puedes agregar ${maxNewImages} imagen${maxNewImages > 1 ? 'es' : ''} más · PNG, JPG, WEBP o AVIF`}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
-          {product.ProductImage?.map((image) => (
-            <div key={image.id}>
-              <ProductImage
-                alt={product.title ?? ""}
-                src={ image.url }
-                width={300}
-                height={300}
-                className="object-cover w-full aspect-[3/4]"
-              />
-
-              <button
-                type="button"
-                onClick={() => deleteProductImage(image.id, image.url)}
-                className="w-full mt-1 text-[11px] tracking-widest uppercase text-kyzz-muted hover:text-red-500 transition-colors py-1 border border-kyzz-secondary hover:border-red-300"
-              >
-                Eliminar
-              </button>
+        {/* Preview de imágenes nuevas */}
+        {imagePreviews.length > 0 && (
+          <div>
+            <p className="text-[10px] tracking-[0.18em] uppercase text-kyzz-muted mb-2">Vista previa</p>
+            <div className="grid grid-cols-2 gap-3">
+              {imagePreviews.map((url, i) => (
+                <div key={i} className="relative">
+                  <Image
+                    src={url}
+                    alt={`preview-${i}`}
+                    width={300}
+                    height={300}
+                    className="object-cover w-full aspect-[3/4]"
+                    unoptimized
+                  />
+                  <span className="absolute top-1 right-1 bg-kyzz-primary text-white text-[9px] tracking-widest uppercase px-1.5 py-0.5">
+                    Nueva
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* Imágenes guardadas */}
+        {savedImages.length > 0 && (
+          <div>
+            <p className="text-[10px] tracking-[0.18em] uppercase text-kyzz-muted mb-2">Imágenes guardadas</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {savedImages.map((image) => (
+                <div key={image.id}>
+                  <ProductImage
+                    alt={product.title ?? ""}
+                    src={image.url}
+                    width={300}
+                    height={300}
+                    className="object-cover w-full aspect-[3/4]"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const { ok } = await deleteProductImage(image.id, image.url);
+                      if (ok) {
+                        setSavedImages((prev) => prev.filter((i) => i.id !== image.id));
+                        toast.success('Imagen eliminada');
+                      } else {
+                        toast.error('No se pudo eliminar la imagen');
+                      }
+                    }}
+                    className="w-full mt-1 text-[11px] tracking-widest uppercase text-kyzz-muted hover:text-red-500 transition-colors py-1 border border-kyzz-secondary hover:border-red-300"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </form>
   );

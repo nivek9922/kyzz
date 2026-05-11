@@ -11,27 +11,20 @@ import {
   IoPersonOutline,
   IoShirtOutline,
   IoTicketOutline,
+  IoStarOutline,
 } from "react-icons/io5";
 
+import { signOut } from "next-auth/react";
 import { titleFont } from "@/config/fonts";
 import { useUIStore } from "@/store";
-import { logout } from "@/actions";
 
-// Categorías únicas fuente de verdad
 const CATEGORIES = [
-  { label: "Jeans",     href: "/categoria/jeans" },
-  { label: "Blusas",    href: "/categoria/blusas" },
-  { label: "Enterizos", href: "/categoria/enterizos" },
-  { label: "Chaquetas", href: "/categoria/chaquetas" },
+  { label: "Jeans",      href: "/products?category=jeans" },
+  { label: "Blusas",     href: "/products?category=blusas" },
+  { label: "Enterizos",  href: "/products?category=enterizos" },
+  { label: "Chaquetas",  href: "/products?category=chaquetas" },
 ];
 
-/**
- * MobileMenu — panel lateral izquierdo (mobile only).
- * Responsabilidades:
- *   • Navegación de catálogo (colecciones, categorías, contacto)
- *   • Cuenta de usuario (perfil, pedidos, logout)
- * NO incluye: búsqueda ni admin (admin está en UserMenu desktop).
- */
 export const Sidebar = () => {
   const isMobileMenuOpen = useUIStore((state) => state.isMobileMenuOpen);
   const closeMobileMenu  = useUIStore((state) => state.closeMobileMenu);
@@ -50,7 +43,6 @@ export const Sidebar = () => {
         />
       )}
 
-      {/* Panel lateral — desliza desde la IZQUIERDA */}
       <nav
         className={clsx(
           "fixed top-0 left-0 w-[300px] h-screen bg-kyzz-neutral z-40 shadow-2xl",
@@ -83,22 +75,30 @@ export const Sidebar = () => {
         {/* ── Contenido scrollable ─────────────────────────── */}
         <div className="flex-1 overflow-y-auto">
 
-          {/* ── Sección: Comprar ─────────────────────────── */}
+          {/* ── Sección: Tienda ──────────────────────────── */}
           <div className="px-6 py-6">
             <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mb-4">
               Tienda
             </p>
 
             <MobileLink
-              href="/gender/women"
-              label="Colecciones"
+              href="/products"
+              label="Todas las piezas"
               icon={<IoShirtOutline size={16} />}
               onClick={closeMobileMenu}
             />
 
-            {/* Sub-categorías */}
-            <div className="ml-0 mt-1 space-y-0">
-              <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mt-4 mb-2">
+            <MobileLink
+              href="/coleccion-especial"
+              label="Colección Especial"
+              icon={<IoStarOutline size={16} />}
+              onClick={closeMobileMenu}
+              highlight
+            />
+
+            {/* Categorías */}
+            <div className="mt-4">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mb-2">
                 Categorías
               </p>
               {CATEGORIES.map((cat) => (
@@ -135,35 +135,23 @@ export const Sidebar = () => {
                   </p>
                 )}
 
-                <MobileLink
-                  href="/profile"
-                  label="Mi perfil"
-                  icon={<IoPersonOutline size={16} />}
-                  onClick={closeMobileMenu}
-                />
-                <MobileLink
-                  href="/orders"
-                  label="Mis pedidos"
-                  icon={<IoTicketOutline size={16} />}
-                  onClick={closeMobileMenu}
-                />
+                <MobileLink href="/profile" label="Mi perfil"   icon={<IoPersonOutline size={16} />} onClick={closeMobileMenu} />
+                <MobileLink href="/orders"  label="Mis pedidos" icon={<IoTicketOutline size={16} />} onClick={closeMobileMenu} />
 
                 {isAdmin && (
                   <>
                     <div className="my-3 border-t border-kyzz-secondary" />
-                    <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mb-3">
-                      Admin
-                    </p>
-                    <MobileLink href="/admin"          label="Dashboard"  icon={<IoPeopleOutline size={16} />} onClick={closeMobileMenu} />
-                    <MobileLink href="/admin/products" label="Productos"  icon={<IoShirtOutline size={16} />}  onClick={closeMobileMenu} />
-                    <MobileLink href="/admin/orders"   label="Órdenes"    icon={<IoTicketOutline size={16} />} onClick={closeMobileMenu} />
-                    <MobileLink href="/admin/users"    label="Usuarios"   icon={<IoPeopleOutline size={16} />} onClick={closeMobileMenu} />
+                    <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mb-3">Admin</p>
+                    <MobileLink href="/admin"          label="Dashboard" icon={<IoPeopleOutline size={16} />} onClick={closeMobileMenu} />
+                    <MobileLink href="/admin/products" label="Productos" icon={<IoShirtOutline size={16} />}  onClick={closeMobileMenu} />
+                    <MobileLink href="/admin/orders"   label="Órdenes"   icon={<IoTicketOutline size={16} />} onClick={closeMobileMenu} />
+                    <MobileLink href="/admin/users"    label="Usuarios"  icon={<IoPeopleOutline size={16} />} onClick={closeMobileMenu} />
                   </>
                 )}
 
                 <div className="mt-4 pt-4 border-t border-kyzz-secondary">
                   <button
-                    onClick={() => { logout(); closeMobileMenu(); }}
+                    onClick={() => signOut({ callbackUrl: '/' })}
                     className="flex items-center gap-3 w-full py-2.5 text-sm text-kyzz-muted hover:text-red-500 transition-colors"
                   >
                     <IoLogOutOutline size={16} />
@@ -173,18 +161,8 @@ export const Sidebar = () => {
               </>
             ) : (
               <>
-                <MobileLink
-                  href="/auth/login"
-                  label="Ingresar"
-                  icon={<IoLogInOutline size={16} />}
-                  onClick={closeMobileMenu}
-                />
-                <MobileLink
-                  href="/auth/new-account"
-                  label="Crear cuenta"
-                  icon={<IoPersonOutline size={16} />}
-                  onClick={closeMobileMenu}
-                />
+                <MobileLink href="/auth/login"       label="Ingresar"      icon={<IoLogInOutline size={16} />}  onClick={closeMobileMenu} />
+                <MobileLink href="/auth/new-account" label="Crear cuenta"  icon={<IoPersonOutline size={16} />} onClick={closeMobileMenu} />
               </>
             )}
           </div>
@@ -209,19 +187,22 @@ interface MobileLinkProps {
   icon?: React.ReactNode;
   onClick: () => void;
   indent?: boolean;
+  highlight?: boolean;
 }
 
-const MobileLink = ({ href, label, icon, onClick, indent }: MobileLinkProps) => (
+const MobileLink = ({ href, label, icon, onClick, indent, highlight }: MobileLinkProps) => (
   <Link
     href={href}
     onClick={onClick}
     className={clsx(
-      "flex items-center gap-3 py-2.5 text-sm text-kyzz-muted hover:text-kyzz-dark transition-colors",
-      indent && "pl-2"
+      "flex items-center gap-3 py-2.5 text-sm transition-colors",
+      indent && "pl-2",
+      highlight
+        ? "text-kyzz-primary hover:text-kyzz-dark"
+        : "text-kyzz-muted hover:text-kyzz-dark"
     )}
   >
     {icon && <span className="shrink-0">{icon}</span>}
     <span className="text-[12px] tracking-wide">{label}</span>
   </Link>
 );
-

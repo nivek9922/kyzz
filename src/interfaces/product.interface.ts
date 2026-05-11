@@ -8,7 +8,6 @@ export interface Product {
   slug: string;
   tags: string[];
   title: string;
-  gender: Gender;
   isFeatured: boolean;
   categoryId: string;
 }
@@ -23,14 +22,11 @@ export interface CartProduct {
   image: string;
 }
 
-
 export interface ProductImage {
   id: number;
   url: string;
   productId: string;
 }
 
-
-type Gender = 'men' | 'women' | 'kid' | 'unisex';
-export type Size = 'XS'|'S'|'M'|'L'|'XL'|'XXL'|'XXXL';
-export type Type = 'jeans'|'blusas'|'enterizos'|'chaquetas';
+export type Size = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'XXXL';
+export type ProductType = 'jeans' | 'blusas' | 'enterizos' | 'chaquetas';
