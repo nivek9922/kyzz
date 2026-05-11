@@ -22,9 +22,18 @@ enum Role {
   user
 }
 
+enum ShippingStatus {
+  pending
+  processing
+  shipped
+  delivered
+  returned
+}
+
 model Category {
   id      String    @id @default(uuid())
   name    String    @unique
+  slug    String    @unique @default("")
   Product Product[]
 }
 
@@ -112,6 +121,12 @@ model Order {
   paidAt       DateTime?
   cancelledAt  DateTime?
 
+  shippingStatus ShippingStatus @default(pending)
+  trackingCode   String?
+  shippingNotes  String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -146,6 +161,14 @@ model SiteConfig {
   heroCta      String   @default("Explorar colección")
   heroImageUrl String?
   updatedAt    DateTime @updatedAt
+}
+
+model Subscriber {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  createdAt      DateTime  @default(now())
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
 }
 
 model OrderAddress {

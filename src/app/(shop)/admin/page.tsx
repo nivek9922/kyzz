@@ -3,6 +3,10 @@ import { titleFont } from '@/config/fonts';
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
 import { currencyFormat } from '@/utils';
+import {
+  IoStorefrontOutline, IoReceiptOutline, IoPeopleOutline,
+  IoAddCircleOutline, IoMailOutline, IoSettingsOutline,
+} from 'react-icons/io5';
 
 export const revalidate = 0;
 
@@ -62,11 +66,13 @@ async function getLowStockProducts() {
   });
 }
 
-const cards = [
-  { label: 'Productos', href: '/admin/products', icon: '◈' },
-  { label: 'Órdenes',   href: '/admin/orders',   icon: '◎' },
-  { label: 'Usuarios',  href: '/admin/users',     icon: '✦' },
-  { label: 'Nuevo producto', href: '/admin/product/new', icon: '+' },
+const QUICK_LINKS = [
+  { label: 'Productos',      desc: 'Ver y editar catálogo',      href: '/admin/products',     Icon: IoStorefrontOutline },
+  { label: 'Pedidos',        desc: 'Gestionar órdenes',          href: '/admin/orders',        Icon: IoReceiptOutline },
+  { label: 'Usuarios',       desc: 'Roles y cuentas',            href: '/admin/users',         Icon: IoPeopleOutline },
+  { label: 'Newsletter',     desc: 'Enviar campaña de email',    href: '/admin/newsletter',    Icon: IoMailOutline },
+  { label: 'Nuevo producto', desc: 'Agregar al catálogo',        href: '/admin/product/new',   Icon: IoAddCircleOutline },
+  { label: 'Configuración',  desc: 'Banner y ajustes del sitio', href: '/admin/configuracion', Icon: IoSettingsOutline },
 ];
 
 export default async function AdminPage() {
@@ -167,18 +173,23 @@ export default async function AdminPage() {
       <h2 className="text-[11px] tracking-[0.3em] uppercase text-kyzz-muted mb-6">
         Accesos rápidos
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {cards.map(({ label, href, icon }) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {QUICK_LINKS.map(({ label, desc, href, Icon }) => (
           <Link
             key={href}
             href={href}
-            className="kyzz-panel p-6 flex items-center gap-4 hover:border-kyzz-primary transition-colors group"
+            className="kyzz-panel p-6 flex items-start gap-4 hover:border-kyzz-primary transition-colors group"
           >
-            <span className="text-kyzz-primary text-xl w-8">{icon}</span>
-            <span className="text-sm tracking-wide text-kyzz-dark group-hover:text-kyzz-primary transition-colors">
-              {label}
+            <span className="shrink-0 w-10 h-10 flex items-center justify-center border border-kyzz-secondary group-hover:border-kyzz-primary transition-colors">
+              <Icon size={18} className="text-kyzz-muted group-hover:text-kyzz-primary transition-colors" />
             </span>
-            <span className="ml-auto text-kyzz-muted text-xs">→</span>
+            <div className="min-w-0">
+              <p className="text-sm text-kyzz-dark group-hover:text-kyzz-primary transition-colors leading-tight">
+                {label}
+              </p>
+              <p className="text-[11px] text-kyzz-muted mt-0.5 leading-tight">{desc}</p>
+            </div>
+            <span className="ml-auto text-kyzz-muted text-xs shrink-0 mt-0.5 group-hover:text-kyzz-primary transition-colors">→</span>
           </Link>
         ))}
       </div>

@@ -2,15 +2,33 @@ export const revalidate = 0;
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { IoCheckmarkCircleOutline, IoTimeOutline, IoReceiptOutline, IoCloseCircleOutline } from "react-icons/io5";
+import {
+  IoCheckmarkCircleOutline, IoTimeOutline, IoReceiptOutline,
+  IoCloseCircleOutline, IoBicycleOutline, IoCheckmarkDoneOutline,
+} from "react-icons/io5";
 import { getPaginatedOrders, getCancellableOrdersCount } from "@/actions";
-import { CancelExpiredOrdersButton } from "@/components";
+import { CancelExpiredOrdersButton, AdminSearchInput, Pagination } from "@/components";
 import { titleFont } from "@/config/fonts";
 import { currencyFormat } from "@/utils";
 
-export default async function AdminOrdersPage() {
-  const [{ ok, orders = [] }, cancellableCount] = await Promise.all([
-    getPaginatedOrders(),
+const SHIPPING_BADGE: Record<string, { label: string; color: string }> = {
+  pending:    { label: 'Pendiente',  color: 'text-kyzz-muted bg-kyzz-tertiary border-kyzz-secondary' },
+  processing: { label: 'Procesando', color: 'text-blue-700 bg-blue-50 border-blue-200' },
+  shipped:    { label: 'Enviado',    color: 'text-amber-700 bg-amber-50 border-amber-200' },
+  delivered:  { label: 'Entregado', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+  returned:   { label: 'Devuelto',   color: 'text-red-600 bg-red-50 border-red-200' },
+};
+
+interface Props {
+  searchParams: { q?: string; page?: string };
+}
+
+export default async function AdminOrdersPage({ searchParams }: Props) {
+  const query = searchParams.q ?? '';
+  const page  = Number(searchParams.page ?? '1');
+
+  const [{ ok, orders = [], totalPages = 1, total = 0 }, cancellableCount] = await Promise.all([
+    getPaginatedOrders({ page, query }),
     getCancellableOrdersCount(),
   ]);
   if (!ok) redirect("/auth/login");
@@ -18,7 +36,7 @@ export default async function AdminOrdersPage() {
   return (
     <div>
       {/* Cabecera */}
-      <div className="flex items-end justify-between mb-10">
+      <div className="flex items-end justify-between mb-8">
         <div>
           <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mb-2">Admin</p>
           <h1 className={`${titleFont.className} text-3xl font-normal text-kyzz-dark`}>
@@ -29,74 +47,110 @@ export default async function AdminOrdersPage() {
         <CancelExpiredOrdersButton cancellableCount={cancellableCount} />
       </div>
 
+      {/* Buscador */}
+      <div className="flex items-center justify-between mb-6 gap-4">
+        <AdminSearchInput
+          defaultValue={query}
+          placeholder="Buscar por ID, cliente o email..."
+        />
+        {total > 0 && (
+          <p className="text-[11px] text-kyzz-muted shrink-0">
+            {total} pedido{total !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
+
       {orders.length === 0 ? (
         <div className="flex flex-col items-center py-24 gap-4 text-center border border-kyzz-secondary">
           <IoReceiptOutline className="w-8 h-8 text-kyzz-muted" />
-          <p className="text-sm text-kyzz-muted">Sin pedidos registrados</p>
+          <p className="text-sm text-kyzz-muted">
+            {query ? `Sin resultados para "${query}"` : 'Sin pedidos registrados'}
+          </p>
         </div>
       ) : (
-        <div className="flex flex-col divide-y divide-kyzz-secondary border border-kyzz-secondary">
-          {/* Header */}
-          <div className="hidden md:grid grid-cols-[100px_1fr_120px_110px_60px] gap-4 px-5 py-3 bg-kyzz-tertiary">
-            {['Pedido', 'Cliente', 'Total', 'Estado', ''].map((h, i) => (
-              <p key={i} className="text-[10px] tracking-[0.2em] uppercase text-kyzz-muted">{h}</p>
-            ))}
+        <>
+          <div className="flex flex-col divide-y divide-kyzz-secondary border border-kyzz-secondary">
+            {/* Header */}
+            <div className="hidden lg:grid grid-cols-[130px_1fr_100px_120px_110px_56px] gap-4 px-5 py-3 bg-kyzz-tertiary">
+              {['Pedido', 'Cliente', 'Total', 'Pago', 'Envío', ''].map((h, i) => (
+                <p key={i} className="text-[10px] tracking-[0.2em] uppercase text-kyzz-muted">{h}</p>
+              ))}
+            </div>
+
+            {orders.map((order) => {
+              const shipping = SHIPPING_BADGE[(order as any).shippingStatus ?? 'pending'];
+              return (
+                <div
+                  key={order.id}
+                  className={`grid grid-cols-[1fr_auto] lg:grid-cols-[130px_1fr_100px_120px_110px_56px] gap-4 items-center px-5 py-4 transition-colors ${
+                    order.cancelledAt ? 'opacity-50 bg-kyzz-tertiary/30' : 'hover:bg-kyzz-tertiary/50'
+                  }`}
+                >
+                  {/* ID */}
+                  <p className="text-[11px] tracking-widest font-medium text-kyzz-dark font-mono">
+                    #{order.id.split('-').at(-1)?.toUpperCase()}
+                  </p>
+
+                  {/* Cliente */}
+                  <div className="min-w-0">
+                    <p className="text-sm text-kyzz-dark truncate">
+                      {order.OrderAddress?.firstName} {order.OrderAddress?.lastName}
+                    </p>
+                    <p className="text-[10px] text-kyzz-muted truncate">{order.user?.email}</p>
+                  </div>
+
+                  {/* Total */}
+                  <p className="hidden lg:block text-sm font-medium text-kyzz-dark">
+                    {currencyFormat(order.total)}
+                  </p>
+
+                  {/* Badge pago */}
+                  <div className="hidden lg:flex">
+                    {order.cancelledAt ? (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-red-500 bg-red-50 border border-red-200 px-2 py-1">
+                        <IoCloseCircleOutline size={11} /> Cancelada
+                      </span>
+                    ) : order.isPaid ? (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1">
+                        <IoCheckmarkCircleOutline size={11} /> Pagada
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-kyzz-muted bg-kyzz-tertiary border border-kyzz-secondary px-2 py-1">
+                        <IoTimeOutline size={11} /> Sin pagar
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Badge envío */}
+                  <div className="hidden lg:flex">
+                    {!order.cancelledAt && (
+                      <span className={`inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase border px-2 py-1 ${shipping.color}`}>
+                        {(order as any).shippingStatus === 'shipped'   ? <IoBicycleOutline size={11} /> :
+                         (order as any).shippingStatus === 'delivered' ? <IoCheckmarkDoneOutline size={11} /> :
+                         <IoTimeOutline size={11} />}
+                        {shipping.label}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Link detalle */}
+                  <Link
+                    href={`/admin/orders/${order.id}`}
+                    className="text-[10px] tracking-widest uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors"
+                  >
+                    Ver →
+                  </Link>
+                </div>
+              );
+            })}
           </div>
 
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className={`grid grid-cols-[1fr_auto] md:grid-cols-[100px_1fr_120px_110px_60px] gap-4 items-center px-5 py-4 transition-colors ${
-                order.cancelledAt
-                  ? 'opacity-50 bg-kyzz-tertiary/30'
-                  : 'hover:bg-kyzz-tertiary/50'
-              }`}
-            >
-              {/* ID */}
-              <p className="text-[11px] tracking-widest font-medium text-kyzz-dark font-mono">
-                #{order.id.split('-').at(-1)?.toUpperCase()}
-              </p>
-
-              {/* Cliente */}
-              <p className="text-sm text-kyzz-dark truncate">
-                {order.OrderAddress?.firstName} {order.OrderAddress?.lastName}
-              </p>
-
-              {/* Total */}
-              <p className="hidden md:block text-sm font-medium text-kyzz-dark">
-                {currencyFormat(order.total)}
-              </p>
-
-              {/* Badge estado */}
-              <div className="hidden md:flex">
-                {order.cancelledAt ? (
-                  <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-red-500 bg-red-50 border border-red-200 px-3 py-1">
-                    <IoCloseCircleOutline size={11} />
-                    Cancelada
-                  </span>
-                ) : order.isPaid ? (
-                  <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1">
-                    <IoCheckmarkCircleOutline size={11} />
-                    Pagada
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-kyzz-muted bg-kyzz-tertiary border border-kyzz-secondary px-3 py-1">
-                    <IoTimeOutline size={11} />
-                    Pendiente
-                  </span>
-                )}
-              </div>
-
-              {/* Link detalle */}
-              <Link
-                href={`/orders/${order.id}`}
-                className="text-[10px] tracking-widest uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors"
-              >
-                Ver →
-              </Link>
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination totalPages={totalPages} />
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

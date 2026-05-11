@@ -6,9 +6,10 @@ import { IoSearchOutline, IoCloseOutline } from 'react-icons/io5';
 
 interface Props {
   defaultValue?: string;
+  placeholder?:  string;
 }
 
-export const AdminSearchInput = ({ defaultValue }: Props) => {
+export const AdminSearchInput = ({ defaultValue, placeholder = 'Buscar...' }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -44,7 +45,7 @@ export const AdminSearchInput = ({ defaultValue }: Props) => {
         type="text"
         defaultValue={defaultValue}
         onChange={handleChange}
-        placeholder="Buscar producto..."
+        placeholder={placeholder}
         className="kyzz-input pl-9 pr-8 text-sm w-60"
       />
       {defaultValue && (

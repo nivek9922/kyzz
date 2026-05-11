@@ -9,6 +9,8 @@ import {
   IoAddCircleOutline,
   IoStorefrontOutline,
   IoSettingsOutline,
+  IoListOutline,
+  IoMailOutline,
 } from 'react-icons/io5';
 
 const NAV = [
@@ -16,6 +18,8 @@ const NAV = [
   { label: 'Productos',       href: '/admin/products',         icon: IoStorefrontOutline },
   { label: 'Pedidos',         href: '/admin/orders',           icon: IoReceiptOutline },
   { label: 'Usuarios',        href: '/admin/users',            icon: IoPeopleOutline },
+  { label: 'Categorías',      href: '/admin/categorias',       icon: IoListOutline },
+  { label: 'Newsletter',      href: '/admin/newsletter',       icon: IoMailOutline },
   { label: 'Nuevo producto',  href: '/admin/product/new',      icon: IoAddCircleOutline },
   { label: 'Configuración',   href: '/admin/configuracion',    icon: IoSettingsOutline },
 ];

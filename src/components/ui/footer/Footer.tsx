@@ -1,5 +1,6 @@
 import { titleFont } from '@/config/fonts';
 import Link from 'next/link';
+import { NewsletterForm } from './NewsletterForm';
 
 export const Footer = () => {
   return (
@@ -42,16 +43,7 @@ export const Footer = () => {
           <p className="text-sm text-kyzz-muted mb-4">
             Recibe noticias sobre nuevas colecciones y acceso anticipado.
           </p>
-          <div className="flex border-b border-kyzz-primary">
-            <input
-              type="email"
-              placeholder="Tu correo electrónico"
-              className="flex-1 bg-transparent text-sm text-kyzz-dark placeholder-kyzz-muted py-2 outline-none"
-            />
-            <button className="text-xs tracking-widest uppercase text-kyzz-primary py-2 pl-4 hover:text-kyzz-dark transition-colors">
-              Suscribir
-            </button>
-          </div>
+          <NewsletterForm />
         </div>
 
       </div>

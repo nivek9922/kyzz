@@ -9,14 +9,11 @@ import { useCartStore, useUIStore } from "@/store";
 import { UserMenu } from "./UserMenu";
 import { SearchOverlay } from "./SearchOverlay";
 
-const CATEGORIES = [
-  { label: "Jeans",     href: "/products?category=jeans" },
-  { label: "Blusas",    href: "/products?category=blusas" },
-  { label: "Enterizos", href: "/products?category=enterizos" },
-  { label: "Chaquetas", href: "/products?category=chaquetas" },
-];
+interface NavCategory { name: string; slug: string; }
 
-export const TopMenu = () => {
+interface Props { categories?: NavCategory[]; }
+
+export const TopMenu = ({ categories = [] }: Props) => {
   const openMobileMenu = useUIStore((state) => state.openMobileMenu);
   const openSearch     = useUIStore((state) => state.openSearch);
   const totalItems     = useCartStore((state) => state.getTotalItems());
@@ -81,14 +78,14 @@ export const TopMenu = () => {
                       Ver todo
                     </Link>
                     {/* Categorías */}
-                    {CATEGORIES.map((cat) => (
+                    {categories.map((cat: NavCategory) => (
                       <Link
-                        key={cat.href}
-                        href={cat.href}
+                        key={cat.slug}
+                        href={`/products?category=${cat.slug}`}
                         onClick={() => setCatsOpen(false)}
                         className="block px-5 py-3 text-[11px] tracking-widest uppercase text-kyzz-muted hover:text-kyzz-dark hover:bg-kyzz-tertiary transition-colors"
                       >
-                        {cat.label}
+                        {cat.name}
                       </Link>
                     ))}
                     {/* Separador + colección especial */}

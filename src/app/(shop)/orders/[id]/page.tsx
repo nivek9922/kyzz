@@ -9,19 +9,31 @@ interface Props {
   params: { id: string };
 }
 
+const SHIPPING_STEPS = [
+  { status: 'pending',    label: 'Confirmada' },
+  { status: 'processing', label: 'Procesando' },
+  { status: 'shipped',    label: 'En camino' },
+  { status: 'delivered',  label: 'Entregada' },
+];
+
+const STEP_INDEX: Record<string, number> = {
+  pending: 0, processing: 1, shipped: 2, delivered: 3, returned: -1,
+};
+
 export default async function OrdersByIdPage({ params }: Props) {
   const { id } = params;
   const { ok, order } = await getOrderById(id);
 
   if (!ok) redirect("/");
 
-  const address = order!.OrderAddress;
-  const shortId = id.split("-").at(-1)?.toUpperCase();
+  const address  = order!.OrderAddress;
+  const shortId  = id.split("-").at(-1)?.toUpperCase();
+  const shipIdx  = order!.cancelledAt ? -2 : STEP_INDEX[order!.shippingStatus ?? 'pending'] ?? 0;
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-14">
 
-      {/* ── Cabecera ─────────────────────────────────────────── */}
+      {/* Cabecera */}
       <div className="mb-10">
         <p className="text-[11px] tracking-[0.3em] uppercase text-kyzz-muted mb-3">
           Mi cuenta · Pedidos
@@ -35,9 +47,47 @@ export default async function OrdersByIdPage({ params }: Props) {
         <div className="w-8 h-px bg-kyzz-secondary mt-5" />
       </div>
 
+      {/* Barra de progreso de envío (solo si no está cancelada) */}
+      {!order!.cancelledAt && (
+        <div className="mb-10">
+          <div className="flex items-center gap-0">
+            {SHIPPING_STEPS.map((step, i) => {
+              const done    = i <= shipIdx;
+              const current = i === shipIdx;
+              return (
+                <div key={step.status} className="flex-1 flex flex-col items-center gap-2">
+                  <div className="w-full flex items-center">
+                    {i > 0 && (
+                      <div className={`flex-1 h-px transition-colors ${done ? 'bg-kyzz-primary' : 'bg-kyzz-secondary'}`} />
+                    )}
+                    <div className={`w-2.5 h-2.5 rounded-full border-2 shrink-0 transition-colors ${
+                      done ? 'bg-kyzz-primary border-kyzz-primary' : 'bg-kyzz-neutral border-kyzz-secondary'
+                    } ${current ? 'ring-2 ring-kyzz-primary/30' : ''}`} />
+                    {i < SHIPPING_STEPS.length - 1 && (
+                      <div className={`flex-1 h-px transition-colors ${i < shipIdx ? 'bg-kyzz-primary' : 'bg-kyzz-secondary'}`} />
+                    )}
+                  </div>
+                  <p className={`text-[9px] tracking-widest uppercase text-center ${done ? 'text-kyzz-primary' : 'text-kyzz-muted'}`}>
+                    {step.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Código de rastreo */}
+          {order!.trackingCode && (
+            <div className="mt-5 p-4 bg-kyzz-tertiary border border-kyzz-secondary text-center">
+              <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Código de rastreo</p>
+              <p className="text-sm font-mono font-medium text-kyzz-dark">{order!.trackingCode}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
 
-        {/* ── Productos ──────────────────────────────────────── */}
+        {/* Productos */}
         <div className="space-y-0 border border-kyzz-secondary divide-y divide-kyzz-secondary">
           {order!.OrderItem.map((item) => (
             <div
@@ -75,7 +125,7 @@ export default async function OrdersByIdPage({ params }: Props) {
           ))}
         </div>
 
-        {/* ── Panel lateral ──────────────────────────────────── */}
+        {/* Panel lateral */}
         <div className="space-y-6">
 
           {/* Dirección */}

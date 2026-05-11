@@ -10,7 +10,10 @@ export { logout }              from './auth/logout';
 export { registerUser }        from './auth/register';
 
 // ─── Category ───────────────────────────────────────────────
-export { getCategories } from './category/get-categories';
+export { getCategories }   from './category/get-categories';
+export { createCategory }  from './category/create-category';
+export { updateCategory }  from './category/update-category';
+export { deleteCategory }  from './category/delete-category';
 
 // ─── Country ────────────────────────────────────────────────
 export { getCountries } from './country/get-countries';
@@ -21,6 +24,7 @@ export { getOrderById }              from './order/get-order-by-id';
 export { getPaginatedOrders }        from './order/get-paginated-orders';
 export { getOrdersByUser }           from './order/get-orders-by-user';
 export { markOrderAsPaid }           from './order/mark-order-as-paid';
+export { updateOrderShipping }       from './order/update-order-shipping';
 export { cancelUnpaidOrders,
          getCancellableOrdersCount } from './order/cancel-unpaid-orders';
 
@@ -41,8 +45,11 @@ export { getPaginatedProductsWithImages }  from './product/product-pagination';
 export { searchProducts }                  from './product/search-products';
 
 // ─── Site Config ─────────────────────────────────────────────
-export { getSiteConfig }    from './site/get-site-config';
-export { updateSiteConfig } from './site/update-site-config';
+export { getSiteConfig }         from './site/get-site-config';
+export { updateSiteConfig }      from './site/update-site-config';
+export { subscribeNewsletter }   from './site/subscribe-newsletter';
+export { sendNewsletter }        from './site/send-newsletter';
+export type { NewsletterProduct } from './site/send-newsletter';
 
 // ─── User ───────────────────────────────────────────────────
 export { changeUserRole }    from './user/change-user-role';

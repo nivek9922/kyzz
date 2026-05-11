@@ -3,15 +3,23 @@ export const revalidate = 0;
 import { redirect } from "next/navigation";
 import { getPaginatedUsers } from "@/actions";
 import { titleFont } from "@/config/fonts";
+import { AdminSearchInput, Pagination } from "@/components";
 import { UsersTable } from './ui/UsersTable';
 
-export default async function AdminUsersPage() {
-  const { ok, users = [] } = await getPaginatedUsers();
+interface Props {
+  searchParams: { q?: string; page?: string };
+}
+
+export default async function AdminUsersPage({ searchParams }: Props) {
+  const query = searchParams.q ?? '';
+  const page  = Number(searchParams.page ?? '1');
+
+  const { ok, users = [], totalPages = 1, total = 0 } = await getPaginatedUsers({ page, query });
   if (!ok) redirect("/auth/login");
 
   return (
     <div>
-      <div className="mb-10">
+      <div className="mb-8">
         <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mb-2">Admin</p>
         <h1 className={`${titleFont.className} text-3xl font-normal text-kyzz-dark`}>
           Usuarios
@@ -19,7 +27,35 @@ export default async function AdminUsersPage() {
         <div className="w-6 h-px bg-kyzz-secondary mt-3" />
       </div>
 
-      <UsersTable users={users} />
+      {/* Buscador */}
+      <div className="flex items-center justify-between mb-6 gap-4">
+        <AdminSearchInput
+          defaultValue={query}
+          placeholder="Buscar por nombre o email..."
+        />
+        {total > 0 && (
+          <p className="text-[11px] text-kyzz-muted shrink-0">
+            {total} usuario{total !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
+
+      {users.length === 0 ? (
+        <div className="flex flex-col items-center py-24 gap-4 text-center border border-kyzz-secondary">
+          <p className="text-sm text-kyzz-muted">
+            {query ? `Sin resultados para "${query}"` : 'Sin usuarios registrados'}
+          </p>
+        </div>
+      ) : (
+        <>
+          <UsersTable users={users} />
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination totalPages={totalPages} />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

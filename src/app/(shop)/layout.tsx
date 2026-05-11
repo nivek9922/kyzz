@@ -1,14 +1,15 @@
 import { Footer, Sidebar, TopMenu } from '@/components';
+import { getCategories } from '@/actions';
 
-export default function ShopLayout( { children }: {
-  children: React.ReactNode;
-} ) {
+export default async function ShopLayout({ children }: { children: React.ReactNode }) {
+  const categories = await getCategories();
+
   return (
     <main className="min-h-screen flex flex-col bg-kyzz-neutral">
-      <TopMenu />
+      <TopMenu categories={categories} />
       <Sidebar />
       <div className="flex-1">
-        { children }
+        {children}
       </div>
       <Footer />
     </main>
