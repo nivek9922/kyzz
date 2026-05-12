@@ -1,11 +1,7 @@
 "use server";
 import prisma from "@/lib/prisma";
-import { render } from "@react-email/components";
 import { auth } from "@/auth";
 import { TAX_RATE } from "@/config/constants";
-import { resend, EMAIL_FROM } from "@/lib/resend";
-import { OrderConfirmationEmail } from "@/emails/OrderConfirmationEmail";
-import { logger } from "@/lib/logger";
 import type { Address, Size } from "@/interfaces";
 
 interface ProductToOrder {
@@ -140,34 +136,6 @@ export const placeOrder = async (
       };
     });
 
-
-    // Enviar email de confirmación (no bloquea si falla)
-    try {
-      const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
-      if (user?.email && process.env.RESEND_API_KEY) {
-        const html = await render(OrderConfirmationEmail({
-          orderId:   prismaTx.order.id,
-          firstName: user.name?.split(' ')[0] ?? 'Cliente',
-          items:     productIds.map((p) => {
-            const prod = products.find(pr => pr.id === p.productId)!;
-            return { title: prod.title, size: p.size, quantity: p.quantity, price: prod.price };
-          }),
-          subtotal: subTotal,
-          tax,
-          total,
-          address:  prismaTx.orderAddress.address,
-          city:     prismaTx.orderAddress.city,
-        }));
-        await resend.emails.send({
-          from: EMAIL_FROM,
-          to:   user.email,
-          subject: `KYZZ · Pedido recibido #${prismaTx.order.id.split('-').at(-1)?.toUpperCase()}`,
-          html,
-        });
-      }
-    } catch (emailErr) {
-      logger.error({ orderId: prismaTx.order.id, error: String(emailErr) }, 'Error enviando email de confirmación');
-    }
 
     return {
       ok: true,

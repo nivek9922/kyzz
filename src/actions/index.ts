@@ -29,8 +29,9 @@ export { cancelUnpaidOrders,
          getCancellableOrdersCount } from './order/cancel-unpaid-orders';
 
 // ─── Payments ───────────────────────────────────────────────
-export { setTransactionId }    from './payments/set-transaction-id';
-export { paypalCheckPayment }  from './payments/paypal-check-payment';
+export { setTransactionId }             from './payments/set-transaction-id';
+export { paypalCheckPayment }           from './payments/paypal-check-payment';
+export { verifyExistingPaypalPayment }  from './payments/verify-existing-paypal-payment';
 
 // ─── Product ────────────────────────────────────────────────
 export { deleteProduct }                   from './product/delete-product';

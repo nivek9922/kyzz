@@ -11,9 +11,9 @@ interface Props {
 export const Providers = ({ children }: Props) => {
   return (
     <PayPalScriptProvider options={{
-      clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? '',
-      intent: 'capture',
-      currency: 'USD',
+      clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? 'sb',
+      intent:   'capture',
+      currency: process.env.NEXT_PUBLIC_PAYPAL_CURRENCY ?? 'USD',
     }}>
       <SessionProvider>
         {children}
