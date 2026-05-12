@@ -7,7 +7,7 @@ import clsx from 'clsx';
 import { toast } from 'sonner';
 
 import { authenticate } from "@/actions";
-import { titleFont } from "@/config/fonts";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 export const LoginForm = () => {
   const [state, dispatch] = useFormState(authenticate, undefined);
@@ -53,6 +53,15 @@ export const LoginForm = () => {
       </div>
 
       <LoginButton />
+
+      {/* Divisor */}
+      <div className="flex items-center gap-4 my-1">
+        <div className="flex-1 h-px bg-kyzz-secondary" />
+        <span className="text-[10px] tracking-widest text-kyzz-muted uppercase">o</span>
+        <div className="flex-1 h-px bg-kyzz-secondary" />
+      </div>
+
+      <GoogleSignInButton />
 
       {/* Divisor */}
       <div className="flex items-center gap-4 my-1">

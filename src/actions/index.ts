@@ -5,7 +5,7 @@ export { getUserAddress }    from './address/get-user-address';
 export { setUserAddress }    from './address/set-user-address';
 
 // ─── Auth ────────────────────────────────────────────────────
-export { authenticate, login } from './auth/login';
+export { authenticate, login, loginWithGoogle } from './auth/login';
 export { logout }              from './auth/logout';
 export { registerUser }        from './auth/register';
 

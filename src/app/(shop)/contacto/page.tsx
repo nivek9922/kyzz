@@ -3,29 +3,38 @@
 import { useState } from 'react';
 import { titleFont } from '@/config/fonts';
 
+const SUBJECTS = [
+  'Consulta sobre un producto',
+  'Estado de mi pedido',
+  'Devoluciones y cambios',
+  'Problema con mi cuenta',
+  'Otro',
+];
+
 interface FormState {
-  name: string;
-  email: string;
+  name:    string;
+  email:   string;
+  subject: string;
   message: string;
 }
 
 interface FieldErrors {
-  name?: string[];
-  email?: string[];
+  name?:    string[];
+  email?:   string[];
+  subject?: string[];
   message?: string[];
 }
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
 export default function ContactPage() {
-  const [form, setForm] = useState<FormState>({ name: '', email: '', message: '' });
+  const [form, setForm] = useState<FormState>({ name: '', email: '', subject: '', message: '' });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<Status>('idle');
   const [serverError, setServerError] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    // Limpiar error del campo al escribir
     setFieldErrors((prev) => ({ ...prev, [e.target.name]: undefined }));
   };
 
@@ -56,7 +65,7 @@ export default function ContactPage() {
       }
 
       setStatus('success');
-      setForm({ name: '', email: '', message: '' });
+      setForm({ name: '', email: '', subject: '', message: '' });
     } catch {
       setServerError('No se pudo conectar con el servidor. Intenta de nuevo.');
       setStatus('error');
@@ -77,7 +86,6 @@ export default function ContactPage() {
         <div className="w-8 h-px bg-kyzz-secondary" />
       </div>
 
-      {/* Estado de éxito */}
       {status === 'success' ? (
         <div className="kyzz-panel p-8 text-center space-y-3">
           <p className="text-kyzz-primary text-xl">✦</p>
@@ -85,7 +93,7 @@ export default function ContactPage() {
             Mensaje enviado
           </p>
           <p className="text-sm text-kyzz-muted leading-relaxed">
-            Gracias por escribirnos. Te responderemos pronto.
+            Gracias por escribirnos. Te responderemos en menos de 24 horas.
           </p>
           <button
             onClick={() => setStatus('idle')}
@@ -132,6 +140,28 @@ export default function ContactPage() {
             />
             {fieldErrors.email && (
               <p className="text-xs text-red-500 mt-1">{fieldErrors.email[0]}</p>
+            )}
+          </div>
+
+          {/* Asunto */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">
+              Asunto
+            </label>
+            <select
+              name="subject"
+              value={form.subject}
+              onChange={handleChange}
+              className="kyzz-input bg-transparent cursor-pointer"
+              disabled={status === 'loading'}
+            >
+              <option value="" disabled>Selecciona un asunto...</option>
+              {SUBJECTS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            {fieldErrors.subject && (
+              <p className="text-xs text-red-500 mt-1">{fieldErrors.subject[0]}</p>
             )}
           </div>
 

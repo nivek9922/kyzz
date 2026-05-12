@@ -5,6 +5,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { login, registerUser } from '@/actions';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { useState } from 'react';
 
 type FormInputs = {
@@ -87,6 +88,15 @@ export const RegisterForm = () => {
       >
         {loading ? 'Creando cuenta...' : 'Crear cuenta'}
       </button>
+
+      {/* Divisor */}
+      <div className="flex items-center gap-4 my-1">
+        <div className="flex-1 h-px bg-kyzz-secondary" />
+        <span className="text-[10px] tracking-widest text-kyzz-muted uppercase">o</span>
+        <div className="flex-1 h-px bg-kyzz-secondary" />
+      </div>
+
+      <GoogleSignInButton label="Registrarse con Google" />
 
       {/* Divisor */}
       <div className="flex items-center gap-4 my-1">
