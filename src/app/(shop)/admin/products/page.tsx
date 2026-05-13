@@ -8,10 +8,11 @@ import { titleFont } from "@/config/fonts";
 import { IoAddOutline, IoPencilOutline, IoStorefrontOutline } from "react-icons/io5";
 
 interface Props {
-  searchParams: { page?: string; q?: string };
+  searchParams: Promise<{ page?: string; q?: string }>;
 }
 
-export default async function AdminProductsPage({ searchParams }: Props) {
+export default async function AdminProductsPage(props: Props) {
+  const searchParams = await props.searchParams;
   const page  = searchParams.page ? parseInt(searchParams.page) : 1;
   const query = searchParams.q ?? '';
   const { products, totalPages } = await getPaginatedProductsWithImages({ page, query });

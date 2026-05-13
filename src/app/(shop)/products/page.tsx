@@ -9,17 +9,18 @@ import { titleFont } from '@/config/fonts';
 import type { SortOption } from '@/actions/product/product-pagination';
 
 interface Props {
-  searchParams: {
+  searchParams: Promise<{
     page?:     string;
     category?: string;
     sizes?:    string;
     min?:      string;
     max?:      string;
     sort?:     string;
-  };
+  }>;
 }
 
-export default async function ProductsPage({ searchParams }: Props) {
+export default async function ProductsPage(props: Props) {
+  const searchParams = await props.searchParams;
   const page        = searchParams.page ? parseInt(searchParams.page) : 1;
   const catSlug     = searchParams.category?.toLowerCase();
   const sizesParam  = searchParams.sizes?.split(',').filter(Boolean) as Size[] | undefined;

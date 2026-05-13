@@ -6,7 +6,7 @@ import { OrderStatus, PayPalButton, ProductImage } from "@/components";
 import { titleFont } from "@/config/fonts";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const SHIPPING_STEPS = [
@@ -20,7 +20,8 @@ const STEP_INDEX: Record<string, number> = {
   pending: 0, processing: 1, shipped: 2, delivered: 3, returned: -1,
 };
 
-export default async function OrdersByIdPage({ params }: Props) {
+export default async function OrdersByIdPage(props: Props) {
+  const params = await props.params;
   const { id } = params;
   const { ok, order } = await getOrderById(id);
 

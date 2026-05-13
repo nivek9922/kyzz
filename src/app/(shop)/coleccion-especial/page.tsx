@@ -6,10 +6,11 @@ import { Pagination, ProductGrid } from '@/components';
 import { titleFont } from '@/config/fonts';
 
 interface Props {
-  searchParams: { page?: string };
+  searchParams: Promise<{ page?: string }>;
 }
 
-export default async function ColeccionEspecialPage({ searchParams }: Props) {
+export default async function ColeccionEspecialPage(props: Props) {
+  const searchParams = await props.searchParams;
   const page = searchParams.page ? parseInt(searchParams.page) : 1;
 
   const { products, totalPages } = await getFeaturedProductsPaginated({ page });

@@ -30,9 +30,13 @@ export const PayPalButton = ({ orderId, amount }: Props) => {
 
   const createOrder = async (_data: CreateOrderData, actions: CreateOrderActions): Promise<string> => {
     const transactionId = await actions.order.create({
+      intent: 'CAPTURE',
       purchase_units: [{
         invoice_id: orderId,
-        amount: { value: `${roundedAmount}` },
+        amount: {
+          currency_code: process.env.NEXT_PUBLIC_PAYPAL_CURRENCY ?? 'USD',
+          value: `${roundedAmount}`,
+        },
       }],
     });
 

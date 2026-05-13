@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useActionState } from 'react';
 import Link from "next/link";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import clsx from 'clsx';
 import { toast } from 'sonner';
 
@@ -10,7 +10,7 @@ import { authenticate } from "@/actions";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 export const LoginForm = () => {
-  const [state, dispatch] = useFormState(authenticate, undefined);
+  const [state, dispatch] = useActionState(authenticate, undefined);
 
   useEffect(() => {
     if (state === 'Success') {

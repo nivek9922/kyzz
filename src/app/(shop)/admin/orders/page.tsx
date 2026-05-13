@@ -20,10 +20,11 @@ const SHIPPING_BADGE: Record<string, { label: string; color: string }> = {
 };
 
 interface Props {
-  searchParams: { q?: string; page?: string };
+  searchParams: Promise<{ q?: string; page?: string }>;
 }
 
-export default async function AdminOrdersPage({ searchParams }: Props) {
+export default async function AdminOrdersPage(props: Props) {
+  const searchParams = await props.searchParams;
   const query = searchParams.q ?? '';
   const page  = Number(searchParams.page ?? '1');
 

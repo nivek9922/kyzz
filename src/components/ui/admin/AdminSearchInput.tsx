@@ -13,7 +13,7 @@ export const AdminSearchInput = ({ defaultValue, placeholder = 'Buscar...' }: Pr
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const navigate = (term: string) => {

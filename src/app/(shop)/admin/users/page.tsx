@@ -7,10 +7,11 @@ import { AdminSearchInput, Pagination } from "@/components";
 import { UsersTable } from './ui/UsersTable';
 
 interface Props {
-  searchParams: { q?: string; page?: string };
+  searchParams: Promise<{ q?: string; page?: string }>;
 }
 
-export default async function AdminUsersPage({ searchParams }: Props) {
+export default async function AdminUsersPage(props: Props) {
+  const searchParams = await props.searchParams;
   const query = searchParams.q ?? '';
   const page  = Number(searchParams.page ?? '1');
 

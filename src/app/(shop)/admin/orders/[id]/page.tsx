@@ -6,13 +6,14 @@ import { ProductImage } from '@/components';
 import { titleFont } from '@/config/fonts';
 import { ShippingPanel } from './ui/ShippingPanel';
 
-interface Props { params: { id: string } }
+interface Props { params: Promise<{ id: string }> }
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pendiente', processing: 'Procesando', shipped: 'Enviado', delivered: 'Entregado', returned: 'Devuelto',
 };
 
-export default async function AdminOrderDetailPage({ params }: Props) {
+export default async function AdminOrderDetailPage(props: Props) {
+  const params = await props.params;
   const { id } = params;
   const { ok, order } = await getOrderById(id);
   if (!ok || !order) redirect('/admin/orders');

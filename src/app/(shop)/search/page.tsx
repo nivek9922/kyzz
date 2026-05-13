@@ -4,10 +4,11 @@ import { titleFont } from '@/config/fonts';
 import { SearchBar } from './ui/SearchBar';
 
 interface Props {
-  searchParams: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }
 
-export default async function SearchPage({ searchParams }: Props) {
+export default async function SearchPage(props: Props) {
+  const searchParams = await props.searchParams;
   const query = searchParams.q?.trim() ?? '';
   const products = query.length >= 2 ? await searchProducts(query) : [];
 

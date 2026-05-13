@@ -13,15 +13,13 @@ import { getProductBySlug } from "@/actions";
 import { AddToCart } from './ui/AddToCart';
 
 interface Props {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata(props: Props, parent: ResolvingMetadata): Promise<Metadata> {
+  const params = await props.params;
   const product = await getProductBySlug(params.slug);
 
   return {
@@ -35,7 +33,8 @@ export async function generateMetadata(
   };
 }
 
-export default async function ProductBySlugPage({ params }: Props) {
+export default async function ProductBySlugPage(props: Props) {
+  const params = await props.params;
   const product = await getProductBySlug(params.slug);
 
   if (!product) {
