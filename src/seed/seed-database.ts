@@ -40,7 +40,10 @@ async function main() {
   // {
   //   name: 'Shirt'
   // }
-  const categoriesData = categories.map( (name) => ({ name }));
+  const categoriesData = categories.map( (name) => ({
+    name,
+    slug: name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-'),
+  }));
   
   await prisma.category.createMany({
     data: categoriesData
