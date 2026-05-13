@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 
 // Threshold en horas para considerar una orden como expirada
 const EXPIRY_HOURS = 24;
@@ -33,7 +34,7 @@ export const cancelUnpaidOrders = async () => {
       return { ok: true, cancelledCount: 0 };
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Restaurar stock de cada orden
       for (const order of expiredOrders) {
         for (const item of order.OrderItem) {
@@ -46,7 +47,7 @@ export const cancelUnpaidOrders = async () => {
 
       // Marcar todas como canceladas
       await tx.order.updateMany({
-        where: { id: { in: expiredOrders.map((o) => o.id) } },
+        where: { id: { in: expiredOrders.map((o: { id: string }) => o.id) } },
         data: { cancelledAt: new Date() },
       });
     });

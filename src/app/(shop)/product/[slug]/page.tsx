@@ -22,13 +22,21 @@ export async function generateMetadata(props: Props, parent: ResolvingMetadata):
   const params = await props.params;
   const product = await getProductBySlug(params.slug);
 
+  const rawImage = product?.images[0];
+  const ogImage = rawImage?.startsWith('http')
+    ? rawImage
+    : rawImage
+      ? `/products/${rawImage}`
+      : undefined;
+
   return {
     title: product?.title ?? "Producto no encontrado",
     description: product?.description ?? "",
     openGraph: {
-      title: product?.title ?? "Producto no encontrado",
+      title: product?.title ? `${product.title} | KYZZ` : "Producto no encontrado",
       description: product?.description ?? "",
-      images: [`/products/${product?.images[0]}`],
+      images: ogImage ? [ogImage] : [],
+      type: 'website',
     },
   };
 }

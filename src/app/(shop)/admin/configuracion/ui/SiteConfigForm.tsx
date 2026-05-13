@@ -39,6 +39,12 @@ export const SiteConfigForm = ({ config }: Props) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (imageFile && imageFile.size > 10 * 1024 * 1024) {
+      toast.error('La imagen supera los 10 MB. Comprime la imagen antes de subirla.');
+      return;
+    }
+
     setSaving(true);
     const id = toast.loading('Guardando configuración...');
 
@@ -57,9 +63,13 @@ export const SiteConfigForm = ({ config }: Props) => {
           id,
           description: 'La página principal se actualizará en breve',
         });
+        setImageFile(null);
       } else {
         toast.error(result.message ?? 'Error al guardar', { id });
       }
+    } catch (err) {
+      console.error('[SiteConfig] Error inesperado:', err);
+      toast.error('No se pudo guardar. Intenta de nuevo.', { id });
     } finally {
       setSaving(false);
     }

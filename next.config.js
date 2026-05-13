@@ -30,6 +30,10 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  experimental: {
+    serverActionsBodySizeLimit: '10mb',
+  },
+
   images: {
     remotePatterns: [
       {

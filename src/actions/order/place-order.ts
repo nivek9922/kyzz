@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 import { TAX_RATE } from "@/config/constants";
 import type { Address, Size } from "@/interfaces";
+import type { Prisma } from "@prisma/client";
 
 interface ProductToOrder {
   productId: string;
@@ -35,6 +36,8 @@ export const placeOrder = async (
     },
   });
 
+  type DbProduct = (typeof products)[number];
+
   // Calcular los montos // Encabezado
   const itemsInOrder = productIds.reduce((count, p) => count + p.quantity, 0);
 
@@ -42,7 +45,7 @@ export const placeOrder = async (
   const { subTotal, tax, total } = productIds.reduce(
     (totals, item) => {
       const productQuantity = item.quantity;
-      const product = products.find((product) => product.id === item.productId);
+      const product = products.find((p: DbProduct) => p.id === item.productId);
 
       if (!product) throw new Error(`${item.productId} no existe - 500`);
 
@@ -60,9 +63,9 @@ export const placeOrder = async (
   // Crear la transacción de base de datos
   try {
 
-    const prismaTx = await prisma.$transaction(async (tx) => {
+    const prismaTx = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Actualizar el stock de los productos
-      const updatedProductsPromises = products.map((product) => {
+      const updatedProductsPromises = products.map((product: DbProduct) => {
         //  Acumular los valores
         const productQuantity = productIds
           .filter((p) => p.productId === product.id)
@@ -75,7 +78,6 @@ export const placeOrder = async (
         return tx.product.update({
           where: { id: product.id },
           data: {
-            // inStock: product.inStock - productQuantity // no hacer
             inStock: {
               decrement: productQuantity,
             },
@@ -108,15 +110,13 @@ export const placeOrder = async (
                 size: p.size,
                 productId: p.productId,
                 price:
-                  products.find((product) => product.id === p.productId)
+                  products.find((product: DbProduct) => product.id === p.productId)
                     ?.price ?? 0,
               })),
             },
           },
         },
       });
-
-      // Validar, si el price es cero, entonces, lanzar un error
 
       // 3. Crear la direccion de la orden
       // Address
