@@ -1,7 +1,7 @@
 import type { CartProduct } from "@/interfaces";
 import { TAX_RATE } from "@/config/constants";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 interface State {
   cart: CartProduct[];
@@ -108,6 +108,7 @@ export const useCartStore = create<State>()(
 
     {
       name: "shopping-cart",
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

@@ -8,6 +8,7 @@ import { titleFont } from "@/config/fonts";
 import { placeOrder } from "@/actions";
 import { useAddressStore, useCartStore } from "@/store";
 import { currencyFormat } from "@/utils";
+import { useShallow } from "zustand/react/shallow";
 import { gaBeginCheckout, gaPurchase } from "@/lib/gtag";
 
 export const PlaceOrder = () => {
@@ -16,8 +17,8 @@ export const PlaceOrder = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const address = useAddressStore((state) => state.address);
-  const { itemsInCart, subTotal, tax, total } = useCartStore((state) =>
-    state.getSummaryInformation()
+  const { itemsInCart, subTotal, tax, total } = useCartStore(
+    useShallow((state) => state.getSummaryInformation())
   );
   const cart = useCartStore((state) => state.cart);
   const clearCart = useCartStore((state) => state.clearCart);

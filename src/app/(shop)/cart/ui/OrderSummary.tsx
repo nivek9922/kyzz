@@ -4,12 +4,13 @@ import { useCartStore } from "@/store";
 import { currencyFormat } from "@/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 export const OrderSummary = () => {
   const router = useRouter();
   const [loaded, setLoaded] = useState(false);
-  const { itemsInCart, subTotal, tax, total } = useCartStore((state) =>
-    state.getSummaryInformation()
+  const { itemsInCart, subTotal, tax, total } = useCartStore(
+    useShallow((state) => state.getSummaryInformation())
   );
 
   useEffect(() => { setLoaded(true); }, []);

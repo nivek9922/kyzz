@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 interface State {
   address: {
@@ -37,6 +37,7 @@ export const useAddressStore = create<State>()(
     }),
     {
       name: "address-storage",
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );
