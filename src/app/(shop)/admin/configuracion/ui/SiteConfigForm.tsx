@@ -37,11 +37,15 @@ export const SiteConfigForm = ({ config }: Props) => {
     if (fileRef.current) fileRef.current.value = '';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (imageFile && imageFile.size > 10 * 1024 * 1024) {
-      toast.error('La imagen supera los 10 MB. Comprime la imagen antes de subirla.');
+    if (imageFile && imageFile.size > 4 * 1024 * 1024) {
+      const mb = (imageFile.size / 1024 / 1024).toFixed(1);
+      toast.error(`La imagen pesa ${mb} MB — máximo permitido: 4 MB`, {
+        description: 'Comprime la imagen en tinypng.com o reduce su resolución antes de subirla.',
+        duration: 6000,
+      });
       return;
     }
 

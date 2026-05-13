@@ -31,7 +31,9 @@ const securityHeaders = [
 
 const nextConfig = {
   experimental: {
-    serverActionsBodySizeLimit: '10mb',
+    serverActions: {
+      bodySizeLimit: '4mb',
+    },
   },
 
   images: {
