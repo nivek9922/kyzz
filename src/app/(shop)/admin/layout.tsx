@@ -11,6 +11,7 @@ import {
   IoSettingsOutline,
   IoListOutline,
   IoMailOutline,
+  IoPersonOutline,
 } from 'react-icons/io5';
 
 const NAV = [
@@ -22,6 +23,7 @@ const NAV = [
   { label: 'Newsletter',      href: '/admin/newsletter',       icon: IoMailOutline },
   { label: 'Nuevo producto',  href: '/admin/product/new',      icon: IoAddCircleOutline },
   { label: 'Configuración',   href: '/admin/configuracion',    icon: IoSettingsOutline },
+  { label: 'Mi cuenta',       href: '/admin/cuenta',           icon: IoPersonOutline },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

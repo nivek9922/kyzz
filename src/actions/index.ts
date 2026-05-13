@@ -53,6 +53,7 @@ export { sendNewsletter }        from './site/send-newsletter';
 export type { NewsletterProduct } from './site/send-newsletter';
 
 // ─── User ───────────────────────────────────────────────────
-export { changeUserRole }    from './user/change-user-role';
-export { deleteUser }        from './user/delete-user';
-export { getPaginatedUsers } from './user/get-paginater-users';
+export { changeUserRole }      from './user/change-user-role';
+export { deleteUser }          from './user/delete-user';
+export { getPaginatedUsers }   from './user/get-paginater-users';
+export { changeOwnPassword }   from './user/change-own-password';

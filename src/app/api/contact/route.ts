@@ -38,7 +38,10 @@ export async function POST(request: NextRequest) {
       html:     notificationHtml,
     });
 
-    // Auto-respuesta al usuario (no bloquea si falla en sandbox)
+    // Auto-respuesta al usuario (no bloquea el flujo si falla)
+    // NOTA: en sandbox de Resend solo se puede enviar a emails verificados.
+    // Para que funcione en producción: verifica tu dominio en resend.com y
+    // cambia EMAIL_FROM a tu dominio propio (ej: hola@kyzz.co).
     try {
       const autoReplyHtml = await render(ContactAutoReplyEmail({ firstName, subject, message }));
       await resend.emails.send({
@@ -47,8 +50,10 @@ export async function POST(request: NextRequest) {
         subject: 'KYZZ · Recibimos tu mensaje',
         html:    autoReplyHtml,
       });
-    } catch {
-      // En sandbox Resend solo permite enviar al email verificado; no bloquea el flujo
+    } catch (err) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Contact] Auto-reply no enviado (sandbox Resend):', String(err));
+      }
     }
 
     return NextResponse.json({ ok: true, message: 'Mensaje enviado' });

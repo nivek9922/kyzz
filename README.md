@@ -181,11 +181,11 @@ npm start
 
 ---
 
-## Usuario admin por defecto (seed)
+## Usuarios por defecto (seed)
 
-Después de correr el seed, puedes ingresar al panel con:
+| Rol | Email | Contraseña |
+|---|---|---|
+| Admin | `admin@kyzz.co` | `Kyzz2025!` |
+| Usuario demo | `cliente@kyzz.co` | `cliente123` |
 
-- **Email:** `fernando@google.com`
-- **Contraseña:** `123456`
-
-> Cambiar estas credenciales en producción desde el panel de administración.
+> **Importante:** Cambiar la contraseña del admin inmediatamente después del primer despliegue desde `/admin/cuenta`.
