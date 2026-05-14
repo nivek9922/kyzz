@@ -10,7 +10,9 @@ import {
   StockLabel,
 } from "@/components";
 import { getProductBySlug } from "@/actions";
+import { currencyFormat } from "@/utils";
 import { AddToCart } from './ui/AddToCart';
+import { ProductTabs } from './ui/ProductTabs';
 
 interface Props {
   params: Promise<{
@@ -79,7 +81,7 @@ export default async function ProductBySlugPage(props: Props) {
               {product.title}
             </h1>
             <p className="mt-3 text-xl text-kyzz-primary font-light">
-              ${product.price.toFixed(2)}
+              {currencyFormat(product.price)}
             </p>
           </div>
 
@@ -101,6 +103,12 @@ export default async function ProductBySlugPage(props: Props) {
               {product.description}
             </p>
           </div>
+
+          {/* Separador */}
+          <div className="kyzz-divider" />
+
+          {/* Tabs de información */}
+          <ProductTabs />
 
         </div>
       </div>
