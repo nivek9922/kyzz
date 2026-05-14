@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ProductGrid } from "./ProductGrid";
-import { GridLayoutSelector, type Columns } from "./GridLayoutSelector";
+import { ProductGrid, type Columns } from "./ProductGrid";
+import { GridLayoutSelector } from "./GridLayoutSelector";
 import type { Product } from "@/interfaces";
 
 interface Props {
@@ -10,16 +10,16 @@ interface Props {
 }
 
 const STORAGE_KEY = "kyzz-grid-cols";
+const DEFAULT_COLS: Columns = 3;
+const VALID: Columns[] = [1, 2, 3, 4, 5, 6];
 
 export const ProductGridWithLayout = ({ products }: Props) => {
-  const [columns, setColumns] = useState<Columns>(3);
+  const [columns, setColumns] = useState<Columns>(DEFAULT_COLS);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "2" || saved === "3" || saved === "6") {
-      setColumns(Number(saved) as Columns);
-    }
+    const saved = Number(localStorage.getItem(STORAGE_KEY)) as Columns;
+    if (VALID.includes(saved)) setColumns(saved);
     setMounted(true);
   }, []);
 
@@ -31,7 +31,9 @@ export const ProductGridWithLayout = ({ products }: Props) => {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <p className="text-xs text-kyzz-muted">{products.length} {products.length === 1 ? "producto" : "productos"}</p>
+        <p className="text-xs text-kyzz-muted">
+          {products.length} {products.length === 1 ? "producto" : "productos"}
+        </p>
         {mounted && <GridLayoutSelector columns={columns} onChange={handleChange} />}
       </div>
       <ProductGrid products={products} columns={columns} />

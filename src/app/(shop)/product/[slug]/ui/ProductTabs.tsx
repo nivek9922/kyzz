@@ -76,15 +76,28 @@ const TABS: Tab[] = [
     label: "Métodos de pago",
     content: (
       <div className="space-y-3 text-sm text-kyzz-muted leading-relaxed">
-        <p>Aceptamos los siguientes métodos de pago:</p>
-        <ul className="space-y-1 list-none">
-          <li>— Tarjeta de crédito y débito (Visa, Mastercard, Amex)</li>
-          <li>— PayPal</li>
-          <li>— Transferencia bancaria PSE</li>
-          <li>— Nequi</li>
-          <li>— Bancolombia a la mano</li>
+        <p>
+          Puedes pagar con tarjeta de crédito o débito, PSE, Nequi o transferencia
+          por la App Bancolombia, todo a través de nuestra pasarela de pagos segura.
+        </p>
+        <ul className="space-y-2 list-none">
+          <li className="flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-kyzz-muted shrink-0" />
+            Tarjeta de crédito y débito (Visa, Mastercard)
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-kyzz-muted shrink-0" />
+            PSE — débito directo desde tu banco
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-kyzz-muted shrink-0" />
+            Nequi
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-kyzz-muted shrink-0" />
+            Bancolombia a la mano
+          </li>
         </ul>
-        <p className="text-xs">Todos los pagos son procesados de forma segura con encriptación SSL.</p>
       </div>
     ),
   },
