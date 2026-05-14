@@ -5,6 +5,7 @@ import { currencyFormat } from "@/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { FreeShippingBar } from "@/components";
 
 export const OrderSummary = () => {
   const router = useRouter();
@@ -34,6 +35,7 @@ export const OrderSummary = () => {
 
   return (
     <div className="space-y-3">
+      <FreeShippingBar subTotal={subTotal} />
       <div className="flex justify-between text-sm text-kyzz-muted">
         <span>Productos</span>
         <span>{itemsInCart === 1 ? '1 artículo' : `${itemsInCart} artículos`}</span>
