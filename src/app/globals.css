@@ -149,6 +149,24 @@
   }
 }
 
+/* ── Animaciones globales ────────────────────────────────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+@keyframes truck-arrive {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(6px); }
+  50%       { transform: translateX(-3px); }
+  75%       { transform: translateX(4px); }
+}
+
+@keyframes bar-glow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
 /* ── Utilidades globales ─────────────────────────────────── */
 @layer utilities {
   .kyzz-section {
