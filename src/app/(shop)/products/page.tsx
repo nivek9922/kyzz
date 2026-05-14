@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Size } from '@prisma/client';
 import { getPaginatedProductsWithImages, getCategories } from '@/actions';
-import { Pagination, ProductGrid, ProductFilters } from '@/components';
+import { Pagination, ProductGridWithLayout, ProductFilters } from '@/components';
 import { titleFont } from '@/config/fonts';
 import type { SortOption } from '@/actions/product/product-pagination';
 
@@ -95,7 +95,7 @@ export default async function ProductsPage(props: Props) {
           </div>
         ) : (
           <>
-            <ProductGrid products={products} />
+            <ProductGridWithLayout products={products} />
             <div className="mt-10">
               <Pagination totalPages={totalPages} />
             </div>
