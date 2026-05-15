@@ -24,7 +24,6 @@ export const FreeShippingBar = ({ subTotal }: Props) => {
             <IoCheckmarkCircle
               size={18}
               className="text-kyzz-dark shrink-0"
-              style={{ animation: "truck-arrive 0.5s ease-out" }}
             />
             <p className="text-xs font-medium text-kyzz-dark leading-relaxed">
               ¡Envío gratis desbloqueado! Tu pedido llega sin costo adicional.
@@ -67,7 +66,6 @@ export const FreeShippingBar = ({ subTotal }: Props) => {
             style={{
               width: `${progress}%`,
               backgroundColor: achieved ? "var(--kyzz-primary)" : "#2c2c2c",
-              animation: achieved ? "bar-glow 1.5s ease-in-out 3" : undefined,
             }}
           >
             {/* Shimmer — solo mientras no está completo */}
