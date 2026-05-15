@@ -7,6 +7,8 @@ interface Props {
   style?: React.StyleHTMLAttributes<HTMLImageElement>['style'];
   width: number;
   height: number;
+  priority?: boolean;
+  loading?: 'lazy' | 'eager';
 }
 
 export const ProductImage = ({
@@ -15,23 +17,27 @@ export const ProductImage = ({
   className,
   style,
   width,
-  height
+  height,
+  priority,
+  loading,
 }: Props) => {
 
-  const localSrc = ( src ) 
-    ? src.startsWith('http') // https://urlcompletodelaimagen.jpg
+  const localSrc = src
+    ? src.startsWith('http')
       ? src
-      : `/products/${ src }`
+      : `/products/${src}`
     : '/imgs/placeholder.jpg';
 
   return (
     <Image
-      src={ localSrc }
-      width={ width }
-      height={ height}
-      alt={ alt }
-      className={ className }
-      style={ style }
+      src={localSrc}
+      width={width}
+      height={height}
+      alt={alt}
+      className={className}
+      style={style}
+      priority={priority}
+      loading={loading}
     />
   );
 };

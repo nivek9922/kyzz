@@ -41,9 +41,7 @@ export const AddressForm = ({ countries, userStoredAddress = {} }: Props) => {
     }
   });
 
-  const { data: session } = useSession({
-    required: true,
-  })
+  useSession({ required: true });
 
   const setAddress = useAddressStore( state => state.setAddress );
   const address = useAddressStore( state => state.address );
@@ -69,9 +67,9 @@ export const AddressForm = ({ countries, userStoredAddress = {} }: Props) => {
     setAddress(restAddress);
 
     if ( rememberAddress ) {
-      await setUserAddress(restAddress, session!.user.id );
+      await setUserAddress(restAddress);
     } else {
-      await deleteUserAddress(session!.user.id);
+      await deleteUserAddress();
     }
 
     router.push('/checkout');

@@ -1,29 +1,31 @@
 'use server';
 
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 
-
-export const getUserAddress = async( userId: string ) => {
+export const getUserAddress = async( userId?: string ) => {
   try {
+    const session = await auth();
+    if (!session?.user?.id) return null;
+
+    const targetId = (session.user.role === 'admin' && userId) ? userId : session.user.id;
 
     const address = await prisma.userAddress.findUnique({
-      where: { userId }
+      where: { userId: targetId },
     });
 
-    if ( !address ) return null;
+    if (!address) return null;
 
-    const {  countryId, address2, ...rest } = address;
+    const { countryId, address2, ...rest } = address;
 
     return {
       ...rest,
-      country: countryId,
-      address2: address2 ? address2 : '',
+      country:  countryId,
+      address2: address2 ?? '',
     };
 
-
-  } catch (error) {
-    console.log(error);
+  } catch {
     return null;
   }
 }

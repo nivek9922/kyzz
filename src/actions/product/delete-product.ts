@@ -40,7 +40,10 @@ export const deleteProduct = async (productId: string) => {
       });
     await Promise.allSettled(cloudinaryDeletes);
 
-    // Eliminar producto (cascade elimina ProductImage en DB)
+    // Eliminar registros relacionados que no tienen cascade en BD
+    await prisma.productImage.deleteMany({ where: { productId } });
+
+    // Eliminar producto (ProductColor, ProductVariant ya tienen onDelete: Cascade)
     await prisma.product.delete({ where: { id: productId } });
 
     revalidatePath('/admin/products');
