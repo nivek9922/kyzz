@@ -9,6 +9,7 @@ import {
   IoDiamondOutline,
   IoShieldCheckmarkOutline,
 } from 'react-icons/io5';
+import { HomeRecentlyViewed } from './ui/HomeRecentlyViewed';
 
 const features = [
   {
@@ -132,6 +133,9 @@ export default async function Home() {
           Explorar todas las piezas →
         </Link>
       </section>
+
+      {/* ── Viste recientemente ───────────────────────────────── */}
+      <HomeRecentlyViewed />
     </>
   );
 }
