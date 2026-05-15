@@ -208,15 +208,16 @@ export default async function OrdersByIdPage(props: Props) {
                 <span>Subtotal</span>
                 <span>{currencyFormat(order!.subTotal)}</span>
               </div>
-              <div className="flex justify-between text-kyzz-muted">
-                <span>Impuestos (15%)</span>
-                <span>{currencyFormat(order!.tax)}</span>
-              </div>
-              <div className="border-t border-kyzz-secondary pt-4 flex justify-between">
-                <span className="text-[11px] tracking-widest uppercase text-kyzz-dark">Total</span>
-                <span className="text-kyzz-dark font-medium">
-                  {currencyFormat(order!.total)}
-                </span>
+              <div className="border-t border-kyzz-secondary pt-4">
+                <div className="flex justify-between">
+                  <span className="text-[11px] tracking-widest uppercase text-kyzz-dark">Total</span>
+                  <span className="text-kyzz-dark font-medium">
+                    {currencyFormat(order!.total)}
+                  </span>
+                </div>
+                <p className="text-[10px] text-kyzz-muted mt-1">
+                  Incluye {currencyFormat(order!.tax)} de impuestos
+                </p>
               </div>
             </div>
 

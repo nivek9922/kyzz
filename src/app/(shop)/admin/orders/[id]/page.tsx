@@ -128,11 +128,11 @@ export default async function AdminOrderDetailPage(props: Props) {
             <div className="px-4 py-4 flex justify-between items-center">
               <div className="space-y-1 text-sm text-kyzz-muted">
                 <div className="flex gap-8"><span>Subtotal</span><span>{currencyFormat(order.subTotal)}</span></div>
-                <div className="flex gap-8"><span>Impuestos</span><span>{currencyFormat(order.tax)}</span></div>
               </div>
               <div className="text-right">
                 <p className="text-[10px] tracking-widest uppercase text-kyzz-muted">Total</p>
                 <p className="text-lg font-medium text-kyzz-dark">{currencyFormat(order.total)}</p>
+                <p className="text-[10px] text-kyzz-muted mt-0.5">Incluye {currencyFormat(order.tax)} de impuestos</p>
               </div>
             </div>
           </div>

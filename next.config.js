@@ -11,22 +11,7 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   // Permisos de APIs del navegador (cámara, micrófono, etc.)
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-  // Content Security Policy básica (ajustar según servicios usados)
-  {
-    key: 'Content-Security-Policy',
-    value: [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.paypal.com https://www.sandbox.paypal.com https://www.googletagmanager.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://www.paypalobjects.com https://www.google-analytics.com https://www.googletagmanager.com",
-      "connect-src 'self' https://api-m.sandbox.paypal.com https://api-m.paypal.com https://www.sandbox.paypal.com https://www.paypal.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com",
-      "frame-src https://www.paypal.com https://www.sandbox.paypal.com https://*.paypal.com",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join('; '),
-  },
+  // CSP se genera por petición en src/middleware.ts (nonce-based, no unsafe-inline para scripts)
 ];
 
 const nextConfig = {

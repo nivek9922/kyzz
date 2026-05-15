@@ -1,20 +1,22 @@
 "use server";
 
+import { auth } from "@/auth";
 import type { Address } from "@/interfaces";
 import prisma from "@/lib/prisma";
 
-export const setUserAddress = async (address: Address, userId: string) => {
-  try {
+export const setUserAddress = async (address: Address) => {
+  const session = await auth();
+  if (!session?.user?.id) return { ok: false, message: "No autenticado" };
 
-    const newAddress = await createOrReplaceAddress( address, userId );
+  try {
+    const newAddress = await createOrReplaceAddress( address, session.user.id );
 
     return {
       ok: true,
       address: newAddress,
-    }
+    };
 
-  } catch (error) {
-    console.log(error);
+  } catch {
     return {
       ok: false,
       message: "No se pudo grabar la dirección",
@@ -24,9 +26,6 @@ export const setUserAddress = async (address: Address, userId: string) => {
 
 const createOrReplaceAddress = async (address: Address, userId: string) => {
   try {
-
-    console.log({ userId });
-
     const storedAddress = await prisma.userAddress.findUnique({
       where: { userId },
     });

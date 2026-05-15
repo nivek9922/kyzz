@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ProductMobileSlideshow, ProductSlideshow, StockLabel } from '@/components';
 import { currencyFormat } from '@/utils';
+import { useRecentlyViewedStore } from '@/store';
 import { AddToCart } from './AddToCart';
 import { ProductTabs } from './ProductTabs';
 import type { Product, Size } from '@/interfaces';
@@ -29,6 +30,8 @@ interface Props {
 
 export const ProductDetailClient = ({ product, colors, variants }: Props) => {
 
+  const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
+
   // ── Seleccionar primer color disponible (con al menos una variante con stock > 0 si es posible) ──
   const initialColorId = useMemo(() => {
     if (colors.length === 0) return null;
@@ -45,6 +48,22 @@ export const ProductDetailClient = ({ product, colors, variants }: Props) => {
     selectedColor && selectedColor.images.length > 0
       ? selectedColor.images.map((i) => i.url)
       : product.images;
+
+  // ── Capturar imagen inicial (antes de cualquier cambio de color) para el registro ──
+  const initialImageRef = useRef(currentImages[0] ?? '');
+
+  // ── Registrar visita una sola vez al montar (no se repite al cambiar color) ──
+  useEffect(() => {
+    addRecentlyViewed({
+      id:    product.id,
+      slug:  product.slug,
+      title: product.title,
+      price: product.price,
+      image: initialImageRef.current,
+    });
+  // product.id identifica unívocamente esta página — dispara solo en mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
 
   // ── Variantes filtradas al color actual (o sin color) ──
   const visibleVariants = useMemo(
@@ -71,7 +90,7 @@ export const ProductDetailClient = ({ product, colors, variants }: Props) => {
     variants.filter((v) => v.colorId === colorId).every((v) => v.stock <= 0);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
 
       {/* ── Slideshow ────────────────────────────────────────────── */}
       <div>
@@ -90,73 +109,74 @@ export const ProductDetailClient = ({ product, colors, variants }: Props) => {
       </div>
 
       {/* ── Info ─────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
 
         <StockLabel slug={product.slug} />
 
         <div>
           <h1 className="font-serif text-3xl text-kyzz-dark leading-snug">{product.title}</h1>
-          <p className="mt-3 text-xl text-kyzz-primary font-light">{currencyFormat(product.price)}</p>
+          <p className="mt-2 text-xl text-kyzz-primary font-light">{currencyFormat(product.price)}</p>
         </div>
 
-        {/* Selector de color */}
-        {colors.length > 0 && (
-          <div>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-kyzz-muted mb-3">
-              Color
-              {selectedColor && (
-                <span className="ml-2 normal-case text-kyzz-dark">{selectedColor.paletteColor.name}</span>
-              )}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {colors.map((c) => {
-                const sold = isColorOutOfStock(c.id);
-                const active = selectedColorId === c.id;
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedColorId(c.id)}
-                    title={`${c.paletteColor.name}${sold ? ' (agotado)' : ''}`}
-                    aria-label={c.paletteColor.name}
-                    className={`relative w-8 h-8 rounded-full transition-all duration-200 hover:scale-110 ${
-                      active
-                        ? 'ring-2 ring-offset-2 ring-kyzz-dark scale-110'
-                        : 'ring-1 ring-kyzz-secondary hover:ring-kyzz-muted'
-                    } ${sold ? 'opacity-40' : ''}`}
-                    style={{ backgroundColor: c.paletteColor.hex }}
-                  >
-                    <span className="absolute inset-0 rounded-full ring-1 ring-inset ring-black/10" />
-                    {sold && (
-                      <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className="w-9 h-px bg-kyzz-dark rotate-45 absolute" />
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+        {/* Controles: color + talla + cantidad + botones — agrupados sin dividers */}
+        <div className="flex flex-col gap-3">
+
+          {/* Selector de color */}
+          {colors.length > 0 && (
+            <div>
+              <p className="text-[10px] tracking-[0.25em] uppercase text-kyzz-muted mb-2">
+                Color
+                {selectedColor && (
+                  <span className="ml-2 normal-case text-kyzz-dark">{selectedColor.paletteColor.name}</span>
+                )}
+              </p>
+              <div className="flex flex-wrap gap-2.5">
+                {colors.map((c) => {
+                  const sold = isColorOutOfStock(c.id);
+                  const active = selectedColorId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedColorId(c.id)}
+                      title={`${c.paletteColor.name}${sold ? ' (agotado)' : ''}`}
+                      aria-label={c.paletteColor.name}
+                      className={`relative w-7 h-7 rounded-full transition-all duration-200 hover:scale-110 ${
+                        active
+                          ? 'ring-2 ring-offset-2 ring-kyzz-dark scale-110'
+                          : 'ring-1 ring-kyzz-secondary hover:ring-kyzz-muted'
+                      } ${sold ? 'opacity-40' : ''}`}
+                      style={{ backgroundColor: c.paletteColor.hex }}
+                    >
+                      <span className="absolute inset-0 rounded-full ring-1 ring-inset ring-black/10" />
+                      {sold && (
+                        <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <span className="w-9 h-px bg-kyzz-dark rotate-45 absolute" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="kyzz-divider" />
+          <AddToCart
+            product={product}
+            variants={visibleVariants}
+            availableSizes={availableSizes}
+            stockBySize={stockBySize}
+            colorName={selectedColor?.paletteColor.name}
+            imageForCart={currentImages[0]}
+          />
 
-        <AddToCart
-          product={product}
-          variants={visibleVariants}
-          availableSizes={availableSizes}
-          stockBySize={stockBySize}
-          colorName={selectedColor?.paletteColor.name}
-          imageForCart={currentImages[0]}
-        />
+        </div>
 
         <div className="kyzz-divider" />
 
         <div>
-          <h3 className="text-xs tracking-widest uppercase text-kyzz-muted mb-3">Descripción</h3>
+          <h3 className="text-xs tracking-widest uppercase text-kyzz-muted mb-2">Descripción</h3>
           <p className="text-sm text-kyzz-dark leading-relaxed">{product.description}</p>
         </div>
-
-        <div className="kyzz-divider" />
 
         <ProductTabs />
       </div>

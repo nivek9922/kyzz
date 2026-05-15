@@ -85,13 +85,12 @@ export const OrderConfirmationEmail = ({
               <Column><Text style={{ fontSize: '12px', color: '#A89080', margin: 0 }}>Subtotal</Text></Column>
               <Column style={{ textAlign: 'right' }}><Text style={{ fontSize: '12px', color: '#A89080', margin: 0 }}>{currencyFormat(subtotal)}</Text></Column>
             </Row>
-            <Row style={{ marginBottom: '6px' }}>
-              <Column><Text style={{ fontSize: '12px', color: '#A89080', margin: 0 }}>Impuestos</Text></Column>
-              <Column style={{ textAlign: 'right' }}><Text style={{ fontSize: '12px', color: '#A89080', margin: 0 }}>{currencyFormat(tax)}</Text></Column>
-            </Row>
             <Row>
               <Column><Text style={{ fontSize: '13px', color: '#3D2B1F', fontWeight: 'bold', margin: 0 }}>Total</Text></Column>
               <Column style={{ textAlign: 'right' }}><Text style={{ fontSize: '13px', color: '#3D2B1F', fontWeight: 'bold', margin: 0 }}>{currencyFormat(total)}</Text></Column>
+            </Row>
+            <Row>
+              <Column colSpan={2}><Text style={{ fontSize: '10px', color: '#A89080', margin: '4px 0 0' }}>Incluye {currencyFormat(tax)} de impuestos</Text></Column>
             </Row>
           </Section>
 

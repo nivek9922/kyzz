@@ -17,11 +17,12 @@ export const PlaceOrder = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const address = useAddressStore((state) => state.address);
-  const { itemsInCart, subTotal, tax, total } = useCartStore(
-    useShallow((state) => state.getSummaryInformation())
+  const { cart, clearCart, itemsInCart, subTotal, tax, shipping, total } = useCartStore(
+    useShallow((s) => {
+      const summary = s.getSummaryInformation();
+      return { cart: s.cart, clearCart: s.clearCart, ...summary };
+    })
   );
-  const cart = useCartStore((state) => state.cart);
-  const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
     setLoaded(true);
@@ -96,22 +97,23 @@ export const PlaceOrder = () => {
       </h2>
       <div className="space-y-3">
         <div className="flex justify-between text-sm text-kyzz-muted">
-          <span>Productos</span>
-          <span>{itemsInCart === 1 ? "1 artículo" : `${itemsInCart} artículos`}</span>
-        </div>
-        <div className="flex justify-between text-sm text-kyzz-muted">
-          <span>Subtotal</span>
+          <span>Subtotal · {itemsInCart === 1 ? "1 artículo" : `${itemsInCart} artículos`}</span>
           <span>{currencyFormat(subTotal)}</span>
         </div>
         <div className="flex justify-between text-sm text-kyzz-muted">
-          <span>Impuestos (15%)</span>
-          <span>{currencyFormat(tax)}</span>
+          <span>Envío</span>
+          <span className={shipping === 0 ? 'text-kyzz-dark' : ''}>
+            {shipping === 0 ? 'Gratis' : currencyFormat(shipping)}
+          </span>
         </div>
         <div className="border-t border-kyzz-secondary pt-4">
           <div className="flex justify-between">
             <span className="text-[11px] tracking-widest uppercase text-kyzz-dark">Total</span>
             <span className="text-sm text-kyzz-dark font-medium">{currencyFormat(total)}</span>
           </div>
+          <p className="text-[10px] text-kyzz-muted mt-1">
+            Incluye {currencyFormat(tax)} de impuestos
+          </p>
         </div>
       </div>
 

@@ -16,54 +16,35 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// IDs de colores de la paleta (deben coincidir con los de la BD tras seed-color-palette.ts)
-const COLOR = {
-  blancoRoto:   'c29327d0-1abb-4d4a-b6e2-430fb77a792e',
-  crema:        'd07f8f16-2875-4947-83b1-3079a0161f51',
-  beige:        '603e482e-8238-4f49-94de-8a8a8f2fbf34',
-  rosaPalo:     '37164d06-55ab-4755-a79f-302b4c1b034d',
-  lavanda:      '4be58ee2-50b5-49c6-9f3b-31a88b0c6742',
-  sage:         '766f09de-5208-4d1c-ba01-93fd9dbed244',
-  azulNiebla:   '33c10690-139a-4f54-8b0c-f835863c8280',
-  terracota:    'b1885abc-a235-4572-b489-c515685ff93e',
-  marronTierra: 'c8cc1ea9-b17c-450b-964b-2bc22957065b',
-  negroCarbon:  'b0be1044-d802-4a86-9648-6bb051b789ea',
-};
-
-/**
- * Cada entrada define qué colores asignar a un producto y qué imágenes usar.
- * Las imágenes son filenames locales de /public/products/ — coherentes con el producto.
- * Para cada color se usa el mismo set de fotos (placeholder: el admin las reemplaza).
- */
 const DATA: Array<{
   slug:   string;
-  colors: Array<{ paletteColorId: string; images: string[] }>;
+  colors: Array<{ paletteName: string; images: string[] }>;
 }> = [
-  // Jean oscuro → color único negro carbón + sus fotos de denim oscuro
+  // Jean oscuro → negro carbón
   {
     slug: 'jean-wide-leg-oscuro',
     colors: [
       {
-        paletteColorId: COLOR.negroCarbon,
+        paletteName: 'Negro carbón',
         images: ['1473819-00-A_1_2000.jpg', '1473819-00-A_alt.jpg'],
       },
     ],
   },
 
-  // Enterizo acanalado → beige, rosa palo, marrón tierra (3 colores)
+  // Enterizo acanalado → beige, rosa palo, marrón tierra
   {
     slug: 'enterizo-manga-corta-acanalado',
     colors: [
       {
-        paletteColorId: COLOR.beige,
+        paletteName: 'Beige',
         images: ['1740226-00-A_0_2000.jpg', '1740226-00-A_1.jpg'],
       },
       {
-        paletteColorId: COLOR.rosaPalo,
+        paletteName: 'Rosa palo',
         images: ['1740226-00-A_1.jpg', '1740226-00-A_0_2000.jpg'],
       },
       {
-        paletteColorId: COLOR.marronTierra,
+        paletteName: 'Marrón tierra',
         images: ['1740226-00-A_0_2000.jpg', '1740226-00-A_1.jpg'],
       },
     ],
@@ -74,11 +55,11 @@ const DATA: Array<{
     slug: 'blusa-escote-v-viscosa',
     colors: [
       {
-        paletteColorId: COLOR.blancoRoto,
+        paletteName: 'Blanco roto',
         images: ['8765120-00-A_0_2000.jpg', '8765120-00-A_1.jpg'],
       },
       {
-        paletteColorId: COLOR.rosaPalo,
+        paletteName: 'Rosa palo',
         images: ['8765120-00-A_1.jpg', '8765120-00-A_0_2000.jpg'],
       },
     ],
@@ -89,11 +70,11 @@ const DATA: Array<{
     slug: 'enterizo-pantalon-espalda-descubierta',
     colors: [
       {
-        paletteColorId: COLOR.terracota,
+        paletteName: 'Terracota',
         images: ['9877040-00-A_0_2000.jpg', '9877040-00-A_1.jpg'],
       },
       {
-        paletteColorId: COLOR.sage,
+        paletteName: 'Sage',
         images: ['9877040-00-A_1.jpg', '9877040-00-A_0_2000.jpg'],
       },
     ],
@@ -104,11 +85,11 @@ const DATA: Array<{
     slug: 'blusa-manga-larga-cuello-bote',
     colors: [
       {
-        paletteColorId: COLOR.crema,
+        paletteName: 'Crema',
         images: ['8765100-00-A_0_2000.jpg', '8765100-00-A_1.jpg'],
       },
       {
-        paletteColorId: COLOR.lavanda,
+        paletteName: 'Lavanda',
         images: ['8765100-00-A_1.jpg', '8765100-00-A_0_2000.jpg'],
       },
     ],
@@ -117,6 +98,15 @@ const DATA: Array<{
 
 async function main() {
   console.log('Sembrando colores en productos...\n');
+
+  // Cargar paleta completa → mapa nombre → id
+  const palette = await prisma.colorPalette.findMany();
+  const paletteByName = new Map(palette.map((c) => [c.name, c.id]));
+
+  if (paletteByName.size === 0) {
+    console.error('❌ La paleta de colores está vacía. Corre seed-color-palette.ts primero.');
+    process.exit(1);
+  }
 
   for (const entry of DATA) {
     const product = await prisma.product.findUnique({ where: { slug: entry.slug } });
@@ -127,29 +117,34 @@ async function main() {
     // Eliminar imágenes generales para evitar duplicación con las de color
     const deleted = await prisma.productImage.deleteMany({ where: { productId: product.id } });
     if (deleted.count > 0) {
-      console.log(`  → ${deleted.count} ProductImage eliminada(s) (evitar duplicación)`);
+      console.log(`  → ${deleted.count} ProductImage eliminada(s)`);
     }
 
     for (const colorEntry of entry.colors) {
+      const paletteColorId = paletteByName.get(colorEntry.paletteName);
+      if (!paletteColorId) {
+        console.log(`  ⚠ Color no encontrado en paleta: "${colorEntry.paletteName}"`);
+        continue;
+      }
+
       // Obtener o crear ProductColor
       let pc = await prisma.productColor.findUnique({
-        where: { productId_paletteColorId: { productId: product.id, paletteColorId: colorEntry.paletteColorId } },
+        where: { productId_paletteColorId: { productId: product.id, paletteColorId } },
       });
       if (!pc) {
         pc = await prisma.productColor.create({
-          data: { productId: product.id, paletteColorId: colorEntry.paletteColorId },
+          data: { productId: product.id, paletteColorId },
         });
       }
 
-      const palette = await prisma.colorPalette.findUnique({ where: { id: colorEntry.paletteColorId } });
-      console.log(`  ✓ ${palette?.name}`);
+      console.log(`  ✓ ${colorEntry.paletteName}`);
 
       // Reemplazar imágenes del color
       await prisma.productColorImage.deleteMany({ where: { productColorId: pc.id } });
       await prisma.productColorImage.createMany({
         data: colorEntry.images.map((url, i) => ({ url, sortOrder: i, productColorId: pc!.id })),
       });
-      console.log(`    → ${colorEntry.images.length} imágenes locales`);
+      console.log(`    → ${colorEntry.images.length} imágenes`);
     }
     console.log('');
   }

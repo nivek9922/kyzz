@@ -1,3 +1,5 @@
+import type { Size } from '@prisma/client';
+
 export interface Product {
   id: string;
   description: string;
@@ -30,5 +32,5 @@ export interface ProductImage {
   productId: string;
 }
 
-export type Size = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'XXXL';
+export type { Size } from '@prisma/client';
 export type ProductType = 'jeans' | 'blusas' | 'enterizos' | 'chaquetas';

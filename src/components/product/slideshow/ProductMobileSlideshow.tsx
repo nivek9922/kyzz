@@ -40,6 +40,8 @@ export const ProductMobileSlideshow = ({ images, title, className }: Props) => {
               src={image}
               alt={title}
               className="object-cover w-full h-full"
+              priority={i === 0}
+              loading={i === 0 ? 'eager' : 'lazy'}
             />
           </SwiperSlide>
         ))}
@@ -64,6 +66,7 @@ export const ProductMobileSlideshow = ({ images, title, className }: Props) => {
                 src={image}
                 alt={`${title} - ${i + 1}`}
                 className="object-cover w-full h-full"
+                loading="lazy"
               />
             </SwiperSlide>
           ))}

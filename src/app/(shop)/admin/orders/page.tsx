@@ -79,7 +79,7 @@ export default async function AdminOrdersPage(props: Props) {
             </div>
 
             {orders.map((order) => {
-              const shipping = SHIPPING_BADGE[(order as any).shippingStatus ?? 'pending'];
+              const shipping = SHIPPING_BADGE[order.shippingStatus ?? 'pending'];
               return (
                 <div
                   key={order.id}
@@ -126,8 +126,8 @@ export default async function AdminOrdersPage(props: Props) {
                   <div className="hidden lg:flex">
                     {!order.cancelledAt && (
                       <span className={`inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase border px-2 py-1 ${shipping.color}`}>
-                        {(order as any).shippingStatus === 'shipped'   ? <IoBicycleOutline size={11} /> :
-                         (order as any).shippingStatus === 'delivered' ? <IoCheckmarkDoneOutline size={11} /> :
+                        {order.shippingStatus === 'shipped'   ? <IoBicycleOutline size={11} /> :
+                         order.shippingStatus === 'delivered' ? <IoCheckmarkDoneOutline size={11} /> :
                          <IoTimeOutline size={11} />}
                         {shipping.label}
                       </span>

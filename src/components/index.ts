@@ -6,6 +6,7 @@ export * from './products/product-grid/ProductGrid';
 export * from './products/product-grid/ProductGridItem';
 export * from './products/product-grid/GridLayoutSelector';
 export * from './products/product-grid/ProductGridWithLayout';
+export * from './products/product-grid/WishlistButton';
 export * from './products/product-filters/ProductFilters';
 
 export * from './orders/OrderStatus';

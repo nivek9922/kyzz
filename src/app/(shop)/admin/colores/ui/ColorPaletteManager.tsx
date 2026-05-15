@@ -149,7 +149,11 @@ export const ColorPaletteManager = ({ initialColors }: Props) => {
         </div>
       ) : (
         <button
-          onClick={() => { setShowAdd(true); setEditingId(null); resetForm(); }}
+          onClick={() => {
+            setName(''); setHex('#F5ECD7'); setSortOrder(0);
+            setEditingId(null);
+            setShowAdd(true);
+          }}
           className="flex items-center gap-2 text-sm text-kyzz-primary hover:text-kyzz-dark transition-colors"
         >
           <IoAddOutline size={16} />

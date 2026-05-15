@@ -7,21 +7,23 @@ import clsx from 'clsx';
 import { toast } from 'sonner';
 
 import { authenticate } from "@/actions";
+import type { AuthState } from "@/actions/auth/login";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 export const LoginForm = () => {
-  const [state, dispatch] = useActionState(authenticate, undefined);
+  const [state, dispatch] = useActionState<AuthState, FormData>(authenticate, undefined);
 
   useEffect(() => {
-    if (state === 'Success') {
+    if (!state) return;
+    if (state.status === 'success') {
       window.location.replace('/');
-    }
-    if (state === 'CredentialsSignin') {
+    } else {
       toast.error('Credenciales incorrectas', {
         description: 'Verifica tu correo y contraseña.',
       });
     }
-  }, [state]);
+  // nonce cambia en cada intento → el effect siempre dispara aunque el status sea el mismo
+  }, [state?.nonce]);
 
   return (
     <form action={dispatch} className="flex flex-col gap-5">
