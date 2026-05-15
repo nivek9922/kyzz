@@ -4,8 +4,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { IoCloseOutline, IoFunnelOutline } from 'react-icons/io5';
 import type { ProductColor } from '@/actions/product/get-product-colors';
+import { VALID_SIZES } from '@/config/constants';
 
-const SIZES   = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const;
+const SIZES = VALID_SIZES;
 const SORT_OPTIONS = [
   { value: 'newest',     label: 'Más reciente' },
   { value: 'price_asc',  label: 'Precio: menor a mayor' },

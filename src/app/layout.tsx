@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notoSerif, manrope } from "@/config/fonts";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -26,16 +27,18 @@ export const metadata: Metadata = {
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
+
   return (
     <html lang="es" className={`${notoSerif.variable} ${manrope.variable}`}>
       <body className="font-sans">
         <Providers>{children}</Providers>
-        {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
+        {GA_ID && <GoogleAnalytics gaId={GA_ID} nonce={nonce} />}
         <SpeedInsights />
       </body>
     </html>
