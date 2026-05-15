@@ -15,7 +15,7 @@ export default async function AddressPage() {
     );
   }
 
-  const userAddress = await getUserAddress(session.user.id) ?? undefined;
+  const userAddress = await getUserAddress() ?? undefined;
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-16 mb-24">

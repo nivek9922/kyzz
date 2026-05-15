@@ -17,11 +17,12 @@ export const PlaceOrder = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const address = useAddressStore((state) => state.address);
-  const { itemsInCart, subTotal, tax, shipping, total } = useCartStore(
-    useShallow((state) => state.getSummaryInformation())
+  const { cart, clearCart, itemsInCart, subTotal, tax, shipping, total } = useCartStore(
+    useShallow((s) => {
+      const summary = s.getSummaryInformation();
+      return { cart: s.cart, clearCart: s.clearCart, ...summary };
+    })
   );
-  const cart = useCartStore((state) => state.cart);
-  const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
     setLoaded(true);

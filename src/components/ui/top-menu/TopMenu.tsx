@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { IoCartOutline, IoSearchOutline } from "react-icons/io5";
+import { IoCartOutline, IoHeartOutline, IoSearchOutline } from "react-icons/io5";
 
 import { titleFont } from "@/config/fonts";
-import { useCartStore, useUIStore } from "@/store";
+import { useCartStore, useUIStore, useWishlistStore } from "@/store";
 import { UserMenu } from "./UserMenu";
 import { SearchOverlay } from "./SearchOverlay";
 
@@ -16,7 +16,8 @@ interface Props { categories?: NavCategory[]; }
 export const TopMenu = ({ categories = [] }: Props) => {
   const openMobileMenu = useUIStore((state) => state.openMobileMenu);
   const openSearch     = useUIStore((state) => state.openSearch);
-  const totalItems     = useCartStore((state) => state.getTotalItems());
+  const totalItems      = useCartStore((state) => state.getTotalItems());
+  const wishlistCount   = useWishlistStore((state) => state.items.length);
 
   const [loaded, setLoaded]     = useState(false);
   const [catsOpen, setCatsOpen] = useState(false);
@@ -131,6 +132,19 @@ export const TopMenu = ({ categories = [] }: Props) => {
             >
               <IoSearchOutline className="w-5 h-5" />
             </button>
+
+            <Link
+              href="/wishlist"
+              className="relative text-kyzz-dark hover:text-kyzz-primary transition-colors"
+              aria-label="Favoritos"
+            >
+              {loaded && wishlistCount > 0 && (
+                <span className="fade-in absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-kyzz-primary text-white text-[10px] flex items-center justify-center font-medium">
+                  {wishlistCount}
+                </span>
+              )}
+              <IoHeartOutline className="w-5 h-5" />
+            </Link>
 
             <Link
               href={loaded && totalItems > 0 ? "/cart" : "/empty"}

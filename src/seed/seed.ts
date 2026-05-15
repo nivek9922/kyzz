@@ -1,11 +1,12 @@
 import bcryptjs from 'bcryptjs';
+import type { Size } from '@prisma/client';
 
 interface SeedProduct {
   description: string;
   images: string[];
   inStock: number;
   price: number;
-  sizes: ValidSizes[];
+  sizes: Size[];
   slug: string;
   tags: string[];
   title: string;
@@ -20,7 +21,6 @@ interface SeedUser {
   role: 'admin' | 'user';
 }
 
-type ValidSizes = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'XXXL';
 type ValidTypes = 'jeans' | 'blusas' | 'enterizos' | 'chaquetas';
 
 interface SeedData {
