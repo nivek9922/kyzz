@@ -19,7 +19,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.paypal.com https://www.sandbox.paypal.com https://www.googletagmanager.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://res.cloudinary.com https://www.paypalobjects.com https://www.google-analytics.com https://www.googletagmanager.com",
+      "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://www.paypalobjects.com https://www.google-analytics.com https://www.googletagmanager.com",
       "connect-src 'self' https://api-m.sandbox.paypal.com https://api-m.paypal.com https://www.sandbox.paypal.com https://www.paypal.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com",
       "frame-src https://www.paypal.com https://www.sandbox.paypal.com https://*.paypal.com",
       "object-src 'none'",
@@ -30,6 +30,7 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  outputFileTracingRoot: require('path').join(__dirname),
   experimental: {
     serverActions: {
       bodySizeLimit: '4mb',
@@ -41,6 +42,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
       },
     ],
     // Tamaños optimizados para grid de productos y PDP

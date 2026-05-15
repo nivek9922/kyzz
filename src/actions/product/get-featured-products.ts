@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import type { ProductColorsMap } from './product-pagination';
 
 export const getFeaturedProducts = async () => {
   try {
@@ -8,18 +9,39 @@ export const getFeaturedProducts = async () => {
       take: 3,
       where: { isFeatured: true },
       include: {
-        ProductImage: {
-          take: 2,
-          select: { url: true },
-        },
+        ProductImage: { take: 2, select: { url: true } },
       },
       orderBy: { createdAt: "asc" },
     });
 
-    return products.map((product) => ({
-      ...product,
-      images: product.ProductImage.map((img) => img.url),
-    }));
+    const productIds = products.map((p) => p.id);
+    const colorRows  = await prisma.productColor.findMany({
+      where: { productId: { in: productIds } },
+      include: {
+        paletteColor: true,
+        images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+      },
+      orderBy: { paletteColor: { sortOrder: 'asc' } },
+    });
+
+    const variantColors: ProductColorsMap = {};
+    for (const row of colorRows) {
+      if (!variantColors[row.productId]) variantColors[row.productId] = [];
+      variantColors[row.productId].push({
+        id:    row.paletteColorId,
+        name:  row.paletteColor.name,
+        hex:   row.paletteColor.hex,
+        image: row.images[0]?.url ?? null,
+      });
+    }
+
+    return {
+      products: products.map((p) => ({
+        ...p,
+        images: p.ProductImage.map((img) => img.url),
+      })),
+      variantColors,
+    };
   } catch {
     throw new Error("No se pudieron cargar los productos destacados");
   }

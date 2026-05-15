@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -8,12 +8,18 @@ import { QuantitySelector, SizeSelector } from "@/components";
 import type { CartProduct, Product, Size } from "@/interfaces";
 import { useCartStore } from '@/store';
 import { gaViewItem, gaAddToCart } from '@/lib/gtag';
+import type { VariantData } from './ProductDetailClient';
 
 interface Props {
-  product: Product;
+  product:         Product;
+  variants:        VariantData[];                  // variantes ya filtradas al color actual
+  availableSizes:  Size[];                         // tallas existentes para este color
+  stockBySize:     Partial<Record<Size, number>>;  // stock por talla
+  colorName?:      string;
+  imageForCart?:   string;                         // primera imagen del color seleccionado
 }
 
-export const AddToCart = ({ product }: Props) => {
+export const AddToCart = ({ product, variants, availableSizes, stockBySize, colorName, imageForCart }: Props) => {
   const router = useRouter();
   const addProductToCart = useCartStore((state) => state.addProductTocart);
 
@@ -21,29 +27,71 @@ export const AddToCart = ({ product }: Props) => {
   const [quantity, setQuantity] = useState<number>(1);
   const [posted, setPosted]     = useState(false);
 
-  // view_item: se dispara cuando el usuario ve la página del producto
+  const availableSizesKey = availableSizes.join('|');
+
+  // ── Reset talla cuando cambia el color (lista de tallas distintas) ──
+  useEffect(() => {
+    setSize(undefined);
+    setQuantity(1);
+  }, [availableSizesKey]);
+
   useEffect(() => {
     gaViewItem({ id: product.id, name: product.title, price: product.price });
   }, [product.id, product.title, product.price]);
 
-  const buildCartProduct = (): CartProduct => ({
-    id:       product.id,
-    slug:     product.slug,
-    title:    product.title,
-    price:    product.price,
-    quantity,
-    size:     size!,
-    image:    product.images[0],
-  });
+  const outOfStockSizes = useMemo(
+    () => availableSizes.filter((s) => (stockBySize[s] ?? 0) <= 0),
+    [availableSizes, stockBySize]
+  );
+
+  // ── Resolver variantId actual ──
+  const currentVariant = useMemo(() => {
+    if (!size) return null;
+    return variants.find((v) => v.size === size) ?? null;
+  }, [variants, size]);
+
+  const maxQty = currentVariant?.stock ?? 0;
+
+  // Si el usuario pide más de lo disponible, recortamos.
+  useEffect(() => {
+    if (currentVariant && quantity > currentVariant.stock) {
+      setQuantity(Math.max(1, currentVariant.stock));
+    }
+  }, [currentVariant, quantity]);
+
+  const allSoldOut = availableSizes.length > 0 && outOfStockSizes.length === availableSizes.length;
+  const noSizesAvailable = availableSizes.length === 0;
+
+  const buildCartProduct = (): CartProduct | null => {
+    if (!size || !currentVariant) return null;
+    return {
+      id:        product.id,
+      slug:      product.slug,
+      title:     product.title,
+      price:     product.price,
+      quantity,
+      size,
+      image:     imageForCart ?? product.images[0] ?? '',
+      colorName,
+      variantId: currentVariant.id,
+    };
+  };
 
   const addToCart = () => {
     setPosted(true);
     if (!size) return;
+    if (!currentVariant || currentVariant.stock <= 0) {
+      toast.error('Esta variante está agotada');
+      return;
+    }
 
-    addProductToCart(buildCartProduct());
+    const cartProduct = buildCartProduct();
+    if (!cartProduct) return;
+
+    addProductToCart(cartProduct);
     gaAddToCart({ id: product.id, name: product.title, price: product.price, size, quantity });
     toast.success('Agregado al carrito', {
-      description: `${product.title} — Talla ${size}`,
+      description: `${product.title} — Talla ${size}${colorName ? ` · ${colorName}` : ''}`,
       action: {
         label: 'Ver carrito',
         onClick: () => router.push('/cart'),
@@ -56,11 +104,20 @@ export const AddToCart = ({ product }: Props) => {
 
   const buyNow = () => {
     setPosted(true);
-    if (!size) return;
-
-    addProductToCart(buildCartProduct());
+    if (!size || !currentVariant || currentVariant.stock <= 0) return;
+    const cartProduct = buildCartProduct();
+    if (!cartProduct) return;
+    addProductToCart(cartProduct);
     router.push('/checkout/address');
   };
+
+  if (noSizesAvailable) {
+    return (
+      <p className="text-sm text-kyzz-muted py-3 border border-dashed border-kyzz-secondary text-center">
+        Sin variantes disponibles para esta selección.
+      </p>
+    );
+  }
 
   return (
     <>
@@ -70,19 +127,36 @@ export const AddToCart = ({ product }: Props) => {
 
       <SizeSelector
         selectedSize={size}
-        availableSizes={product.sizes}
+        availableSizes={availableSizes}
+        outOfStockSizes={outOfStockSizes}
         onSizeChanged={setSize}
       />
 
-      <QuantitySelector quantity={quantity} onQuantityChanged={setQuantity} />
+      <QuantitySelector
+        quantity={quantity}
+        onQuantityChanged={(q) => setQuantity(Math.min(q, maxQty || 1))}
+      />
+
+      {size && currentVariant && (
+        <p className="text-[11px] text-kyzz-muted">
+          {currentVariant.stock > 0
+            ? <>Disponibles: <span className="text-kyzz-dark">{currentVariant.stock}</span></>
+            : <span className="text-red-500">Talla agotada</span>}
+        </p>
+      )}
 
       <div className="flex flex-col gap-2 my-5">
-        <button onClick={addToCart} className="btn-primary">
-          Agregar al carrito
+        <button
+          onClick={addToCart}
+          disabled={allSoldOut || (size !== undefined && (!currentVariant || currentVariant.stock <= 0))}
+          className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {allSoldOut ? 'Producto agotado' : 'Agregar al carrito'}
         </button>
         <button
           onClick={buyNow}
-          className="w-full py-3 text-[11px] tracking-[0.2em] uppercase border border-kyzz-dark text-kyzz-dark hover:bg-kyzz-dark hover:text-white transition-colors"
+          disabled={allSoldOut || (size !== undefined && (!currentVariant || currentVariant.stock <= 0))}
+          className="w-full py-3 text-[11px] tracking-[0.2em] uppercase border border-kyzz-dark text-kyzz-dark hover:bg-kyzz-dark hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Comprar ahora
         </button>

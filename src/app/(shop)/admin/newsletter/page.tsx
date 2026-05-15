@@ -8,10 +8,26 @@ export default async function AdminNewsletterPage() {
   const [subscriberCount, products] = await Promise.all([
     prisma.subscriber.count({ where: { unsubscribedAt: null } }),
     prisma.product.findMany({
-      where: { inStock: { gt: 0 } },
+      where:   { inStock: { gt: 0 } },
       orderBy: { createdAt: 'desc' },
-      take: 24,
-      include: { ProductImage: { take: 1, select: { url: true } } },
+      take:    24,
+      select: {
+        id:    true,
+        title: true,
+        price: true,
+        slug:  true,
+        ProductImage: { take: 1, select: { url: true } },
+        ProductColors: {
+          take: 1,
+          select: {
+            images: {
+              take:    1,
+              orderBy: { sortOrder: 'asc' },
+              select:  { url: true },
+            },
+          },
+        },
+      },
     }),
   ]);
 
@@ -20,7 +36,7 @@ export default async function AdminNewsletterPage() {
     title:    p.title,
     price:    p.price,
     slug:     p.slug,
-    imageUrl: p.ProductImage[0]?.url ?? '',
+    imageUrl: p.ProductImage[0]?.url ?? p.ProductColors[0]?.images[0]?.url ?? '',
   }));
 
   return (

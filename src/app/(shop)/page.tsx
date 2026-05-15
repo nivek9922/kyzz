@@ -29,10 +29,11 @@ const features = [
 ];
 
 export default async function Home() {
-  const [featuredProducts, config] = await Promise.all([
+  const [featuredData, config] = await Promise.all([
     getFeaturedProducts(),
     getSiteConfig(),
   ]);
+  const { products: featuredProducts, variantColors: featuredColors } = featuredData;
 
   return (
     <>
@@ -114,7 +115,7 @@ export default async function Home() {
               Ver todas
             </Link>
           </div>
-          <ProductGrid products={featuredProducts} />
+          <ProductGrid products={featuredProducts} variantColors={featuredColors} />
         </section>
       )}
 

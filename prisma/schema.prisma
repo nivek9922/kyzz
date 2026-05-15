@@ -50,13 +50,13 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relaciones
-
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
 
-  ProductImage ProductImage[]
-  OrderItem    OrderItem[]
+  ProductImage  ProductImage[]
+  OrderItem     OrderItem[]
+  ProductColors ProductColor[]
+  variants      ProductVariant[]
 
   @@index([isFeatured])
 }
@@ -141,17 +141,71 @@ model Order {
 }
 
 model OrderItem {
-  id       String @id @default(uuid())
-  quantity Int
-  price    Float
-  size     Size
+  id        String  @id @default(uuid())
+  quantity  Int
+  price     Float
+  size      Size
+  colorName String?
 
-  // Relaciones
   order   Order  @relation(fields: [orderId], references: [id])
   orderId String
 
   product   Product @relation(fields: [productId], references: [id])
   productId String
+
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId String?
+}
+
+model ColorPalette {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  hex           String
+  sortOrder     Int            @default(0)
+  productColors ProductColor[]
+}
+
+model ProductColor {
+  id             String              @id @default(uuid())
+  productId      String
+  product        Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  paletteColorId String
+  paletteColor   ColorPalette        @relation(fields: [paletteColorId], references: [id])
+  images         ProductColorImage[]
+  variants       ProductVariant[]
+
+  @@unique([productId, paletteColorId])
+}
+
+model ProductColorImage {
+  id             String       @id @default(uuid())
+  url            String
+  sortOrder      Int          @default(0)
+  productColorId String
+  productColor   ProductColor @relation(fields: [productColorId], references: [id], onDelete: Cascade)
+}
+
+// Variante vendible: combinación (producto × color? × talla) con stock propio
+model ProductVariant {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  colorId String?
+  color   ProductColor? @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  size  Size
+  stock Int     @default(0)
+  sku   String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  OrderItem OrderItem[]
+
+  @@unique([productId, colorId, size])
+  @@index([productId])
+  @@index([colorId])
 }
 
 model SiteConfig {

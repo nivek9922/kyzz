@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Size } from '@prisma/client';
 import { getPaginatedProductsWithImages, getCategories } from '@/actions';
+import { getProductColors } from '@/actions/product/get-product-colors';
 import { Pagination, ProductGridWithLayout, ProductFilters } from '@/components';
 import { titleFont } from '@/config/fonts';
 import type { SortOption } from '@/actions/product/product-pagination';
@@ -16,6 +17,7 @@ interface Props {
     min?:      string;
     max?:      string;
     sort?:     string;
+    color?:    string | string[];
   }>;
 }
 
@@ -24,11 +26,17 @@ export default async function ProductsPage(props: Props) {
   const page        = searchParams.page ? parseInt(searchParams.page) : 1;
   const catSlug     = searchParams.category?.toLowerCase();
   const sizesParam  = searchParams.sizes?.split(',').filter(Boolean) as Size[] | undefined;
-  const minPrice    = searchParams.min  ? parseFloat(searchParams.min)  : undefined;
-  const maxPrice    = searchParams.max  ? parseFloat(searchParams.max)  : undefined;
+  const minPrice    = searchParams.min   ? parseFloat(searchParams.min)  : undefined;
+  const maxPrice    = searchParams.max   ? parseFloat(searchParams.max)  : undefined;
   const sortBy      = (searchParams.sort ?? 'newest') as SortOption;
+  const colorNames  = searchParams.color
+    ? (Array.isArray(searchParams.color) ? searchParams.color : [searchParams.color]).filter(Boolean)
+    : [];
 
-  const allCategories = await getCategories();
+  const [allCategories, availableColors] = await Promise.all([
+    getCategories(),
+    getProductColors(),
+  ]);
 
   let categoryId: string | undefined;
   let activeCategory: { name: string; slug: string } | undefined;
@@ -40,13 +48,14 @@ export default async function ProductsPage(props: Props) {
     activeCategory = match;
   }
 
-  const { products, totalPages } = await getPaginatedProductsWithImages({
+  const { products, totalPages, variantColors } = await getPaginatedProductsWithImages({
     page,
     categoryId,
-    sizes:    sizesParam,
+    sizes:      sizesParam,
     minPrice,
     maxPrice,
     sortBy,
+    colorNames: colorNames.length > 0 ? colorNames : undefined,
   });
 
   if (products.length === 0 && page > 1) {
@@ -65,7 +74,7 @@ export default async function ProductsPage(props: Props) {
             <p className="text-[11px] tracking-[0.25em] uppercase text-kyzz-muted mb-3">{sub}</p>
             <h1 className={`${titleFont.className} text-4xl font-normal text-kyzz-dark`}>{heading}</h1>
           </div>
-          <ProductFilters categories={allCategories} />
+          <ProductFilters categories={allCategories} colors={availableColors} />
         </div>
       </section>
 
@@ -95,7 +104,7 @@ export default async function ProductsPage(props: Props) {
           </div>
         ) : (
           <>
-            <ProductGridWithLayout products={products} />
+            <ProductGridWithLayout products={products} variantColors={variantColors} />
             <div className="mt-10">
               <Pagination totalPages={totalPages} />
             </div>

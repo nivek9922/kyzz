@@ -1,36 +1,39 @@
 'use client';
 
+import { useState } from 'react';
+import { Swiper as SwiperObject } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { FreeMode, Pagination } from 'swiper/modules';
+import { FreeMode, Thumbs } from 'swiper/modules';
 
 import 'swiper/css';
 import 'swiper/css/free-mode';
-import 'swiper/css/pagination';
+import 'swiper/css/thumbs';
 import './slideshow.css';
 
 import { ProductImage } from '../product-image/ProductImage';
 
 interface Props {
-  images: string[];
-  title: string;
+  images:     string[];
+  title:      string;
   className?: string;
 }
 
 export const ProductMobileSlideshow = ({ images, title, className }: Props) => {
+  const [thumbsSwiper, setThumbsSwiper] = useState<SwiperObject>();
+
   return (
     <div className={className}>
+      {/* Imagen principal */}
       <Swiper
         style={{
           '--swiper-pagination-color': '#8C7365',
-          '--swiper-pagination-bullet-inactive-color': '#E3D5CA',
-          '--swiper-pagination-bullet-inactive-opacity': '1',
         } as React.CSSProperties}
-        pagination={{ clickable: true }}
-        modules={[FreeMode, Pagination]}
-        className="mySwiper2"
+        thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
+        modules={[FreeMode, Thumbs]}
+        className="kyzz-main-mobile"
       >
-        {images.map((image) => (
-          <SwiperSlide key={image}>
+        {images.map((image, i) => (
+          <SwiperSlide key={`${image}-${i}`}>
             <ProductImage
               width={600}
               height={800}
@@ -41,6 +44,31 @@ export const ProductMobileSlideshow = ({ images, title, className }: Props) => {
           </SwiperSlide>
         ))}
       </Swiper>
+
+      {/* Tiras horizontales abajo */}
+      {images.length > 1 && (
+        <Swiper
+          onSwiper={setThumbsSwiper}
+          spaceBetween={4}
+          slidesPerView={5}
+          freeMode={true}
+          watchSlidesProgress={true}
+          modules={[FreeMode, Thumbs]}
+          className="kyzz-thumbs-mobile"
+        >
+          {images.map((image, i) => (
+            <SwiperSlide key={`${image}-${i}-thumb`}>
+              <ProductImage
+                width={80}
+                height={80}
+                src={image}
+                alt={`${title} - ${i + 1}`}
+                className="object-cover w-full h-full"
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      )}
     </div>
   );
 };

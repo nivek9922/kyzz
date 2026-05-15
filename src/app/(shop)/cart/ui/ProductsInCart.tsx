@@ -31,7 +31,7 @@ export const ProductsInCart = () => {
   return (
     <div className="divide-y divide-kyzz-secondary">
       {productsInCart.map((product) => (
-        <div key={`${product.slug}-${product.size}`} className="flex gap-5 py-6">
+        <div key={product.variantId} className="flex gap-5 py-6">
           <ProductImage
             src={product.image}
             width={96}
@@ -48,9 +48,16 @@ export const ProductsInCart = () => {
               >
                 {product.title}
               </Link>
-              <p className="text-[11px] tracking-widest uppercase text-kyzz-muted mt-0.5">
-                Talla {product.size}
-              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-[11px] tracking-widest uppercase text-kyzz-muted">
+                  Talla {product.size}
+                </p>
+                {product.colorName && (
+                  <p className="text-[11px] tracking-widest uppercase text-kyzz-muted">
+                    · {product.colorName}
+                  </p>
+                )}
+              </div>
               <p className="text-sm text-kyzz-dark mt-1">${product.price.toFixed(2)}</p>
             </div>
             <div className="flex items-center justify-between mt-3">
