@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ProductMobileSlideshow, ProductSlideshow, StockLabel } from '@/components';
 import { currencyFormat } from '@/utils';
+import { useRecentlyViewedStore } from '@/store';
 import { AddToCart } from './AddToCart';
 import { ProductTabs } from './ProductTabs';
 import type { Product, Size } from '@/interfaces';
@@ -29,6 +30,8 @@ interface Props {
 
 export const ProductDetailClient = ({ product, colors, variants }: Props) => {
 
+  const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
+
   // ── Seleccionar primer color disponible (con al menos una variante con stock > 0 si es posible) ──
   const initialColorId = useMemo(() => {
     if (colors.length === 0) return null;
@@ -45,6 +48,22 @@ export const ProductDetailClient = ({ product, colors, variants }: Props) => {
     selectedColor && selectedColor.images.length > 0
       ? selectedColor.images.map((i) => i.url)
       : product.images;
+
+  // ── Capturar imagen inicial (antes de cualquier cambio de color) para el registro ──
+  const initialImageRef = useRef(currentImages[0] ?? '');
+
+  // ── Registrar visita una sola vez al montar (no se repite al cambiar color) ──
+  useEffect(() => {
+    addRecentlyViewed({
+      id:    product.id,
+      slug:  product.slug,
+      title: product.title,
+      price: product.price,
+      image: initialImageRef.current,
+    });
+  // product.id identifica unívocamente esta página — dispara solo en mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
 
   // ── Variantes filtradas al color actual (o sin color) ──
   const visibleVariants = useMemo(
