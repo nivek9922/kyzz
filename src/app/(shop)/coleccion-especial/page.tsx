@@ -2,7 +2,7 @@ export const revalidate = 60;
 
 import { redirect } from 'next/navigation';
 import { getFeaturedProductsPaginated } from '@/actions';
-import { Pagination, ProductGrid } from '@/components';
+import { Pagination, ProductGridWithLayout } from '@/components';
 import { titleFont } from '@/config/fonts';
 
 interface Props {
@@ -45,7 +45,7 @@ export default async function ColeccionEspecialPage(props: Props) {
           </div>
         ) : (
           <>
-            <ProductGrid products={products} variantColors={variantColors} />
+            <ProductGridWithLayout products={products} variantColors={variantColors} />
             <div className="mt-10">
               <Pagination totalPages={totalPages} />
             </div>

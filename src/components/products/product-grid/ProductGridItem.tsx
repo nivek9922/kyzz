@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Product } from '@/interfaces';
 import { currencyFormat } from '@/utils';
 import type { ProductColorEntry } from '@/actions/product/product-pagination';
+import { WishlistButton } from './WishlistButton';
 
 interface Props {
   product:       Product;
@@ -56,6 +57,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
                 Agotado
               </span>
             )}
+            <WishlistButton productId={product.id} />
           </div>
         </Link>
 
@@ -112,6 +114,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
               Agotado
             </span>
           )}
+          <WishlistButton productId={product.id} />
         </div>
       </Link>
 
