@@ -2,18 +2,20 @@
 
 import { signIn } from '@/auth';
 
+export type AuthState = { status: 'success' | 'error'; nonce: number } | undefined;
+
 export async function authenticate(
-  prevState: string | undefined,
+  prevState: AuthState,
   formData: FormData,
-) {
+): Promise<AuthState> {
   try {
     await signIn('credentials', {
       ...Object.fromEntries(formData),
       redirect: false,
     });
-    return 'Success';
+    return { status: 'success', nonce: Date.now() };
   } catch {
-    return 'CredentialsSignin';
+    return { status: 'error', nonce: Date.now() };
   }
 }
 
