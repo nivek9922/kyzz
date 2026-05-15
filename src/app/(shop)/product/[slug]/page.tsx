@@ -55,7 +55,7 @@ export default async function ProductBySlugPage(props: Props) {
   }));
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 mb-20">
+    <div className="max-w-7xl mx-auto px-6 py-8 mb-16">
       <ProductDetailClient product={product} colors={colors} variants={variantList} />
     </div>
   );
