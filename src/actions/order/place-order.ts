@@ -1,7 +1,7 @@
 "use server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
-import { TAX_RATE } from "@/config/constants";
+import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from "@/config/constants";
 import type { Address, Size } from "@/interfaces";
 import type { Prisma } from "@prisma/client";
 
@@ -33,18 +33,19 @@ export const placeOrder = async (
 
   const itemsInOrder = productIds.reduce((count, p) => count + p.quantity, 0);
 
-  const { subTotal, tax, total } = productIds.reduce(
+  const { subTotal, tax } = productIds.reduce(
     (totals, item) => {
       const product = products.find((p: DbProduct) => p.id === item.productId);
       if (!product) throw new Error(`${item.productId} no existe - 500`);
       const lineSubTotal = product.price * item.quantity;
       totals.subTotal += lineSubTotal;
-      totals.tax      += lineSubTotal * TAX_RATE;
-      totals.total    += lineSubTotal * (1 + TAX_RATE);
+      totals.tax      += lineSubTotal * (TAX_RATE / (1 + TAX_RATE));
       return totals;
     },
-    { subTotal: 0, tax: 0, total: 0 }
+    { subTotal: 0, tax: 0 }
   );
+  const shipping = subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+  const total    = subTotal + shipping;
 
   try {
     const prismaTx = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
