@@ -13,7 +13,7 @@ export default async function ColeccionEspecialPage(props: Props) {
   const searchParams = await props.searchParams;
   const page = searchParams.page ? parseInt(searchParams.page) : 1;
 
-  const { products, totalPages } = await getFeaturedProductsPaginated({ page });
+  const { products, totalPages, variantColors } = await getFeaturedProductsPaginated({ page });
 
   if (products.length === 0 && page > 1) redirect('/coleccion-especial');
 
@@ -45,7 +45,7 @@ export default async function ColeccionEspecialPage(props: Props) {
           </div>
         ) : (
           <>
-            <ProductGrid products={products} />
+            <ProductGrid products={products} variantColors={variantColors} />
             <div className="mt-10">
               <Pagination totalPages={totalPages} />
             </div>

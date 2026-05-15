@@ -6,9 +6,11 @@ import type { Address, Size } from "@/interfaces";
 import type { Prisma } from "@prisma/client";
 
 interface ProductToOrder {
-  productId: string;
-  quantity: number;
-  size: Size;
+  productId:  string;
+  variantId:  string;     // requerido: identifica exactamente la combinación (color×talla)
+  quantity:   number;
+  size:       Size;
+  colorName?: string;
 }
 
 export const placeOrder = async (
@@ -18,131 +20,126 @@ export const placeOrder = async (
   const session = await auth();
   const userId = session?.user.id;
 
-  // Verificar sesión de usuario
   if (!userId) {
-    return {
-      ok: false,
-      message: "No hay sesión de usuario",
-    };
+    return { ok: false, message: "No hay sesión de usuario" };
   }
 
-  // Obtener la información de los productos
-  // Nota: recuerden que podemos llevar 2+ productos con el mismo ID
+  // ── Cargar productos para precios (snapshot) ──
   const products = await prisma.product.findMany({
-    where: {
-      id: {
-        in: productIds.map((p) => p.productId),
-      },
-    },
+    where: { id: { in: productIds.map((p) => p.productId) } },
   });
 
   type DbProduct = (typeof products)[number];
 
-  // Calcular los montos // Encabezado
   const itemsInOrder = productIds.reduce((count, p) => count + p.quantity, 0);
 
-  // Los totales de tax, subtotal, y total
   const { subTotal, tax, total } = productIds.reduce(
     (totals, item) => {
-      const productQuantity = item.quantity;
       const product = products.find((p: DbProduct) => p.id === item.productId);
-
       if (!product) throw new Error(`${item.productId} no existe - 500`);
-
-      const subTotal = product.price * productQuantity;
-
-      totals.subTotal += subTotal;
-      totals.tax += subTotal * TAX_RATE;
-      totals.total += subTotal * (1 + TAX_RATE);
-
+      const lineSubTotal = product.price * item.quantity;
+      totals.subTotal += lineSubTotal;
+      totals.tax      += lineSubTotal * TAX_RATE;
+      totals.total    += lineSubTotal * (1 + TAX_RATE);
       return totals;
     },
     { subTotal: 0, tax: 0, total: 0 }
   );
 
-  // Crear la transacción de base de datos
   try {
-
     const prismaTx = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // 1. Actualizar el stock de los productos
-      const updatedProductsPromises = products.map((product: DbProduct) => {
-        //  Acumular los valores
-        const productQuantity = productIds
-          .filter((p) => p.productId === product.id)
-          .reduce((acc, item) => item.quantity + acc, 0);
 
-        if (productQuantity === 0) {
-          throw new Error(`${product.id} no tiene cantidad definida`);
+      // 1. Decrementar stock de cada variante y verificar disponibilidad
+      const variantIds = productIds.map((p) => p.variantId);
+      const variants   = await tx.productVariant.findMany({
+        where: { id: { in: variantIds } },
+      });
+
+      // Validar que cada variante existe y tiene stock suficiente
+      for (const item of productIds) {
+        const variant = variants.find((v) => v.id === item.variantId);
+        if (!variant) {
+          throw new Error(`Variante ${item.variantId} no encontrada`);
         }
+        // Sumar cantidad pedida de esta variante (puede aparecer dos veces si por algún motivo se duplicó)
+        const totalQty = productIds
+          .filter((p) => p.variantId === item.variantId)
+          .reduce((acc, p) => acc + p.quantity, 0);
+        if (variant.stock < totalQty) {
+          throw new Error(`Sin stock suficiente para ${item.size}${item.colorName ? ` · ${item.colorName}` : ''}`);
+        }
+      }
 
-        return tx.product.update({
-          where: { id: product.id },
-          data: {
-            inStock: {
-              decrement: productQuantity,
-            },
-          },
+      // Decrementar (atómico por variante)
+      const uniqueDecrement = new Map<string, number>();
+      for (const item of productIds) {
+        uniqueDecrement.set(item.variantId, (uniqueDecrement.get(item.variantId) ?? 0) + item.quantity);
+      }
+
+      await Promise.all(
+        Array.from(uniqueDecrement.entries()).map(([variantId, qty]) =>
+          tx.productVariant.update({
+            where: { id: variantId },
+            data:  { stock: { decrement: qty } },
+          })
+        )
+      );
+
+      // 2. Sincronizar Product.inStock (suma de stock de variantes del producto)
+      const affectedProductIds = Array.from(new Set(productIds.map((p) => p.productId)));
+      for (const pid of affectedProductIds) {
+        const agg = await tx.productVariant.aggregate({
+          where:  { productId: pid },
+          _sum:   { stock: true },
         });
-      });
+        await tx.product.update({
+          where: { id: pid },
+          data:  { inStock: agg._sum.stock ?? 0 },
+        });
+      }
 
-      const updatedProducts = await Promise.all(updatedProductsPromises);
-
-      // Verificar valores negativos en las existencia = no hay stock
-      updatedProducts.forEach((product) => {
-        if (product.inStock < 0) {
-          throw new Error(`${product.title} no tiene inventario suficiente`);
-        }
-      });
-
-      // 2. Crear la orden - Encabezado - Detalles
+      // 3. Crear la orden + items
       const order = await tx.order.create({
         data: {
-          userId: userId,
-          itemsInOrder: itemsInOrder,
-          subTotal: subTotal,
-          tax: tax,
-          total: total,
-
+          userId,
+          itemsInOrder,
+          subTotal,
+          tax,
+          total,
           OrderItem: {
             createMany: {
               data: productIds.map((p) => ({
-                quantity: p.quantity,
-                size: p.size,
+                quantity:  p.quantity,
+                size:      p.size,
                 productId: p.productId,
+                variantId: p.variantId,
+                colorName: p.colorName ?? null,
                 price:
-                  products.find((product: DbProduct) => product.id === p.productId)
-                    ?.price ?? 0,
+                  products.find((product: DbProduct) => product.id === p.productId)?.price ?? 0,
               })),
             },
           },
         },
       });
 
-      // 3. Crear la direccion de la orden
-      // Address
+      // 4. Dirección
       const { country, ...restAddress } = address;
       const orderAddress = await tx.orderAddress.create({
         data: {
           ...restAddress,
           countryId: country,
-          orderId: order.id,
+          orderId:   order.id,
         },
       });
 
-      return {
-        updatedProducts: updatedProducts,
-        order: order,
-        orderAddress: orderAddress,
-      };
+      return { order, orderAddress };
     });
-
 
     return {
       ok: true,
       order: prismaTx.order,
       prismaTx: prismaTx,
-    }
-
+    };
 
   } catch (error: any) {
     return {

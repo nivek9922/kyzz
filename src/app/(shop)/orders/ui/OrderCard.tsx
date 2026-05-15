@@ -8,8 +8,13 @@ interface OrderItem {
   quantity: number;
   product: {
     title: string;
-    ProductImage: { url: string }[];
+    ProductImage:  { url: string }[];
+    ProductColors: { images: { url: string }[] }[];
   };
+  variant: {
+    colorId: string | null;
+    color: { images: { url: string }[] } | null;
+  } | null;
 }
 
 interface Props {
@@ -34,7 +39,10 @@ export const OrderCard = ({ order }: Props) => {
 
   // Hasta 3 imágenes de vista previa
   const previews = order.OrderItem.slice(0, 3).map((item) => ({
-    url: item.product.ProductImage[0]?.url ?? "/imgs/placeholder.jpg",
+    url: item.variant?.color?.images[0]?.url       // color exacto del pedido
+      ?? item.product.ProductImage[0]?.url          // imagen legacy
+      ?? item.product.ProductColors[0]?.images[0]?.url  // primer color de fallback
+      ?? "/imgs/placeholder.jpg",
     title: item.product.title,
     qty: item.quantity,
   }));

@@ -37,9 +37,11 @@ export const PlaceOrder = () => {
     setIsPlacingOrder(true);
     const toastId = toast.loading('Confirmando pedido...');
     const productsToOrder = cart.map((product) => ({
-      productId: product.id,
-      quantity: product.quantity,
-      size: product.size,
+      productId:  product.id,
+      variantId:  product.variantId,
+      quantity:   product.quantity,
+      size:       product.size,
+      colorName:  product.colorName,
     }));
     const resp = await placeOrder(productsToOrder, address);
     if (!resp.ok) {

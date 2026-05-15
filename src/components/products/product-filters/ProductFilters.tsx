@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { IoCloseOutline, IoFunnelOutline } from 'react-icons/io5';
+import type { ProductColor } from '@/actions/product/get-product-colors';
 
 const SIZES   = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const;
 const SORT_OPTIONS = [
@@ -15,9 +16,10 @@ interface Category { name: string; slug: string; }
 
 interface Props {
   categories: Category[];
+  colors?:    ProductColor[];
 }
 
-export const ProductFilters = ({ categories }: Props) => {
+export const ProductFilters = ({ categories, colors = [] }: Props) => {
   const router     = useRouter();
   const params     = useSearchParams();
   const [open, setOpen] = useState(false);
@@ -28,6 +30,7 @@ export const ProductFilters = ({ categories }: Props) => {
   const minPrice       = params.get('min') ?? '';
   const maxPrice       = params.get('max') ?? '';
   const sortBy         = params.get('sort') ?? 'newest';
+  const activeColors   = params.getAll('color');
 
   // Estados locales del drawer (sincronizados al abrir)
   const [localSizes,    setLocalSizes]    = useState<string[]>(activeSizes);
@@ -35,12 +38,14 @@ export const ProductFilters = ({ categories }: Props) => {
   const [localMax,      setLocalMax]      = useState(maxPrice);
   const [localSort,     setLocalSort]     = useState(sortBy);
   const [localCategory, setLocalCategory] = useState(activeCategory);
+  const [localColors,   setLocalColors]   = useState<string[]>(activeColors);
 
   const activeCount = [
     activeCategory,
     activeSizes.length > 0 ? 'sizes' : '',
     minPrice || maxPrice ? 'price' : '',
     sortBy !== 'newest' ? 'sort' : '',
+    activeColors.length > 0 ? 'color' : '',
   ].filter(Boolean).length;
 
   const applyFilters = useCallback(() => {
@@ -50,9 +55,10 @@ export const ProductFilters = ({ categories }: Props) => {
     if (localMin) p.set('min', localMin);
     if (localMax) p.set('max', localMax);
     if (localSort !== 'newest') p.set('sort', localSort);
+    localColors.forEach((c) => p.append('color', c));
     router.replace(`/products${p.toString() ? '?' + p.toString() : ''}`);
     setOpen(false);
-  }, [localCategory, localSizes, localMin, localMax, localSort, router]);
+  }, [localCategory, localSizes, localMin, localMax, localSort, localColors, router]);
 
   const clearFilters = () => {
     setLocalCategory('');
@@ -60,6 +66,7 @@ export const ProductFilters = ({ categories }: Props) => {
     setLocalMin('');
     setLocalMax('');
     setLocalSort('newest');
+    setLocalColors([]);
     router.replace('/products');
     setOpen(false);
   };
@@ -67,12 +74,18 @@ export const ProductFilters = ({ categories }: Props) => {
   const toggleSize = (size: string) =>
     setLocalSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
 
+  const toggleColor = (colorName: string) =>
+    setLocalColors(prev =>
+      prev.includes(colorName) ? prev.filter((c) => c !== colorName) : [...prev, colorName],
+    );
+
   const openDrawer = () => {
     setLocalCategory(activeCategory);
     setLocalSizes(activeSizes);
     setLocalMin(minPrice);
     setLocalMax(maxPrice);
     setLocalSort(sortBy);
+    setLocalColors(activeColors);
     setOpen(true);
   };
 
@@ -155,6 +168,42 @@ export const ProductFilters = ({ categories }: Props) => {
               ))}
             </div>
           </div>
+
+          {/* Color */}
+          {colors.length > 0 && (
+            <div>
+              <p className="text-[10px] tracking-[0.25em] uppercase text-kyzz-muted mb-3">Color</p>
+              <div className="space-y-1">
+                {colors.map((c) => {
+                  const active = localColors.includes(c.colorName);
+                  return (
+                    <button
+                      key={c.colorName}
+                      onClick={() => toggleColor(c.colorName)}
+                      className={`w-full flex items-center gap-3 px-2 py-1.5 transition-colors text-left ${
+                        active ? 'bg-kyzz-secondary/50' : 'hover:bg-kyzz-secondary/30'
+                      }`}
+                    >
+                      <span
+                        className={`relative shrink-0 w-5 h-5 rounded-full transition-all duration-200 ${
+                          active
+                            ? 'ring-2 ring-offset-1 ring-kyzz-dark scale-110'
+                            : 'ring-1 ring-kyzz-secondary'
+                        }`}
+                        style={{ backgroundColor: c.colorHex }}
+                      >
+                        <span className="absolute inset-0 rounded-full ring-1 ring-inset ring-black/10" />
+                      </span>
+                      <span className={`text-sm flex-1 ${active ? 'text-kyzz-dark font-medium' : 'text-kyzz-muted'}`}>
+                        {c.colorName}
+                      </span>
+                      <span className="text-[11px] text-kyzz-muted tabular-nums">({c.count})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Precio */}
           <div>

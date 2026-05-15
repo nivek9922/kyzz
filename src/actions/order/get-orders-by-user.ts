@@ -24,7 +24,23 @@ export const getOrdersByUser = async () => {
           product: {
             select: {
               title: true,
-              ProductImage: { take: 1, select: { url: true } },
+              ProductImage:  { take: 1, select: { url: true } },
+              ProductColors: {
+                take: 1,
+                select: {
+                  images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true } },
+                },
+              },
+            },
+          },
+          variant: {
+            select: {
+              colorId: true,
+              color: {
+                select: {
+                  images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true } },
+                },
+              },
             },
           },
         },

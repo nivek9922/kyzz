@@ -4,7 +4,6 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 
-
 export const getOrderById = async( id: string ) => {
 
   const session = await auth();
@@ -18,31 +17,62 @@ export const getOrderById = async( id: string ) => {
 
 
   try {
-    
+
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
         OrderAddress: true,
         OrderItem: {
           select: {
-            price: true,
-            quantity: true,
-            size: true,
+            price:     true,
+            quantity:  true,
+            size:      true,
+            colorName: true,
 
             product: {
               select: {
                 title: true,
-                slug: true,
+                slug:  true,
 
                 ProductImage: {
+                  select: { url: true },
+                  take: 1,
+                },
+
+                ProductColors: {
                   select: {
-                    url: true
+                    images: {
+                      select: { url: true },
+                      orderBy: { sortOrder: 'asc' },
+                      take: 1,
+                    },
+                    paletteColor: {
+                      select: { hex: true },
+                    },
                   },
-                  take: 1
-                }
-              }
-            }
-          }
+                  take: 1,
+                },
+              },
+            },
+
+            variant: {
+              select: {
+                colorId: true,
+                color: {
+                  select: {
+                    paletteColor: {
+                      select: { name: true, hex: true },
+                    },
+                    images: {
+                      select: { url: true },
+                      orderBy: { sortOrder: 'asc' },
+                      take: 1,
+                    },
+                  },
+                },
+              },
+            },
+          },
         }
       }
     });
@@ -74,8 +104,6 @@ export const getOrderById = async( id: string ) => {
 
 
   }
-
-
 
 
 }

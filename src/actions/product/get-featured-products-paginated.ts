@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import type { ProductColorsMap } from './product-pagination';
 
 interface Options {
   page?: number;
@@ -25,12 +26,34 @@ export const getFeaturedProductsPaginated = async ({ page = 1, take = 12 }: Opti
     prisma.product.count({ where }),
   ]);
 
+  const productIds = products.map((p) => p.id);
+  const colorRows  = await prisma.productColor.findMany({
+    where: { productId: { in: productIds } },
+    include: {
+      paletteColor: true,
+      images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+    },
+    orderBy: { paletteColor: { sortOrder: 'asc' } },
+  });
+
+  const variantColors: ProductColorsMap = {};
+  for (const row of colorRows) {
+    if (!variantColors[row.productId]) variantColors[row.productId] = [];
+    variantColors[row.productId].push({
+      id:    row.paletteColorId,
+      name:  row.paletteColor.name,
+      hex:   row.paletteColor.hex,
+      image: row.images[0]?.url ?? null,
+    });
+  }
+
   return {
-    currentPage: page,
-    totalPages: Math.ceil(totalCount / take),
-    products: products.map((p) => ({
+    currentPage:  page,
+    totalPages:   Math.ceil(totalCount / take),
+    products:     products.map((p) => ({
       ...p,
       images: p.ProductImage.map((img) => img.url),
     })),
+    variantColors,
   };
 };

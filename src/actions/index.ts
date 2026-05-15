@@ -44,6 +44,22 @@ export { getProductBySlug }                from './product/get-product-by-slug';
 export { getStockBySlug }                  from './product/get-stock-by-slug';
 export { getPaginatedProductsWithImages }  from './product/product-pagination';
 export { searchProducts }                  from './product/search-products';
+export { convertProductToNoColor }         from './product/convert-product-type';
+export { addProductColor,
+         removeProductColor,
+         addColorImage,
+         removeColorImage,
+         getProductColors as getProductColorsByProductId } from './product/manage-product-color';
+export { getProductVariants,
+         updateProductVariants,
+         resolveVariant }                                  from './product/manage-product-variants';
+export type { VariantInput }                                from './product/manage-product-variants';
+
+// ─── Color Palette ───────────────────────────────────────────
+export { getColorPalette }      from './color-palette/get-color-palette';
+export { createPaletteColor }   from './color-palette/create-palette-color';
+export { updatePaletteColor }   from './color-palette/update-palette-color';
+export { deletePaletteColor }   from './color-palette/delete-palette-color';
 
 // ─── Site Config ─────────────────────────────────────────────
 export { getSiteConfig }         from './site/get-site-config';
