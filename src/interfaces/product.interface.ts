@@ -20,6 +20,8 @@ export interface CartProduct {
   quantity: number;
   size: Size;
   image: string;
+  colorName?: string;
+  variantId: string;
 }
 
 export interface ProductImage {

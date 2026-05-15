@@ -90,40 +90,79 @@ export default async function OrdersByIdPage(props: Props) {
 
         {/* Productos */}
         <div className="space-y-0 border border-kyzz-secondary divide-y divide-kyzz-secondary">
-          {order!.OrderItem.map((item) => (
-            <div
-              key={item.product.slug + "-" + item.size}
-              className="flex gap-4 p-4"
-            >
-              <div className="shrink-0 w-20 h-24 overflow-hidden bg-kyzz-tertiary">
-                <ProductImage
-                  src={item.product.ProductImage[0]?.url}
-                  alt={item.product.title}
-                  width={80}
-                  height={96}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          {order!.OrderItem.map((item) => {
+            // Imagen: preferir la del color de la variante, luego legacy, luego primer color del producto
+            // ProductImage ya resuelve el prefijo /products/ para URLs locales
+            const resolvedImg =
+              item.variant?.color?.images?.[0]?.url
+              ?? item.product.ProductImage[0]?.url
+              ?? item.product.ProductColors?.[0]?.images?.[0]?.url
+              ?? undefined;
 
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-kyzz-dark font-medium truncate">
-                  {item.product.title}
-                </p>
-                <p className="text-[11px] tracking-widest uppercase text-kyzz-muted mt-0.5">
-                  Talla {item.size}
-                </p>
-                <p className="text-xs text-kyzz-muted mt-1">
-                  {currencyFormat(item.price)} × {item.quantity}
-                </p>
-              </div>
+            // Color de la variante (solo si la variante tiene colorId)
+            const variantColor = item.variant?.colorId
+              ? item.variant.color?.paletteColor
+              : null;
+            const displayColorName = variantColor?.name ?? item.colorName ?? null;
+            const displayColorHex  = variantColor?.hex ?? null;
 
-              <div className="shrink-0 text-right">
-                <p className="text-sm text-kyzz-dark font-medium">
-                  {currencyFormat(item.price * item.quantity)}
-                </p>
+            return (
+              <div
+                key={item.product.slug + "-" + item.size}
+                className="flex gap-4 p-4"
+              >
+                <div className="shrink-0 w-20 h-24 overflow-hidden bg-kyzz-tertiary">
+                  <ProductImage
+                    src={resolvedImg}
+                    alt={item.product.title}
+                    width={80}
+                    height={96}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-kyzz-dark font-medium truncate">
+                    {item.product.title}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <p className="text-[11px] tracking-widest uppercase text-kyzz-muted">
+                      Talla {item.size}
+                    </p>
+                    {displayColorHex && displayColorName && (
+                      <>
+                        <span className="text-[11px] text-kyzz-muted">·</span>
+                        <span
+                          className="w-3 h-3 rounded-full border border-kyzz-secondary shrink-0"
+                          style={{ backgroundColor: displayColorHex }}
+                        />
+                        <span className="text-[11px] tracking-widest uppercase text-kyzz-muted">
+                          {displayColorName}
+                        </span>
+                      </>
+                    )}
+                    {!displayColorHex && displayColorName && (
+                      <>
+                        <span className="text-[11px] text-kyzz-muted">·</span>
+                        <span className="text-[11px] tracking-widest uppercase text-kyzz-muted">
+                          {displayColorName}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-xs text-kyzz-muted mt-1">
+                    {currencyFormat(item.price)} × {item.quantity}
+                  </p>
+                </div>
+
+                <div className="shrink-0 text-right">
+                  <p className="text-sm text-kyzz-dark font-medium">
+                    {currencyFormat(item.price * item.quantity)}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Panel lateral */}

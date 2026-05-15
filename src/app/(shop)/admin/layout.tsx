@@ -12,6 +12,7 @@ import {
   IoListOutline,
   IoMailOutline,
   IoPersonOutline,
+  IoColorPaletteOutline,
 } from 'react-icons/io5';
 
 const NAV = [
@@ -20,6 +21,7 @@ const NAV = [
   { label: 'Pedidos',         href: '/admin/orders',           icon: IoReceiptOutline },
   { label: 'Usuarios',        href: '/admin/users',            icon: IoPeopleOutline },
   { label: 'Categorías',      href: '/admin/categorias',       icon: IoListOutline },
+  { label: 'Colores',         href: '/admin/colores',          icon: IoColorPaletteOutline },
   { label: 'Newsletter',      href: '/admin/newsletter',       icon: IoMailOutline },
   { label: 'Nuevo producto',  href: '/admin/product/new',      icon: IoAddCircleOutline },
   { label: 'Configuración',   href: '/admin/configuracion',    icon: IoSettingsOutline },

@@ -4,16 +4,18 @@ import { useState, useEffect } from "react";
 import { ProductGrid, type Columns } from "./ProductGrid";
 import { GridLayoutSelector } from "./GridLayoutSelector";
 import type { Product } from "@/interfaces";
+import type { VariantColorMap } from "@/actions/product/product-pagination";
 
 interface Props {
-  products: Product[];
+  products:      Product[];
+  variantColors?: VariantColorMap;
 }
 
 const STORAGE_KEY = "kyzz-grid-cols";
 const DEFAULT_COLS: Columns = 3;
 const VALID: Columns[] = [1, 2, 3, 4, 5, 6];
 
-export const ProductGridWithLayout = ({ products }: Props) => {
+export const ProductGridWithLayout = ({ products, variantColors = {} }: Props) => {
   const [columns, setColumns] = useState<Columns>(DEFAULT_COLS);
   const [mounted, setMounted] = useState(false);
 
@@ -36,7 +38,7 @@ export const ProductGridWithLayout = ({ products }: Props) => {
         </p>
         {mounted && <GridLayoutSelector columns={columns} onChange={handleChange} />}
       </div>
-      <ProductGrid products={products} columns={columns} />
+      <ProductGrid products={products} columns={columns} variantColors={variantColors} />
     </>
   );
 };

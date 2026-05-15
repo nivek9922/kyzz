@@ -15,7 +15,7 @@ export default async function AdminProductsPage(props: Props) {
   const searchParams = await props.searchParams;
   const page  = searchParams.page ? parseInt(searchParams.page) : 1;
   const query = searchParams.q ?? '';
-  const { products, totalPages } = await getPaginatedProductsWithImages({ page, query });
+  const { products, totalPages, variantColors } = await getPaginatedProductsWithImages({ page, query });
 
   return (
     <div>
@@ -57,7 +57,7 @@ export default async function AdminProductsPage(props: Props) {
               {/* Imagen */}
               <Link href={`/product/${product.slug}`} className="shrink-0">
                 <ProductImage
-                  src={product.ProductImage[0]?.url}
+                  src={product.ProductImage[0]?.url ?? variantColors[product.id]?.[0]?.image ?? undefined}
                   width={64}
                   height={64}
                   alt={product.title}

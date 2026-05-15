@@ -9,34 +9,92 @@
   object-fit: cover;
 }
 
-/* Main slideshow — responsive aspect ratio */
-.mySwiper2 {
-  width: 100%;
-  aspect-ratio: 3 / 4;
+/* ── Desktop: layout horizontal (thumbnails a la izquierda) ── */
+.slideshow-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
 }
 
-.mySwiper2 .swiper-slide {
+/* Columna de miniaturas (izquierda) — altura fija requerida por Swiper vertical */
+.kyzz-thumbs {
+  width: 72px;
+  height: 480px;   /* igual que .kyzz-main */
+  flex-shrink: 0;
+}
+
+.kyzz-thumbs .swiper-wrapper {
+  flex-direction: column;
+}
+
+.kyzz-thumbs .swiper-slide {
+  width: 72px !important;
+  height: 92px !important;
+  flex-shrink: 0;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  overflow: hidden;
+}
+
+.kyzz-thumbs .swiper-slide-thumb-active {
+  opacity: 1;
+  outline: 1.5px solid #8C7365;
+  outline-offset: -1px;
+}
+
+.kyzz-thumbs .swiper-slide:hover {
+  opacity: 0.85;
+}
+
+/* Imagen principal (derecha) */
+.kyzz-main {
+  flex: 1;
+  min-width: 0;
+  height: 480px;
+}
+
+.kyzz-main .swiper,
+.kyzz-main .swiper-wrapper,
+.kyzz-main .swiper-slide {
+  height: 100%;
+}
+
+.kyzz-main .swiper-slide {
   background-size: cover;
   background-position: center;
 }
 
-/* Thumbnail strip */
-.mySwiper {
+/* ── Mobile: imagen principal arriba, tiras abajo ── */
+.kyzz-main-mobile {
   width: 100%;
-  height: 88px;
-  box-sizing: border-box;
-  padding: 8px 0;
-  margin-top: 8px;
+  aspect-ratio: 3 / 4;
 }
 
-.mySwiper .swiper-slide {
-  width: 25%;
+.kyzz-thumbs-mobile {
+  width: 100%;
+  height: 74px;
+  box-sizing: border-box;
+  padding: 6px 0;
+  margin-top: 6px;
+}
+
+.kyzz-thumbs-mobile .swiper-slide {
+  width: 20%;
   height: 100%;
   opacity: 0.45;
   cursor: pointer;
   transition: opacity 0.2s;
 }
 
-.mySwiper .swiper-slide-thumb-active {
+.kyzz-thumbs-mobile .swiper-slide-thumb-active {
   opacity: 1;
+  outline: 1.5px solid #8C7365;
+  outline-offset: -1px;
+}
+
+/* navegación */
+.kyzz-main .swiper-button-prev,
+.kyzz-main .swiper-button-next {
+  color: #8C7365;
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { MdLocalShipping } from "react-icons/md";
+import { IoCheckmarkCircle } from "react-icons/io5";
 import { FREE_SHIPPING_THRESHOLD } from "@/config/constants";
 import { currencyFormat } from "@/utils";
 
@@ -7,79 +9,87 @@ interface Props {
   subTotal: number;
 }
 
-const TruckIcon = ({ achieved }: { achieved: boolean }) => (
-  <svg
-    viewBox="0 0 48 32"
-    fill="none"
-    className={`w-7 h-5 transition-all duration-500 ${achieved ? "text-kyzz-dark" : "text-kyzz-muted"}`}
-  >
-    {/* Cabina */}
-    <rect x="28" y="6" width="18" height="16" rx="2" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.5" />
-    {/* Carrocería */}
-    <rect x="2" y="2" width="28" height="20" rx="2" fill="currentColor" opacity="0.1" stroke="currentColor" strokeWidth="1.5" />
-    {/* Ventana */}
-    <rect x="31" y="9" width="8" height="7" rx="1" fill="currentColor" opacity="0.3" />
-    {/* Eje trasero */}
-    <line x1="2" y1="22" x2="46" y2="22" stroke="currentColor" strokeWidth="1.5" />
-    {/* Rueda izquierda */}
-    <circle cx="10" cy="27" r="4" fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="1.5" />
-    <circle cx="10" cy="27" r="1.5" fill="currentColor" />
-    {/* Rueda derecha */}
-    <circle cx="38" cy="27" r="4" fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="1.5" />
-    <circle cx="38" cy="27" r="1.5" fill="currentColor" />
-  </svg>
-);
-
 export const FreeShippingBar = ({ subTotal }: Props) => {
   const remaining = FREE_SHIPPING_THRESHOLD - subTotal;
-  const progress = Math.min((subTotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
-  const achieved = remaining <= 0;
+  const progress  = Math.min((subTotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+  const achieved  = remaining <= 0;
 
   return (
-    <div className="mb-6 space-y-2.5">
-      {/* Texto de estado */}
-      <div className="flex items-center justify-between">
+    <div className="mb-6">
+
+      {/* ── Mensaje ── */}
+      <div className="flex items-center gap-2 mb-3 min-h-[32px]">
         {achieved ? (
-          <p className="text-xs tracking-wide text-kyzz-dark font-medium">
-            ¡Envío gratis desbloqueado!
-          </p>
+          <>
+            <IoCheckmarkCircle
+              size={18}
+              className="text-kyzz-dark shrink-0"
+              style={{ animation: "truck-arrive 0.5s ease-out" }}
+            />
+            <p className="text-xs font-medium text-kyzz-dark leading-relaxed">
+              ¡Envío gratis desbloqueado! Tu pedido llega sin costo adicional.
+            </p>
+          </>
         ) : (
-          <p className="text-xs text-kyzz-muted">
-            Agrega{" "}
+          <p className="text-xs text-kyzz-muted leading-relaxed">
+            ¡Ya casi llegas! Te faltan{" "}
             <span className="text-kyzz-dark font-medium">{currencyFormat(remaining)}</span>
-            {" "}más para envío gratis
+            {" "}para obtener{" "}
+            <span className="text-kyzz-dark font-medium">¡ENVÍO GRATIS!</span>
           </p>
-        )}
-        {achieved && (
-          <span className="text-[10px] tracking-widest uppercase text-kyzz-dark">Gratis</span>
         )}
       </div>
 
-      {/* Barra con camión */}
-      <div className="relative">
-        {/* Track */}
-        <div className="h-1 w-full bg-kyzz-secondary rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-700 ease-out ${
-              achieved ? "bg-kyzz-dark" : "bg-kyzz-muted"
+      {/* ── Track + camión ── */}
+      <div className="relative pt-8">
+
+        {/* Camión */}
+        <div
+          className="absolute top-0 transition-all duration-700 ease-out"
+          style={{
+            left: `clamp(0%, calc(${progress}% - 14px), calc(100% - 28px))`,
+            animation: achieved ? "truck-arrive 0.6s ease-out" : undefined,
+          }}
+        >
+          <MdLocalShipping
+            size={28}
+            className={`drop-shadow-sm transition-colors duration-500 ${
+              achieved ? "text-kyzz-dark" : "text-kyzz-muted"
             }`}
-            style={{ width: `${progress}%` }}
           />
         </div>
 
-        {/* Camión — se mueve sobre el track */}
-        <div
-          className="absolute -top-5 transition-all duration-700 ease-out"
-          style={{
-            left: `clamp(0%, calc(${progress}% - 14px), calc(100% - 28px))`,
-          }}
-        >
-          <TruckIcon achieved={achieved} />
+        {/* Barra */}
+        <div className="relative h-3 w-full rounded-full bg-kyzz-secondary overflow-hidden">
+          {/* Relleno */}
+          <div
+            className="relative h-full rounded-full overflow-hidden transition-all duration-700 ease-out"
+            style={{
+              width: `${progress}%`,
+              backgroundColor: achieved ? "var(--kyzz-primary)" : "#2c2c2c",
+              animation: achieved ? "bar-glow 1.5s ease-in-out 3" : undefined,
+            }}
+          >
+            {/* Shimmer — solo mientras no está completo */}
+            {!achieved && progress > 0 && (
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)",
+                  animation: "shimmer 2s ease-in-out infinite",
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Etiquetas extremos */}
+        <div className="flex justify-between mt-1.5">
+          <span className="text-[10px] text-kyzz-muted">$0</span>
+          <span className="text-[10px] text-kyzz-muted">{currencyFormat(FREE_SHIPPING_THRESHOLD)}</span>
         </div>
       </div>
-
-      {/* Espaciador para el camión */}
-      <div className="h-1" />
     </div>
   );
 };

@@ -1,11 +1,13 @@
 import { Product } from '@/interfaces';
+import type { ProductColorsMap } from '@/actions/product/product-pagination';
 import { ProductGridItem } from './ProductGridItem';
 
 export type Columns = 1 | 2 | 3 | 4 | 5 | 6;
 
 interface Props {
-  products: Product[];
-  columns?: Columns;
+  products:      Product[];
+  columns?:      Columns;
+  variantColors?: ProductColorsMap;
 }
 
 const colsClass: Record<Columns, string> = {
@@ -17,7 +19,7 @@ const colsClass: Record<Columns, string> = {
   6: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6',
 };
 
-export const ProductGrid = ({ products, columns = 3 }: Props) => {
+export const ProductGrid = ({ products, columns = 3, variantColors = {} }: Props) => {
   const isListView = columns === 1;
 
   return (
@@ -27,6 +29,7 @@ export const ProductGrid = ({ products, columns = 3 }: Props) => {
           key={product.slug}
           product={product}
           listView={isListView}
+          colorVariants={variantColors[product.id]}
         />
       ))}
     </div>

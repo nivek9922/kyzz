@@ -21,12 +21,14 @@ interface State {
   clearCart: () => void;
 }
 
+// El matching se hace por variantId (cada combinación talla×color es una variante única).
+const sameVariant = (a: CartProduct, b: CartProduct) => a.variantId === b.variantId;
+
 export const useCartStore = create<State>()(
   persist(
     (set, get) => ({
       cart: [],
 
-      // Methods
       getTotalItems: () => {
         const { cart } = get();
         return cart.reduce((total, item) => total + item.quantity, 0);
@@ -46,69 +48,50 @@ export const useCartStore = create<State>()(
           0
         );
 
-        return {
-          subTotal,
-          tax,
-          total,
-          itemsInCart,
-        };
+        return { subTotal, tax, total, itemsInCart };
       },
 
       addProductTocart: (product: CartProduct) => {
         const { cart } = get();
 
-        // 1. Revisar si el producto existe en el carrito con la talla seleccionada
-        const productInCart = cart.some(
-          (item) => item.id === product.id && item.size === product.size
-        );
-
-        if (!productInCart) {
+        if (!cart.some((item) => sameVariant(item, product))) {
           set({ cart: [...cart, product] });
           return;
         }
 
-        // 2. Se que el producto existe por talla... tengo que incrementar
-        const updatedCartProducts = cart.map((item) => {
-          if (item.id === product.id && item.size === product.size) {
-            return { ...item, quantity: item.quantity + product.quantity };
-          }
-
-          return item;
+        set({
+          cart: cart.map((item) =>
+            sameVariant(item, product) ? { ...item, quantity: item.quantity + product.quantity } : item
+          ),
         });
-
-        set({ cart: updatedCartProducts });
       },
 
       updateProductQuantity: (product: CartProduct, quantity: number) => {
         const { cart } = get();
-
-        const updatedCartProducts = cart.map((item) => {
-          if (item.id === product.id && item.size === product.size) {
-            return { ...item, quantity: quantity };
-          }
-          return item;
-        });
-
-        set({ cart: updatedCartProducts });
+        set({ cart: cart.map((item) => sameVariant(item, product) ? { ...item, quantity } : item) });
       },
 
       removeProduct: (product: CartProduct) => {
         const { cart } = get();
-        const updatedCartProducts = cart.filter(
-          (item) => item.id !== product.id || item.size !== product.size
-        );
-
-        set({ cart: updatedCartProducts });
+        set({ cart: cart.filter((item) => !sameVariant(item, product)) });
       },
 
-      clearCart: () => {
-        set({ cart: [] });
-      },
+      clearCart: () => set({ cart: [] }),
     }),
 
     {
       name: "shopping-cart",
       storage: createJSONStorage(() => localStorage),
+      // version 2: matching por variantId (antes era id+size+colorName).
+      // Bump → migrate() limpia carritos viejos sin variantId.
+      version: 2,
+      migrate: (persistedState: unknown) => {
+        const state = persistedState as { cart?: CartProduct[] } | undefined;
+        if (!state || !Array.isArray(state.cart)) return { cart: [] };
+        // Si algún item del carrito viejo no tiene variantId, descartamos todo.
+        const allHaveVariant = state.cart.every((i) => typeof i.variantId === 'string' && i.variantId.length > 0);
+        return { cart: allHaveVariant ? state.cart : [] };
+      },
     }
   )
 );

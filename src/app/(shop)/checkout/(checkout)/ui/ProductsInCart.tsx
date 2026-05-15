@@ -30,7 +30,7 @@ export const ProductsInCart = () => {
   return (
     <div className="divide-y divide-kyzz-secondary">
       {productsInCart.map((product) => (
-        <div key={`${product.slug}-${product.size}`} className="flex gap-5 py-5">
+        <div key={product.variantId} className="flex gap-5 py-5">
           <ProductImage
             src={product.image}
             width={80}
@@ -43,7 +43,9 @@ export const ProductsInCart = () => {
             <div>
               <p className="text-sm text-kyzz-dark">{product.title}</p>
               <p className="text-[11px] tracking-widest uppercase text-kyzz-muted mt-0.5">
-                Talla {product.size} · x{product.quantity}
+                Talla {product.size}
+                {product.colorName && ` · ${product.colorName}`}
+                {' '}· x{product.quantity}
               </p>
             </div>
             <p className="text-sm text-kyzz-dark">{currencyFormat(product.price * product.quantity)}</p>

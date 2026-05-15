@@ -2,13 +2,15 @@
 
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { Product, Size, Prisma } from '@prisma/client';
+import { Product, Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { v2 as cloudinary } from 'cloudinary';
 cloudinary.config(process.env.CLOUDINARY_URL ?? '');
 
 const FEATURED_LIMIT = 3;
 
+// inStock y sizes se calculan automáticamente desde las variantes (ProductVariant),
+// por eso no son parte de este formulario.
 const productSchema = z.object({
   id: z.string().uuid().optional().nullable(),
   title: z.string().min(3).max(255),
@@ -18,12 +20,7 @@ const productSchema = z.object({
     .number()
     .min(0)
     .transform((val) => Number(val.toFixed(2))),
-  inStock: z.coerce
-    .number()
-    .min(0)
-    .transform((val) => Number(val.toFixed(0))),
   categoryId: z.string().uuid(),
-  sizes: z.coerce.string().transform((val) => val.split(',')),
   tags: z.string(),
   isFeatured: z.coerce.boolean().optional().default(false),
 });
@@ -76,15 +73,15 @@ export const createUpdateProduct = async (formData: FormData) => {
           where: { id },
           data: {
             ...rest,
-            sizes: { set: rest.sizes as Size[] },
             tags: { set: tagsArray },
           },
         });
       } else {
+        // Producto nuevo: inStock arranca en 0 (se calcula al crear variantes).
         savedProduct = await tx.product.create({
           data: {
             ...rest,
-            sizes: { set: rest.sizes as Size[] },
+            inStock: 0,
             tags: { set: tagsArray },
           },
         });
@@ -122,7 +119,12 @@ export const createUpdateProduct = async (formData: FormData) => {
     revalidatePath(`/product/${prismaTx.product.slug}`);
     revalidatePath('/');
 
-    return { ok: true, product: prismaTx.product };
+    const finalImages = await prisma.productImage.findMany({
+      where: { productId: prismaTx.product.id },
+      select: { id: true, url: true, productId: true },
+    });
+
+    return { ok: true, product: prismaTx.product, images: finalImages };
   } catch (error) {
     console.error(error);
     return { ok: false, message: 'No se pudo guardar el producto' };
