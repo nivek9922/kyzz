@@ -1,5 +1,5 @@
 import type { CartProduct } from "@/interfaces";
-import { TAX_RATE } from "@/config/constants";
+import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from "@/config/constants";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
@@ -10,6 +10,7 @@ interface State {
   getSummaryInformation: () => {
     subTotal: number;
     tax: number;
+    shipping: number;
     total: number;
     itemsInCart: number;
   };
@@ -41,14 +42,16 @@ export const useCartStore = create<State>()(
           (subTotal, product) => product.quantity * product.price + subTotal,
           0
         );
-        const tax = subTotal * TAX_RATE;
-        const total = subTotal + tax;
+        // Los precios ya incluyen IVA → el tax es el componente implícito dentro del precio
+        const tax      = subTotal * (TAX_RATE / (1 + TAX_RATE));
+        const shipping = subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+        const total    = subTotal + shipping;
         const itemsInCart = cart.reduce(
           (total, item) => total + item.quantity,
           0
         );
 
-        return { subTotal, tax, total, itemsInCart };
+        return { subTotal, tax, shipping, total, itemsInCart };
       },
 
       addProductTocart: (product: CartProduct) => {

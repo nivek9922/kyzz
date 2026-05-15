@@ -10,7 +10,7 @@ import { FreeShippingBar } from "@/components";
 export const OrderSummary = () => {
   const router = useRouter();
   const [loaded, setLoaded] = useState(false);
-  const { itemsInCart, subTotal, tax, total } = useCartStore(
+  const { itemsInCart, subTotal, tax, shipping, total } = useCartStore(
     useShallow((state) => state.getSummaryInformation())
   );
 
@@ -37,22 +37,23 @@ export const OrderSummary = () => {
     <div className="space-y-3">
       <FreeShippingBar subTotal={subTotal} />
       <div className="flex justify-between text-sm text-kyzz-muted">
-        <span>Productos</span>
-        <span>{itemsInCart === 1 ? '1 artículo' : `${itemsInCart} artículos`}</span>
-      </div>
-      <div className="flex justify-between text-sm text-kyzz-muted">
-        <span>Subtotal</span>
+        <span>Subtotal · {itemsInCart === 1 ? '1 artículo' : `${itemsInCart} artículos`}</span>
         <span>{currencyFormat(subTotal)}</span>
       </div>
       <div className="flex justify-between text-sm text-kyzz-muted">
-        <span>Impuestos (15%)</span>
-        <span>{currencyFormat(tax)}</span>
+        <span>Envío</span>
+        <span className={shipping === 0 ? 'text-kyzz-dark' : ''}>
+          {shipping === 0 ? 'Gratis' : currencyFormat(shipping)}
+        </span>
       </div>
       <div className="border-t border-kyzz-secondary pt-4 mt-2">
         <div className="flex justify-between">
           <span className="text-sm tracking-widest uppercase text-kyzz-dark">Total</span>
           <span className="text-sm text-kyzz-dark font-medium">{currencyFormat(total)}</span>
         </div>
+        <p className="text-[10px] text-kyzz-muted mt-1">
+          Incluye {currencyFormat(tax)} de impuestos
+        </p>
       </div>
     </div>
   );

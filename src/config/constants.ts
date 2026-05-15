@@ -1,3 +1,4 @@
-export const TAX_RATE = 0.15; // 15% IVA
+export const TAX_RATE = 0.19; // 19% IVA (normativa colombiana)
 
-export const FREE_SHIPPING_THRESHOLD = 150_000; // COP
+export const FREE_SHIPPING_THRESHOLD = 500_000; // COP — por encima de esto el envío es gratis
+export const SHIPPING_COST           =  17_000; // COP — costo de envío estándar
