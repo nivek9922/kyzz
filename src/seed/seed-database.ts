@@ -90,6 +90,19 @@ async function main() {
 
 
 
+  // ── Cupón KYZZ10 (newsletter welcome) ──────────────────
+  await prisma.coupon.upsert({
+    where:  { code: 'KYZZ10' },
+    update: {},
+    create: {
+      code:           'KYZZ10',
+      type:           'PERCENTAGE',
+      value:          10,
+      isActive:       true,
+      subscriberOnly: true,
+    },
+  });
+
   console.log( 'Seed ejecutado correctamente' );
 }
 

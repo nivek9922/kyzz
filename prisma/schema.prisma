@@ -23,6 +23,22 @@ enum Role {
   user
 }
 
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+enum CouponCampaign {
+  newsletter_welcome
+  first_purchase
+  seasonal
+  influencer
+  category
+  free_shipping
+  vip
+  general
+}
+
 enum ShippingStatus {
   pending
   processing
@@ -138,7 +154,11 @@ model Order {
   OrderItem    OrderItem[]
   OrderAddress OrderAddress?
 
-  transactionId String?
+  transactionId  String?
+  couponCode     String?
+  couponDiscount Float   @default(0)
+
+  redemption CouponRedemption?
 
   @@index([userId])
 }
@@ -226,9 +246,51 @@ model SiteConfig {
 model Subscriber {
   id             String    @id @default(uuid())
   email          String    @unique
+  name           String?
+  source         String    @default("newsletter-popup")
+  isActive       Boolean   @default(true)
+  receivedCoupon Boolean   @default(false)
   createdAt      DateTime  @default(now())
   confirmedAt    DateTime?
   unsubscribedAt DateTime?
+
+  welcomeCouponId String?
+  welcomeCoupon   Coupon? @relation(fields: [welcomeCouponId], references: [id])
+}
+
+model Coupon {
+  id             String         @id @default(uuid())
+  code           String         @unique
+  type           CouponType     @default(PERCENTAGE)
+  value          Float
+  isActive       Boolean        @default(true)
+  subscriberOnly Boolean        @default(false)
+  campaign       CouponCampaign @default(general)
+  description    String?
+  minimumAmount  Float?
+  usageLimit     Int?
+  usageCount     Int            @default(0)
+  expiresAt      DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  redemptions  CouponRedemption[]
+  subscribers  Subscriber[]
+}
+
+model CouponRedemption {
+  id         String   @id @default(uuid())
+  email      String
+  redeemedAt DateTime @default(now())
+
+  coupon   Coupon @relation(fields: [couponId], references: [id])
+  couponId String
+
+  order   Order?  @relation(fields: [orderId], references: [id])
+  orderId String? @unique
+
+  @@unique([couponId, email])
+  @@index([email])
 }
 
 model OrderAddress {

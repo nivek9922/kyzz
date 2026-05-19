@@ -7,24 +7,26 @@ import type { Prisma } from "@prisma/client";
 
 interface ProductToOrder {
   productId:  string;
-  variantId:  string;     // requerido: identifica exactamente la combinación (color×talla)
+  variantId:  string;
   quantity:   number;
   size:       Size;
   colorName?: string;
 }
 
 export const placeOrder = async (
-  productIds: ProductToOrder[],
-  address: Address
+  productIds:  ProductToOrder[],
+  address:     Address,
+  couponCode?: string
 ) => {
   const session = await auth();
-  const userId = session?.user.id;
+  const userId  = session?.user.id;
+  const userEmail = session?.user.email?.toLowerCase();
 
   if (!userId) {
     return { ok: false, message: "No hay sesión de usuario" };
   }
 
-  // ── Cargar productos para precios (snapshot) ──
+  // ── Precios snapshot ────────────────────────────────────
   const products = await prisma.product.findMany({
     where: { id: { in: productIds.map((p) => p.productId) } },
   });
@@ -44,25 +46,19 @@ export const placeOrder = async (
     },
     { subTotal: 0, tax: 0 }
   );
+
   const shipping = subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
-  const total    = subTotal + shipping;
 
   try {
     const prismaTx = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 
-      // 1. Decrementar stock de cada variante y verificar disponibilidad
+      // 1. Validar y decrementar stock
       const variantIds = productIds.map((p) => p.variantId);
-      const variants   = await tx.productVariant.findMany({
-        where: { id: { in: variantIds } },
-      });
+      const variants   = await tx.productVariant.findMany({ where: { id: { in: variantIds } } });
 
-      // Validar que cada variante existe y tiene stock suficiente
       for (const item of productIds) {
         const variant = variants.find((v) => v.id === item.variantId);
-        if (!variant) {
-          throw new Error(`Variante ${item.variantId} no encontrada`);
-        }
-        // Sumar cantidad pedida de esta variante (puede aparecer dos veces si por algún motivo se duplicó)
+        if (!variant) throw new Error(`Variante ${item.variantId} no encontrada`);
         const totalQty = productIds
           .filter((p) => p.variantId === item.variantId)
           .reduce((acc, p) => acc + p.quantity, 0);
@@ -71,7 +67,6 @@ export const placeOrder = async (
         }
       }
 
-      // Decrementar (atómico por variante)
       const uniqueDecrement = new Map<string, number>();
       for (const item of productIds) {
         uniqueDecrement.set(item.variantId, (uniqueDecrement.get(item.variantId) ?? 0) + item.quantity);
@@ -79,27 +74,59 @@ export const placeOrder = async (
 
       await Promise.all(
         Array.from(uniqueDecrement.entries()).map(([variantId, qty]) =>
-          tx.productVariant.update({
-            where: { id: variantId },
-            data:  { stock: { decrement: qty } },
-          })
+          tx.productVariant.update({ where: { id: variantId }, data: { stock: { decrement: qty } } })
         )
       );
 
-      // 2. Sincronizar Product.inStock (suma de stock de variantes del producto)
+      // 2. Sincronizar Product.inStock
       const affectedProductIds = Array.from(new Set(productIds.map((p) => p.productId)));
       for (const pid of affectedProductIds) {
         const agg = await tx.productVariant.aggregate({
-          where:  { productId: pid },
-          _sum:   { stock: true },
+          where: { productId: pid },
+          _sum:  { stock: true },
         });
-        await tx.product.update({
-          where: { id: pid },
-          data:  { inStock: agg._sum.stock ?? 0 },
-        });
+        await tx.product.update({ where: { id: pid }, data: { inStock: agg._sum.stock ?? 0 } });
       }
 
-      // 3. Crear la orden + items
+      // 3. Validar cupón dentro de la transacción (nunca confiar en el cliente)
+      let couponDiscount = 0;
+      let appliedCode:    string | undefined;
+      let appliedCouponId: string | undefined;
+
+      if (couponCode && userEmail) {
+        const upper = couponCode.trim().toUpperCase();
+        const coupon = await tx.coupon.findUnique({ where: { code: upper } });
+
+        const valid =
+          coupon &&
+          coupon.isActive &&
+          (!coupon.expiresAt || coupon.expiresAt > new Date()) &&
+          (coupon.usageLimit === null || coupon.usageCount < coupon.usageLimit) &&
+          (coupon.minimumAmount === null || subTotal >= coupon.minimumAmount);
+
+        if (valid) {
+          // Subscriber-only check
+          if (coupon.subscriberOnly) {
+            const sub = await tx.subscriber.findUnique({ where: { email: userEmail } });
+            if (!sub?.isActive) throw new Error('Cupón exclusivo para suscriptoras del newsletter.');
+          }
+          // Not already used
+          const used = await tx.couponRedemption.findUnique({
+            where: { couponId_email: { couponId: coupon.id, email: userEmail } },
+          });
+          if (!used?.orderId) {
+            couponDiscount = coupon.type === 'PERCENTAGE'
+              ? Math.round(subTotal * (coupon.value / 100))
+              : Math.min(coupon.value, subTotal);
+            appliedCode     = coupon.code;
+            appliedCouponId = coupon.id;
+          }
+        }
+      }
+
+      const total = subTotal + shipping - couponDiscount;
+
+      // 4. Crear orden
       const order = await tx.order.create({
         data: {
           userId,
@@ -107,6 +134,8 @@ export const placeOrder = async (
           subTotal,
           tax,
           total,
+          couponCode:     appliedCode     ?? null,
+          couponDiscount: couponDiscount,
           OrderItem: {
             createMany: {
               data: productIds.map((p) => ({
@@ -115,37 +144,38 @@ export const placeOrder = async (
                 productId: p.productId,
                 variantId: p.variantId,
                 colorName: p.colorName ?? null,
-                price:
-                  products.find((product: DbProduct) => product.id === p.productId)?.price ?? 0,
+                price:     products.find((pr: DbProduct) => pr.id === p.productId)?.price ?? 0,
               })),
             },
           },
         },
       });
 
-      // 4. Dirección
+      // 5. Dirección
       const { country, ...restAddress } = address;
       const orderAddress = await tx.orderAddress.create({
-        data: {
-          ...restAddress,
-          countryId: country,
-          orderId:   order.id,
-        },
+        data: { ...restAddress, countryId: country, orderId: order.id },
       });
+
+      // 6. Registrar redención del cupón y actualizar contador
+      if (appliedCouponId && userEmail) {
+        await tx.couponRedemption.upsert({
+          where: { couponId_email: { couponId: appliedCouponId, email: userEmail } },
+          update: { orderId: order.id, redeemedAt: new Date() },
+          create: { couponId: appliedCouponId, email: userEmail, orderId: order.id },
+        });
+        await tx.coupon.update({
+          where: { id: appliedCouponId },
+          data:  { usageCount: { increment: 1 } },
+        });
+      }
 
       return { order, orderAddress };
     });
 
-    return {
-      ok: true,
-      order: prismaTx.order,
-      prismaTx: prismaTx,
-    };
+    return { ok: true, order: prismaTx.order };
 
-  } catch (error: any) {
-    return {
-      ok: false,
-      message: error?.message,
-    };
+  } catch (error: unknown) {
+    return { ok: false, message: error instanceof Error ? error.message : 'Error desconocido' };
   }
 };

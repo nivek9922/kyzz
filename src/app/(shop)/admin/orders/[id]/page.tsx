@@ -18,8 +18,10 @@ export default async function AdminOrderDetailPage(props: Props) {
   const { ok, order } = await getOrderById(id);
   if (!ok || !order) redirect('/admin/orders');
 
-  const address  = order.OrderAddress!;
-  const shortId  = id.split('-').at(-1)?.toUpperCase();
+  const address      = order.OrderAddress!;
+  const shortId      = id.split('-').at(-1)?.toUpperCase();
+  const discount     = order.couponDiscount ?? 0;
+  const shippingCost = order.total - order.subTotal + discount;
 
   return (
     <div>
@@ -125,14 +127,38 @@ export default async function AdminOrderDetailPage(props: Props) {
                 </div>
               );
             })}
-            <div className="px-4 py-4 flex justify-between items-center">
-              <div className="space-y-1 text-sm text-kyzz-muted">
-                <div className="flex gap-8"><span>Subtotal</span><span>{currencyFormat(order.subTotal)}</span></div>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] tracking-widest uppercase text-kyzz-muted">Total</p>
-                <p className="text-lg font-medium text-kyzz-dark">{currencyFormat(order.total)}</p>
-                <p className="text-[10px] text-kyzz-muted mt-0.5">Incluye {currencyFormat(order.tax)} de impuestos</p>
+            <div className="px-4 py-4 border-t border-kyzz-secondary">
+              <div className="flex justify-between items-start gap-8">
+                {/* Desglose izquierda */}
+                <div className="space-y-1.5 text-[12px] text-kyzz-muted">
+                  <div className="flex justify-between gap-10">
+                    <span>Subtotal</span>
+                    <span>{currencyFormat(order.subTotal)}</span>
+                  </div>
+                  <div className="flex justify-between gap-10">
+                    <span>Envío</span>
+                    <span className={shippingCost === 0 ? 'text-emerald-600' : ''}>
+                      {shippingCost === 0 ? 'Gratis' : currencyFormat(shippingCost)}
+                    </span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between gap-10 text-kyzz-primary">
+                      <span>
+                        Descuento
+                        {order.couponCode && (
+                          <span className="ml-1.5 font-mono text-[10px] opacity-70">{order.couponCode}</span>
+                        )}
+                      </span>
+                      <span>−{currencyFormat(discount)}</span>
+                    </div>
+                  )}
+                </div>
+                {/* Total derecha */}
+                <div className="text-right shrink-0">
+                  <p className="text-[10px] tracking-widest uppercase text-kyzz-muted">Total</p>
+                  <p className="text-lg font-medium text-kyzz-dark">{currencyFormat(order.total)}</p>
+                  <p className="text-[10px] text-kyzz-muted mt-0.5">Incluye {currencyFormat(order.tax)} de impuestos</p>
+                </div>
               </div>
             </div>
           </div>
