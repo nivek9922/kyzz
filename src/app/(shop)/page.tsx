@@ -10,7 +10,6 @@ import {
   IoDiamondOutline,
   IoShieldCheckmarkOutline,
 } from 'react-icons/io5';
-import { HomeRecentlyViewed } from './ui/HomeRecentlyViewed';
 
 const features = [
   {
