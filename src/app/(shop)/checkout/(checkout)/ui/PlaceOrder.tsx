@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { toast } from 'sonner';
@@ -13,7 +13,6 @@ import { gaBeginCheckout, gaPurchase } from "@/lib/gtag";
 
 export const PlaceOrder = () => {
   const router = useRouter();
-  const [loaded, setLoaded] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const address = useAddressStore((state) => state.address);
@@ -25,14 +24,14 @@ export const PlaceOrder = () => {
   );
 
   useEffect(() => {
-    setLoaded(true);
-    // begin_checkout: el usuario llega al resumen de compra
+    if (cart.length === 0) return;
     gaBeginCheckout({
       value: total,
       items: cart.map(p => ({ id: p.id, name: p.title, price: p.price, quantity: p.quantity })),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Solo disparar cuando el carrito esté disponible (post-hidratación del store)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.length]);
 
   const onPlaceOrder = async () => {
     if (cart.length === 0) {
@@ -74,16 +73,6 @@ export const PlaceOrder = () => {
     clearCart();
     router.replace("/orders/" + resp.order?.id);
   };
-
-  if (!loaded) {
-    return (
-      <div className="kyzz-panel animate-pulse space-y-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-3 bg-kyzz-secondary/40 w-full" />
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="kyzz-panel md:sticky md:top-24">

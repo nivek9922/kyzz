@@ -2,6 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
+import { NewsletterPopup } from "@/components/ui/NewsletterPopup";
 
 interface Props {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ export const Providers = ({ children }: Props) => {
   return (
     <SessionProvider>
       {children}
+      <NewsletterPopup />
       <Toaster
         position="top-right"
         gap={8}
