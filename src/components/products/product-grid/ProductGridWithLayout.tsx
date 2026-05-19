@@ -1,44 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ProductGrid, type Columns } from "./ProductGrid";
+import { ProductGrid } from "./ProductGrid";
 import { GridLayoutSelector } from "./GridLayoutSelector";
+import { useGridLayout } from "@/hooks/useGridLayout";
 import type { Product } from "@/interfaces";
 import type { VariantColorMap } from "@/actions/product/product-pagination";
 
 interface Props {
-  products:      Product[];
+  products:       Product[];
   variantColors?: VariantColorMap;
 }
 
-const STORAGE_KEY = "kyzz-grid-cols";
-const DEFAULT_COLS: Columns = 3;
-const VALID: Columns[] = [1, 2, 3, 4, 5, 6];
-
 export const ProductGridWithLayout = ({ products, variantColors = {} }: Props) => {
-  const [columns, setColumns] = useState<Columns>(DEFAULT_COLS);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const saved = Number(localStorage.getItem(STORAGE_KEY)) as Columns;
-    if (VALID.includes(saved)) setColumns(saved);
-    setMounted(true);
-  }, []);
-
-  const handleChange = (cols: Columns) => {
-    setColumns(cols);
-    localStorage.setItem(STORAGE_KEY, String(cols));
-  };
+  const { isMobile, effectiveCols, mounted, gapClass, handleChange } = useGridLayout({
+    storageKeyMobile:  "kyzz-grid-cols-mobile",
+    storageKeyDesktop: "kyzz-grid-cols-desktop",
+  });
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4 md:mb-6">
         <p className="text-xs text-kyzz-muted">
           {products.length} {products.length === 1 ? "producto" : "productos"}
         </p>
-        {mounted && <GridLayoutSelector columns={columns} onChange={handleChange} />}
+        {mounted && (
+          <GridLayoutSelector
+            columns={effectiveCols}
+            onChange={handleChange}
+            isMobile={isMobile}
+          />
+        )}
       </div>
-      <ProductGrid products={products} columns={columns} variantColors={variantColors} />
+      <ProductGrid
+        products={products}
+        columns={effectiveCols}
+        variantColors={variantColors}
+        gapOverride={gapClass}
+        compactMode={isMobile && effectiveCols === 3}
+      />
     </>
   );
 };

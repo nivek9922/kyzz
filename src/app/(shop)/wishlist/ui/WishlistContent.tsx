@@ -1,26 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { IoHeart, IoHeartOutline, IoHeartDislikeOutline } from 'react-icons/io5';
 import { useWishlistStore } from '@/store';
 import { getWishlistProducts } from '@/actions/product/get-wishlist-products';
 import { GridLayoutSelector } from '@/components';
+import { useGridLayout } from '@/hooks/useGridLayout';
 import type { Columns } from '@/components/products/product-grid/ProductGrid';
 import { currencyFormat } from '@/utils';
 import { titleFont } from '@/config/fonts';
 
-// Clave separada de la página de productos para no heredar su configuración
-const STORAGE_KEY  = 'kyzz-wishlist-cols';
-const DEFAULT_COLS: Columns = 3;
 const colsMap: Record<Columns, string> = {
+  0: 'grid-cols-1',
   1: 'grid-cols-1',
   2: 'grid-cols-2',
-  3: 'grid-cols-2 md:grid-cols-3',
-  4: 'grid-cols-2 md:grid-cols-4',
-  5: 'grid-cols-2 md:grid-cols-5',
-  6: 'grid-cols-3 md:grid-cols-6',
+  3: 'grid-cols-3',
+  4: 'grid-cols-2 sm:grid-cols-4',
+  5: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5',
+  6: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6',
 };
 
 type WishlistProduct = Awaited<ReturnType<typeof getWishlistProducts>>[number];
@@ -34,25 +33,17 @@ const imgSrc = (p: WishlistProduct) => {
 export const WishlistContent = () => {
   const { items, toggle } = useWishlistStore();
 
-  // ── Product cache: ID → data. Solo se fetch cuando aparecen IDs nuevos.
-  // Al remover un favorito NO se re-fetcha — se filtra el cache local.
+  const { isMobile, effectiveCols, mounted, isListView, handleChange } = useGridLayout({
+    storageKeyMobile:  'kyzz-wishlist-cols-mobile',
+    storageKeyDesktop: 'kyzz-wishlist-cols-desktop',
+  });
+
+  // ── Product cache: ID → data
   const [productMap, setProductMap] = useState<Map<string, WishlistProduct>>(new Map());
   const [initialLoading, setInitialLoading] = useState(true);
   const [, startTransition] = useTransition();
-
-  // ── Columnas (key separada para no pisar la de /products)
-  const [columns, setColumns] = useState<Columns>(DEFAULT_COLS);
   const columnsReady = useRef(false);
-  useEffect(() => {
-    const saved = Number(localStorage.getItem(STORAGE_KEY)) as Columns;
-    if ([1, 2, 3, 4, 5, 6].includes(saved)) setColumns(saved);
-    columnsReady.current = true;
-  }, []);
-
-  const handleColChange = useCallback((cols: Columns) => {
-    setColumns(cols);
-    localStorage.setItem(STORAGE_KEY, String(cols));
-  }, []);
+  useEffect(() => { columnsReady.current = true; }, []);
 
   // ── Solo fetchea los IDs que no están en cache
   useEffect(() => {
@@ -91,7 +82,7 @@ export const WishlistContent = () => {
   // ── Skeleton de carga inicial
   if (initialLoading) {
     return (
-      <div className={`grid ${colsMap[DEFAULT_COLS]} gap-x-4 gap-y-8 mt-10`}>
+      <div className="grid grid-cols-3 gap-x-4 gap-y-8 mt-10">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="aspect-[3/4] bg-kyzz-secondary/40" />
@@ -123,18 +114,24 @@ export const WishlistContent = () => {
 
   return (
     <>
-      <div className="flex justify-end mt-8 mb-4">
-        <GridLayoutSelector columns={columns} onChange={handleColChange} />
-      </div>
+      {mounted && (
+        <div className="flex justify-end mt-8 mb-4">
+          <GridLayoutSelector
+            columns={effectiveCols}
+            onChange={handleChange}
+            isMobile={isMobile}
+          />
+        </div>
+      )}
 
-      {columns === 1 ? (
+      {isListView ? (
         <div className="divide-y divide-kyzz-secondary">
           {displayedProducts.map((product) => (
             <WishlistListItem key={product.id} product={product} onRemove={toggle} />
           ))}
         </div>
       ) : (
-        <div className={`grid ${colsMap[columns]} gap-x-4 gap-y-8`}>
+        <div className={`grid ${colsMap[effectiveCols]} gap-x-4 gap-y-8`}>
           {displayedProducts.map((product) => (
             <WishlistCard key={product.id} product={product} onRemove={toggle} />
           ))}

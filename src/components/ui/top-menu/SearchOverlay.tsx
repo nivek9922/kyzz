@@ -254,7 +254,7 @@ export const SearchOverlay = () => {
 
       {/* Panel */}
       <div className="relative bg-kyzz-neutral border-b border-kyzz-secondary shadow-xl fade-in">
-        <div className="px-8 md:px-16 py-8">
+        <div className="px-4 md:px-8 lg:px-16 py-5 md:py-8">
 
           {/* ── Input ── */}
           <form onSubmit={handleSubmit} className="flex items-center gap-4">

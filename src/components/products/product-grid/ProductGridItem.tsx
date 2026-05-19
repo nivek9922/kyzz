@@ -10,9 +10,11 @@ import type { ProductColorEntry } from '@/actions/product/product-pagination';
 import { WishlistButton } from './WishlistButton';
 
 interface Props {
-  product:       Product;
-  listView?:     boolean;
+  product:        Product;
+  listView?:      boolean;
   colorVariants?: ProductColorEntry[];
+  /** En 3 columnas mobile el espacio es reducido: texto más pequeño, swatches más chicos */
+  compactMode?:   boolean;
 }
 
 const PLACEHOLDER = '/imgs/placeholder.jpg';
@@ -22,7 +24,7 @@ const imgSrc = (url: string | null | undefined) =>
   : `/products/${url}`;
 
 // ── Card grid normal ──────────────────────────────────────────────────────────
-export const ProductGridItem = ({ product, listView = false, colorVariants = [] }: Props) => {
+export const ProductGridItem = ({ product, listView = false, colorVariants = [], compactMode = false }: Props) => {
   const hasColors     = colorVariants.length > 0;
   const firstColorImg = hasColors && colorVariants[0].image ? colorVariants[0].image : null;
   const isSoldOut     = (product.inStock ?? 0) <= 0;
@@ -123,14 +125,18 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
         </div>
       </Link>
 
-      <div className="pt-3 pb-2">
+      <div className={compactMode ? 'pt-2 pb-1' : 'pt-3 pb-2'}>
         <Link
           href={`/product/${product.slug}`}
-          className="block text-sm text-kyzz-dark hover:text-kyzz-primary transition-colors duration-200 truncate"
+          className={`block text-kyzz-dark hover:text-kyzz-primary transition-colors duration-200 truncate ${
+            compactMode ? 'text-[11px] leading-snug' : 'text-sm'
+          }`}
         >
           {product.title}
         </Link>
-        <span className="block mt-1 text-sm text-kyzz-muted">{currencyFormat(product.price)}</span>
+        <span className={`block mt-0.5 text-kyzz-muted ${compactMode ? 'text-[11px]' : 'text-sm mt-1'}`}>
+          {currencyFormat(product.price)}
+        </span>
 
         {hasColors && (
           <ColorSwatchRow
@@ -138,6 +144,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
             activeId={activeColor}
             onHover={handleColorHover}
             onLeave={handleMouseLeave}
+            compact={compactMode}
           />
         )}
       </div>
@@ -151,12 +158,14 @@ interface SwatchRowProps {
   activeId: string | null;
   onHover:  (c: ProductColorEntry) => void;
   onLeave:  () => void;
+  compact?: boolean;
 }
 
-const ColorSwatchRow = ({ colors, activeId, onHover, onLeave }: SwatchRowProps) => (
-  <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+const ColorSwatchRow = ({ colors, activeId, onHover, onLeave, compact = false }: SwatchRowProps) => (
+  <div className={`flex items-center flex-wrap ${compact ? 'gap-1 mt-1.5' : 'gap-1.5 mt-2.5'}`}>
     {colors.map((c) => {
       const isActive = c.id === activeId;
+      const size     = compact ? 'w-5 h-5' : 'w-7 h-7';
       return (
         <button
           key={c.id}
@@ -166,7 +175,7 @@ const ColorSwatchRow = ({ colors, activeId, onHover, onLeave }: SwatchRowProps) 
           onMouseEnter={() => onHover(c)}
           onMouseLeave={onLeave}
           onClick={(e) => { e.preventDefault(); onHover(c); }}
-          className={`relative w-7 h-7 rounded-full overflow-hidden transition-all duration-200 shrink-0 ${
+          className={`relative ${size} rounded-full overflow-hidden transition-all duration-200 shrink-0 ${
             isActive
               ? 'ring-2 ring-offset-1 ring-kyzz-dark scale-110'
               : 'ring-1 ring-kyzz-secondary hover:scale-110 hover:ring-kyzz-muted'
