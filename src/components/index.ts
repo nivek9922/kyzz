@@ -8,6 +8,7 @@ export * from './products/product-grid/GridLayoutSelector';
 export * from './products/product-grid/ProductGridWithLayout';
 export * from './products/product-grid/WishlistButton';
 export * from './products/product-filters/ProductFilters';
+export * from './products/InfiniteProductGrid';
 
 export * from './orders/OrderStatus';
 

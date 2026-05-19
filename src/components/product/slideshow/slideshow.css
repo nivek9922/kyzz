@@ -10,6 +10,7 @@
 }
 
 /* ── Desktop: layout horizontal (thumbnails a la izquierda) ── */
+/* display:flex se aplica via Tailwind en el componente para no conflictuar con .hidden */
 .slideshow-wrapper {
   display: flex;
   gap: 8px;
@@ -99,4 +100,15 @@
 .kyzz-main .swiper-button-prev,
 .kyzz-main .swiper-button-next {
   color: #8C7365;
+}
+
+/* paginación dots — mobile */
+.kyzz-main-mobile .swiper-pagination {
+  bottom: 10px;
+}
+
+.kyzz-main-mobile .swiper-pagination-bullet {
+  width: 6px;
+  height: 6px;
+  margin: 0 3px;
 }

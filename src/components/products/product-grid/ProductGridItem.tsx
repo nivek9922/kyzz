@@ -10,16 +10,23 @@ import type { ProductColorEntry } from '@/actions/product/product-pagination';
 import { WishlistButton } from './WishlistButton';
 
 interface Props {
-  product:       Product;
-  listView?:     boolean;
+  product:        Product;
+  listView?:      boolean;
   colorVariants?: ProductColorEntry[];
+  /** En 3 columnas mobile el espacio es reducido: texto más pequeño, swatches más chicos */
+  compactMode?:   boolean;
+  /** Hint para el srcset: debe coincidir con el tamaño visual real según las columnas activas */
+  imageSizes?:    string;
 }
 
+const PLACEHOLDER = '/imgs/placeholder.jpg';
 const imgSrc = (url: string | null | undefined) =>
-  !url ? '/imgs/placeholder.jpg' : url.startsWith('http') ? url : `/products/${url}`;
+  !url ? PLACEHOLDER
+  : url.startsWith('http') || url.startsWith('/') ? url
+  : `/products/${url}`;
 
 // ── Card grid normal ──────────────────────────────────────────────────────────
-export const ProductGridItem = ({ product, listView = false, colorVariants = [] }: Props) => {
+export const ProductGridItem = ({ product, listView = false, colorVariants = [], compactMode = false, imageSizes }: Props) => {
   const hasColors     = colorVariants.length > 0;
   const firstColorImg = hasColors && colorVariants[0].image ? colorVariants[0].image : null;
   const isSoldOut     = (product.inStock ?? 0) <= 0;
@@ -51,6 +58,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
               fill
               sizes="128px"
               className={`object-cover transition-all duration-500 group-hover:scale-105 ${isSoldOut ? 'opacity-60' : ''}`}
+            onError={() => setMainImage(PLACEHOLDER)}
             />
             {isSoldOut && (
               <span className="absolute top-1.5 left-1.5 bg-kyzz-dark/85 text-white text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5">
@@ -100,8 +108,9 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
             src={imgSrc(mainImage)}
             alt={product.title}
             fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes={imageSizes ?? '(max-width: 640px) 50vw, 33vw'}
             className={`object-cover transition-all duration-500 group-hover:scale-105 ${isSoldOut ? 'opacity-60' : ''}`}
+            onError={() => setMainImage(PLACEHOLDER)}
             onMouseEnter={() => {
               if (!hasColors && secondImage) setMainImage(secondImage);
             }}
@@ -118,14 +127,18 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
         </div>
       </Link>
 
-      <div className="pt-3 pb-2">
+      <div className={compactMode ? 'pt-2 pb-1' : 'pt-3 pb-2'}>
         <Link
           href={`/product/${product.slug}`}
-          className="block text-sm text-kyzz-dark hover:text-kyzz-primary transition-colors duration-200 truncate"
+          className={`block text-kyzz-dark hover:text-kyzz-primary transition-colors duration-200 truncate ${
+            compactMode ? 'text-[11px] leading-snug' : 'text-sm'
+          }`}
         >
           {product.title}
         </Link>
-        <span className="block mt-1 text-sm text-kyzz-muted">{currencyFormat(product.price)}</span>
+        <span className={`block mt-0.5 text-kyzz-muted ${compactMode ? 'text-[11px]' : 'text-sm mt-1'}`}>
+          {currencyFormat(product.price)}
+        </span>
 
         {hasColors && (
           <ColorSwatchRow
@@ -133,6 +146,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
             activeId={activeColor}
             onHover={handleColorHover}
             onLeave={handleMouseLeave}
+            compact={compactMode}
           />
         )}
       </div>
@@ -146,12 +160,14 @@ interface SwatchRowProps {
   activeId: string | null;
   onHover:  (c: ProductColorEntry) => void;
   onLeave:  () => void;
+  compact?: boolean;
 }
 
-const ColorSwatchRow = ({ colors, activeId, onHover, onLeave }: SwatchRowProps) => (
-  <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+const ColorSwatchRow = ({ colors, activeId, onHover, onLeave, compact = false }: SwatchRowProps) => (
+  <div className={`flex items-center flex-wrap ${compact ? 'gap-1 mt-1.5' : 'gap-1.5 mt-2.5'}`}>
     {colors.map((c) => {
       const isActive = c.id === activeId;
+      const size     = compact ? 'w-5 h-5' : 'w-7 h-7';
       return (
         <button
           key={c.id}
@@ -161,7 +177,7 @@ const ColorSwatchRow = ({ colors, activeId, onHover, onLeave }: SwatchRowProps) 
           onMouseEnter={() => onHover(c)}
           onMouseLeave={onLeave}
           onClick={(e) => { e.preventDefault(); onHover(c); }}
-          className={`relative w-7 h-7 rounded-full overflow-hidden transition-all duration-200 shrink-0 ${
+          className={`relative ${size} rounded-full overflow-hidden transition-all duration-200 shrink-0 ${
             isActive
               ? 'ring-2 ring-offset-1 ring-kyzz-dark scale-110'
               : 'ring-1 ring-kyzz-secondary hover:scale-110 hover:ring-kyzz-muted'

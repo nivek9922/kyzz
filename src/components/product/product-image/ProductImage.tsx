@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 
 interface Props {
@@ -11,6 +14,11 @@ interface Props {
   loading?: 'lazy' | 'eager';
 }
 
+const resolveSrc = (src?: string) =>
+  src
+    ? src.startsWith('http') ? src : `/products/${src}`
+    : '/imgs/placeholder.jpg';
+
 export const ProductImage = ({
   src,
   alt,
@@ -21,16 +29,11 @@ export const ProductImage = ({
   priority,
   loading,
 }: Props) => {
-
-  const localSrc = src
-    ? src.startsWith('http')
-      ? src
-      : `/products/${src}`
-    : '/imgs/placeholder.jpg';
+  const [imgSrc, setImgSrc] = useState(() => resolveSrc(src));
 
   return (
     <Image
-      src={localSrc}
+      src={imgSrc}
       width={width}
       height={height}
       alt={alt}
@@ -38,6 +41,7 @@ export const ProductImage = ({
       style={style}
       priority={priority}
       loading={loading}
+      onError={() => setImgSrc('/imgs/placeholder.jpg')}
     />
   );
 };

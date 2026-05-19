@@ -13,22 +13,30 @@ export const searchProducts = async (query: string) => {
       where: {
         OR: [
           { title: { contains: q, mode: 'insensitive' } },
-          { description: { contains: q, mode: 'insensitive' } },
-          { tags: { has: q } },
+          { tags:  { has: q } },
         ],
       },
       include: {
-        ProductImage: {
+        ProductImage: { take: 2, select: { url: true } },
+        ProductColors: {
           take: 1,
-          select: { url: true },
+          select: {
+            images: { take: 2, orderBy: { sortOrder: 'asc' }, select: { url: true } },
+          },
         },
       },
     });
 
-    return products.map((p) => ({
-      ...p,
-      images: p.ProductImage.map((img) => img.url),
-    }));
+    return products.map((p) => {
+      const { ProductImage, ProductColors, ...rest } = p;
+      const baseImages  = ProductImage.map((img) => img.url);
+      const colorImages = ProductColors.flatMap((c) => c.images.map((i) => i.url));
+      return {
+        ...rest,
+        // Las imágenes pueden estar en el producto base o en sus variantes de color
+        images: baseImages.length > 0 ? baseImages : colorImages,
+      };
+    });
   } catch {
     return [];
   }

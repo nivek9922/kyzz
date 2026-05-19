@@ -94,18 +94,22 @@ export const ProductDetailClient = ({ product, colors, variants }: Props) => {
 
       {/* ── Slideshow ────────────────────────────────────────────── */}
       <div>
-        <ProductMobileSlideshow
-          key={`mobile-${selectedColorId ?? 'base'}`}
-          title={product.title}
-          images={currentImages}
-          className="block md:hidden"
-        />
-        <ProductSlideshow
-          key={`desktop-${selectedColorId ?? 'base'}`}
-          title={product.title}
-          images={currentImages}
-          className="hidden md:block"
-        />
+        {/* Mobile */}
+        <div className="md:hidden">
+          <ProductMobileSlideshow
+            key={`mobile-${selectedColorId ?? 'base'}`}
+            title={product.title}
+            images={currentImages}
+          />
+        </div>
+        {/* Desktop — el wrapper div oculta en mobile, el CSS del slideshow maneja el flex layout */}
+        <div className="hidden md:block">
+          <ProductSlideshow
+            key={`desktop-${selectedColorId ?? 'base'}`}
+            title={product.title}
+            images={currentImages}
+          />
+        </div>
       </div>
 
       {/* ── Info ─────────────────────────────────────────────────── */}

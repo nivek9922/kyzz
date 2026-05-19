@@ -44,6 +44,9 @@ export { getProductBySlug }                from './product/get-product-by-slug';
 export { getStockBySlug }                  from './product/get-stock-by-slug';
 export { getPaginatedProductsWithImages }  from './product/product-pagination';
 export { searchProducts }                  from './product/search-products';
+export { searchProductsQuick }             from './product/search-products-quick';
+export type { QuickSearchResult }          from './product/search-products-quick';
+export { getTrendingProducts }             from './product/get-trending-products';
 export { convertProductToNoColor }         from './product/convert-product-type';
 export { addProductColor,
          removeProductColor,
