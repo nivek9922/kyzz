@@ -15,8 +15,11 @@ interface Props {
   colorVariants?: ProductColorEntry[];
 }
 
+const PLACEHOLDER = '/imgs/placeholder.jpg';
 const imgSrc = (url: string | null | undefined) =>
-  !url ? '/imgs/placeholder.jpg' : url.startsWith('http') ? url : `/products/${url}`;
+  !url ? PLACEHOLDER
+  : url.startsWith('http') || url.startsWith('/') ? url
+  : `/products/${url}`;
 
 // ── Card grid normal ──────────────────────────────────────────────────────────
 export const ProductGridItem = ({ product, listView = false, colorVariants = [] }: Props) => {
@@ -51,6 +54,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
               fill
               sizes="128px"
               className={`object-cover transition-all duration-500 group-hover:scale-105 ${isSoldOut ? 'opacity-60' : ''}`}
+            onError={() => setMainImage(PLACEHOLDER)}
             />
             {isSoldOut && (
               <span className="absolute top-1.5 left-1.5 bg-kyzz-dark/85 text-white text-[8px] tracking-[0.2em] uppercase px-1.5 py-0.5">
@@ -102,6 +106,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [] 
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`object-cover transition-all duration-500 group-hover:scale-105 ${isSoldOut ? 'opacity-60' : ''}`}
+            onError={() => setMainImage(PLACEHOLDER)}
             onMouseEnter={() => {
               if (!hasColors && secondImage) setMainImage(secondImage);
             }}

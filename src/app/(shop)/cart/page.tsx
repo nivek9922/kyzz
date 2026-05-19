@@ -3,7 +3,6 @@ import { titleFont } from '@/config/fonts';
 import { ProductsInCart } from './ui/ProductsInCart';
 import { OrderSummary } from './ui/OrderSummary';
 import { CartRecommendations } from './ui/CartRecommendations';
-import { RecentlyViewed } from './ui/RecentlyViewed';
 import { CartScrollable } from './ui/CartScrollable';
 
 export default function CartPage() {
@@ -55,7 +54,6 @@ export default function CartPage() {
 
       {/* Recomendaciones — full width, debajo del carrito */}
       <CartRecommendations />
-      <RecentlyViewed />
 
     </div>
   );

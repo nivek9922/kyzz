@@ -3,6 +3,7 @@ export const revalidate = 60;
 import Link from 'next/link';
 import Image from 'next/image';
 import { getFeaturedProducts, getSiteConfig } from '@/actions';
+import { HomeRecentlyViewed } from './ui/HomeRecentlyViewed';
 import { ProductGrid } from '@/components';
 import {
   IoLeafOutline,
@@ -132,6 +133,9 @@ export default async function Home() {
           Explorar todas las piezas →
         </Link>
       </section>
+
+      {/* ── Viste recientemente ───────────────────────────────── */}
+      <HomeRecentlyViewed />
     </>
   );
 }
