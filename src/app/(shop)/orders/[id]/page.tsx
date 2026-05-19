@@ -195,31 +195,52 @@ export default async function OrdersByIdPage(props: Props) {
               Resumen de orden
             </p>
 
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between text-kyzz-muted">
-                <span>Productos</span>
-                <span>
-                  {order?.itemsInOrder === 1
-                    ? "1 artículo"
-                    : `${order?.itemsInOrder} artículos`}
-                </span>
-              </div>
-              <div className="flex justify-between text-kyzz-muted">
-                <span>Subtotal</span>
-                <span>{currencyFormat(order!.subTotal)}</span>
-              </div>
-              <div className="border-t border-kyzz-secondary pt-4">
-                <div className="flex justify-between">
-                  <span className="text-[11px] tracking-widest uppercase text-kyzz-dark">Total</span>
-                  <span className="text-kyzz-dark font-medium">
-                    {currencyFormat(order!.total)}
-                  </span>
+            {(() => {
+              const couponDiscount = order!.couponDiscount ?? 0;
+              const shipping       = order!.total - order!.subTotal + couponDiscount;
+              return (
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between text-kyzz-muted">
+                    <span>
+                      {order?.itemsInOrder === 1 ? "1 artículo" : `${order?.itemsInOrder} artículos`}
+                    </span>
+                    <span>{currencyFormat(order!.subTotal)}</span>
+                  </div>
+
+                  <div className="flex justify-between text-kyzz-muted">
+                    <span>Envío</span>
+                    <span className={shipping === 0 ? "text-kyzz-dark" : ""}>
+                      {shipping === 0 ? "Gratis" : currencyFormat(shipping)}
+                    </span>
+                  </div>
+
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-kyzz-primary">
+                      <span>
+                        Descuento
+                        {order!.couponCode && (
+                          <span className="ml-1.5 text-[10px] font-mono tracking-wider">
+                            ({order!.couponCode})
+                          </span>
+                        )}
+                      </span>
+                      <span>−{currencyFormat(couponDiscount)}</span>
+                    </div>
+                  )}
+
+                  <div className="border-t border-kyzz-secondary pt-4">
+                    <div className="flex justify-between">
+                      <span className="text-[11px] tracking-widest uppercase text-kyzz-dark">Total</span>
+                      <span className="text-kyzz-dark font-medium">{currencyFormat(order!.total)}</span>
+                    </div>
+                    <p className="text-[10px] text-kyzz-muted mt-1">
+                      Incluye {currencyFormat(order!.tax)} de impuestos
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[10px] text-kyzz-muted mt-1">
-                  Incluye {currencyFormat(order!.tax)} de impuestos
-                </p>
-              </div>
-            </div>
+              );
+            })()}
+
 
             <div className="mt-6">
               {order?.cancelledAt ? (

@@ -19,11 +19,11 @@ export const TopMenu = ({ categories = [] }: Props) => {
   const totalItems      = useCartStore((state) => state.getTotalItems());
   const wishlistCount   = useWishlistStore((state) => state.items.length);
 
-  const [loaded, setLoaded]     = useState(false);
+  const [mounted, setMounted]   = useState(false);
   const [catsOpen, setCatsOpen] = useState(false);
   const catsRef                  = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setLoaded(true); }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -138,7 +138,7 @@ export const TopMenu = ({ categories = [] }: Props) => {
               className="relative text-kyzz-dark hover:text-kyzz-primary transition-colors"
               aria-label="Favoritos"
             >
-              {loaded && wishlistCount > 0 && (
+              {mounted && wishlistCount > 0 && (
                 <span className="fade-in absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-kyzz-primary text-white text-[10px] flex items-center justify-center font-medium">
                   {wishlistCount}
                 </span>
@@ -147,11 +147,11 @@ export const TopMenu = ({ categories = [] }: Props) => {
             </Link>
 
             <Link
-              href={loaded && totalItems > 0 ? "/cart" : "/empty"}
+              href={mounted && totalItems > 0 ? "/cart" : "/empty"}
               className="relative text-kyzz-dark hover:text-kyzz-primary transition-colors"
               aria-label="Carrito"
             >
-              {loaded && totalItems > 0 && (
+              {mounted && totalItems > 0 && (
                 <span className="fade-in absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-kyzz-primary text-white text-[10px] flex items-center justify-center font-medium">
                   {totalItems}
                 </span>

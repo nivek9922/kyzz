@@ -72,25 +72,34 @@ export default async function AdminOrdersPage(props: Props) {
         <>
           <div className="flex flex-col divide-y divide-kyzz-secondary border border-kyzz-secondary">
             {/* Header */}
-            <div className="hidden lg:grid grid-cols-[130px_1fr_100px_120px_110px_56px] gap-4 px-5 py-3 bg-kyzz-tertiary">
-              {['Pedido', 'Cliente', 'Total', 'Pago', 'Envío', ''].map((h, i) => (
+            <div className="hidden lg:grid grid-cols-[130px_1fr_170px_120px_110px_56px] gap-4 px-5 py-3 bg-kyzz-tertiary">
+              {['Pedido', 'Cliente', 'Importe', 'Pago', 'Envío', ''].map((h, i) => (
                 <p key={i} className="text-[10px] tracking-[0.2em] uppercase text-kyzz-muted">{h}</p>
               ))}
             </div>
 
             {orders.map((order) => {
-              const shipping = SHIPPING_BADGE[order.shippingStatus ?? 'pending'];
+              const shippingBadge = SHIPPING_BADGE[order.shippingStatus ?? 'pending'];
+              const discount      = order.couponDiscount ?? 0;
+              const shippingCost  = order.total - order.subTotal + discount;
+              const itemCount     = order._count.OrderItem;
               return (
                 <div
                   key={order.id}
-                  className={`grid grid-cols-[1fr_auto] lg:grid-cols-[130px_1fr_100px_120px_110px_56px] gap-4 items-center px-5 py-4 transition-colors ${
+                  className={`grid grid-cols-[1fr_auto] lg:grid-cols-[130px_1fr_170px_120px_110px_56px] gap-4 items-center px-5 py-4 transition-colors ${
                     order.cancelledAt ? 'opacity-50 bg-kyzz-tertiary/30' : 'hover:bg-kyzz-tertiary/50'
                   }`}
                 >
-                  {/* ID */}
-                  <p className="text-[11px] tracking-widest font-medium text-kyzz-dark font-mono">
-                    #{order.id.split('-').at(-1)?.toUpperCase()}
-                  </p>
+                  {/* ID + fecha + items */}
+                  <div>
+                    <p className="text-[11px] tracking-widest font-medium text-kyzz-dark font-mono">
+                      #{order.id.split('-').at(-1)?.toUpperCase()}
+                    </p>
+                    <p className="text-[10px] text-kyzz-muted mt-0.5">
+                      {new Date(order.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                      {' · '}{itemCount} {itemCount === 1 ? 'producto' : 'productos'}
+                    </p>
+                  </div>
 
                   {/* Cliente */}
                   <div className="min-w-0">
@@ -100,10 +109,23 @@ export default async function AdminOrdersPage(props: Props) {
                     <p className="text-[10px] text-kyzz-muted truncate">{order.user?.email}</p>
                   </div>
 
-                  {/* Total */}
-                  <p className="hidden lg:block text-sm font-medium text-kyzz-dark">
-                    {currencyFormat(order.total)}
-                  </p>
+                  {/* Importe con desglose */}
+                  <div className="hidden lg:block">
+                    <p className="text-sm font-medium text-kyzz-dark">{currencyFormat(order.total)}</p>
+                    <div className="mt-0.5 space-y-px">
+                      {shippingCost > 0 && (
+                        <p className="text-[10px] text-kyzz-muted">+{currencyFormat(shippingCost)} envío</p>
+                      )}
+                      {discount > 0 && (
+                        <p className="text-[10px] text-kyzz-primary">
+                          −{currencyFormat(discount)}
+                          {order.couponCode && (
+                            <span className="ml-1 font-mono opacity-70">{order.couponCode}</span>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
                   {/* Badge pago */}
                   <div className="hidden lg:flex">
@@ -122,14 +144,14 @@ export default async function AdminOrdersPage(props: Props) {
                     )}
                   </div>
 
-                  {/* Badge envío */}
+                  {/* Badge estado de envío */}
                   <div className="hidden lg:flex">
                     {!order.cancelledAt && (
-                      <span className={`inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase border px-2 py-1 ${shipping.color}`}>
+                      <span className={`inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase border px-2 py-1 ${shippingBadge.color}`}>
                         {order.shippingStatus === 'shipped'   ? <IoBicycleOutline size={11} /> :
                          order.shippingStatus === 'delivered' ? <IoCheckmarkDoneOutline size={11} /> :
                          <IoTimeOutline size={11} />}
-                        {shipping.label}
+                        {shippingBadge.label}
                       </span>
                     )}
                   </div>

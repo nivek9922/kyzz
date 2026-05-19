@@ -35,6 +35,7 @@ export const getPaginatedOrders = async ({ page = 1, take = 15, query }: Options
       include: {
         OrderAddress: { select: { firstName: true, lastName: true } },
         user:         { select: { email: true } },
+        _count:       { select: { OrderItem: true } },
       },
     }),
     prisma.order.count({ where }),

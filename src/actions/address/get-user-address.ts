@@ -17,7 +17,8 @@ export const getUserAddress = async( userId?: string ) => {
 
     if (!address) return null;
 
-    const { countryId, address2, ...rest } = address;
+    // Excluir id y userId — no forman parte de Address y romperían orderAddress.create()
+    const { countryId, address2, id: _id, userId: _userId, ...rest } = address;
 
     return {
       ...rest,
