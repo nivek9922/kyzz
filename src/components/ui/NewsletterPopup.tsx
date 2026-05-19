@@ -5,17 +5,22 @@ import { IoCloseOutline } from "react-icons/io5";
 import { titleFont } from "@/config/fonts";
 import { subscribeNewsletter } from "@/actions/site/subscribe-newsletter";
 
-const STORAGE_KEY    = "kyzz-newsletter-popup";
-const DELAY_MS       = 8000;
-const DISCOUNT_CODE  = "KYZZ10";
+const STORAGE_KEY = "kyzz-newsletter-popup";
+const DELAY_MS    = 8000;
 
-type Stage       = "form" | "success";
-type FormErrors  = { name?: string; email?: string };
+type Stage      = "form" | "success";
+type FormErrors = { name?: string; email?: string };
+
+interface CouponInfo {
+  code:  string;
+  value: number;
+  type:  "PERCENTAGE" | "FIXED";
+}
 
 export const NewsletterPopup = () => {
   /* ── Visibility ──────────────────────────────────── */
   const [open,    setOpen]    = useState(false);
-  const [visible, setVisible] = useState(false);   // drives CSS transition
+  const [visible, setVisible] = useState(false);
 
   /* ── Form ───────────────────────────────────────── */
   const [stage,   setStage]   = useState<Stage>("form");
@@ -24,7 +29,10 @@ export const NewsletterPopup = () => {
   const [errors,  setErrors]  = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
-  /* ── Success ────────────────────────────────────── */
+  /* ── Cupón dinámico desde DB ─────────────────────── */
+  const [coupon,  setCoupon]  = useState<CouponInfo | null>(null);
+
+  /* ── Copy state ──────────────────────────────────── */
   const [copied,  setCopied]  = useState(false);
 
   const triggered   = useRef(false);
@@ -84,13 +92,22 @@ export const NewsletterPopup = () => {
       setErrors({ email: result.message });
       return;
     }
+
+    if (result.couponCode) {
+      setCoupon({
+        code:  result.couponCode,
+        value: result.couponValue ?? 0,
+        type:  result.couponType  ?? "PERCENTAGE",
+      });
+    }
     localStorage.setItem(STORAGE_KEY, "subscribed");
     setStage("success");
   };
 
   const copyCode = async () => {
+    if (!coupon?.code) return;
     try {
-      await navigator.clipboard.writeText(DISCOUNT_CODE);
+      await navigator.clipboard.writeText(coupon.code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* noop */ }
@@ -277,23 +294,32 @@ export const NewsletterPopup = () => {
                 </div>
 
                 {/* Código */}
-                <button
-                  onClick={copyCode}
-                  className="w-full border border-kyzz-secondary py-5 px-6 flex flex-col items-center gap-2
-                             hover:border-kyzz-primary transition-colors group"
-                  aria-label={`Copiar código ${DISCOUNT_CODE}`}
-                >
-                  <span className={`${titleFont.className} text-[32px] tracking-[0.4em] text-kyzz-dark`}>
-                    {DISCOUNT_CODE}
-                  </span>
-                  <span className="text-[9px] tracking-[0.3em] uppercase text-kyzz-muted group-hover:text-kyzz-primary transition-colors">
-                    {copied ? "Copiado ✓" : "Toca para copiar"}
-                  </span>
-                </button>
+                {coupon ? (
+                  <button
+                    onClick={copyCode}
+                    className="w-full border border-kyzz-secondary py-5 px-6 flex flex-col items-center gap-2
+                               hover:border-kyzz-primary transition-colors group"
+                    aria-label={`Copiar código ${coupon.code}`}
+                  >
+                    <span className={`${titleFont.className} text-[32px] tracking-[0.4em] text-kyzz-dark`}>
+                      {coupon.code}
+                    </span>
+                    <span className="text-[9px] tracking-[0.3em] uppercase text-kyzz-muted group-hover:text-kyzz-primary transition-colors">
+                      {copied ? "Copiado ✓" : "Toca para copiar"}
+                    </span>
+                  </button>
+                ) : (
+                  <p className="text-[11px] text-kyzz-muted">Tu descuento ya ha sido registrado.</p>
+                )}
 
                 <p className="text-[11px] text-kyzz-muted leading-relaxed max-w-xs">
-                  Aplica el código al finalizar tu compra y obtén un{" "}
-                  <span className="text-kyzz-dark font-medium">10% de descuento</span>.
+                  {coupon
+                    ? <>Aplica el código al finalizar tu compra y obtén un{" "}
+                        <span className="text-kyzz-dark font-medium">
+                          {coupon.type === "PERCENTAGE" ? `${coupon.value}% de descuento` : `descuento de $${coupon.value.toLocaleString("es-CO")}`}
+                        </span>.</>
+                    : "Usa tu descuento la próxima vez que visites el checkout."
+                  }
                 </p>
 
                 <button onClick={dismiss} className="btn-primary w-full">

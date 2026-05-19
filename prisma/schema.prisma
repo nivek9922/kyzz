@@ -28,6 +28,17 @@ enum CouponType {
   FIXED
 }
 
+enum CouponCampaign {
+  newsletter_welcome
+  first_purchase
+  seasonal
+  influencer
+  category
+  free_shipping
+  vip
+  general
+}
+
 enum ShippingStatus {
   pending
   processing
@@ -242,23 +253,29 @@ model Subscriber {
   createdAt      DateTime  @default(now())
   confirmedAt    DateTime?
   unsubscribedAt DateTime?
+
+  welcomeCouponId String?
+  welcomeCoupon   Coupon? @relation(fields: [welcomeCouponId], references: [id])
 }
 
 model Coupon {
-  id            String     @id @default(uuid())
-  code          String     @unique
-  type          CouponType @default(PERCENTAGE)
-  value         Float
-  isActive      Boolean    @default(true)
-  subscriberOnly Boolean   @default(false)
-  minimumAmount Float?
-  usageLimit    Int?
-  usageCount    Int        @default(0)
-  expiresAt     DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id             String         @id @default(uuid())
+  code           String         @unique
+  type           CouponType     @default(PERCENTAGE)
+  value          Float
+  isActive       Boolean        @default(true)
+  subscriberOnly Boolean        @default(false)
+  campaign       CouponCampaign @default(general)
+  description    String?
+  minimumAmount  Float?
+  usageLimit     Int?
+  usageCount     Int            @default(0)
+  expiresAt      DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  redemptions CouponRedemption[]
+  redemptions  CouponRedemption[]
+  subscribers  Subscriber[]
 }
 
 model CouponRedemption {

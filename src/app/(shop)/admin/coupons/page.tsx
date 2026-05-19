@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { getCoupons } from "@/actions/coupon";
+import { getCoupons, getRedemptions } from "@/actions/coupon";
 import { CouponsClient } from "./ui/CouponsClient";
 
 export const revalidate = 0;
@@ -9,11 +9,11 @@ export default async function AdminCouponsPage() {
   const session = await auth();
   if (session?.user?.role !== "admin") redirect("/auth/login");
 
-  const coupons = await getCoupons();
+  const [coupons, redemptions] = await Promise.all([getCoupons(), getRedemptions()]);
 
   return (
     <div>
-      <CouponsClient initialCoupons={coupons} />
+      <CouponsClient initialCoupons={coupons} initialRedemptions={redemptions} />
     </div>
   );
 }

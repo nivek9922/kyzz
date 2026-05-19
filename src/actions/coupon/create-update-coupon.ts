@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { CouponType } from '@prisma/client';
+import { CouponType, CouponCampaign } from '@prisma/client';
 import { z } from 'zod';
 
 const couponSchema = z.object({
@@ -10,6 +10,8 @@ const couponSchema = z.object({
   code:           z.string().min(2).max(30).transform((v) => v.trim().toUpperCase()),
   type:           z.nativeEnum(CouponType),
   value:          z.number().positive(),
+  campaign:       z.nativeEnum(CouponCampaign).default(CouponCampaign.general),
+  description:    z.string().max(200).optional().nullable(),
   isActive:       z.boolean().default(true),
   subscriberOnly: z.boolean().default(false),
   minimumAmount:  z.number().nonnegative().nullable().optional(),
@@ -30,21 +32,20 @@ export const createUpdateCoupon = async (input: CouponInput) => {
     return { ok: false, message: parsed.error.errors[0]?.message ?? 'Datos inválidos' };
   }
 
-  const { id, code, type, value, isActive, subscriberOnly, minimumAmount, usageLimit, expiresAt } =
-    parsed.data;
+  const { id, code, type, value, campaign, description, isActive, subscriberOnly, minimumAmount, usageLimit, expiresAt } = parsed.data;
+  const data = {
+    code, type, value, campaign, description: description ?? null,
+    isActive, subscriberOnly, minimumAmount: minimumAmount ?? null,
+    usageLimit: usageLimit ?? null,
+    expiresAt: expiresAt ? new Date(expiresAt) : null,
+  };
 
   try {
     if (id) {
-      const updated = await prisma.coupon.update({
-        where: { id },
-        data: { code, type, value, isActive, subscriberOnly, minimumAmount, usageLimit, expiresAt: expiresAt ? new Date(expiresAt) : null },
-      });
+      const updated = await prisma.coupon.update({ where: { id }, data });
       return { ok: true, coupon: updated };
     }
-
-    const created = await prisma.coupon.create({
-      data: { code, type, value, isActive, subscriberOnly, minimumAmount, usageLimit, expiresAt: expiresAt ? new Date(expiresAt) : null },
-    });
+    const created = await prisma.coupon.create({ data });
     return { ok: true, coupon: created };
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Error desconocido';
