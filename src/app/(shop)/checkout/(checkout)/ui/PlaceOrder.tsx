@@ -35,6 +35,16 @@ export const PlaceOrder = () => {
   }, []);
 
   const onPlaceOrder = async () => {
+    if (cart.length === 0) {
+      toast.error('Tu carrito está vacío', { description: 'Agrega productos antes de confirmar' });
+      return;
+    }
+    if (!address.firstName || !address.address || !address.city || !address.country) {
+      toast.error('Falta tu dirección de entrega', { description: 'Completa todos los campos requeridos' });
+      router.push('/checkout/address');
+      return;
+    }
+
     setIsPlacingOrder(true);
     const toastId = toast.loading('Confirmando pedido...');
     const productsToOrder = cart.map((product) => ({
@@ -76,7 +86,7 @@ export const PlaceOrder = () => {
   }
 
   return (
-    <div className="kyzz-panel sticky top-24">
+    <div className="kyzz-panel md:sticky md:top-24">
       {/* Dirección */}
       <h2 className={`${titleFont.className} text-lg font-normal text-kyzz-dark mb-4`}>
         Dirección de entrega

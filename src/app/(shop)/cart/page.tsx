@@ -3,12 +3,11 @@ import { titleFont } from '@/config/fonts';
 import { ProductsInCart } from './ui/ProductsInCart';
 import { OrderSummary } from './ui/OrderSummary';
 import { CartRecommendations } from './ui/CartRecommendations';
-
 import { CartScrollable } from './ui/CartScrollable';
 
 export default function CartPage() {
   return (
-    <div className="max-w-6xl mx-auto px-6 py-16 mb-24">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-16 mb-16 md:mb-24">
 
       {/* Cabecera */}
       <div className="mb-12">

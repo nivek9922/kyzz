@@ -5,13 +5,12 @@ import { redirect } from 'next/navigation';
 import { Size } from '@prisma/client';
 import { getPaginatedProductsWithImages, getCategories } from '@/actions';
 import { getProductColors } from '@/actions/product/get-product-colors';
-import { Pagination, ProductGridWithLayout, ProductFilters } from '@/components';
+import { InfiniteProductGrid, ProductFilters } from '@/components';
 import { titleFont } from '@/config/fonts';
 import type { SortOption } from '@/actions/product/product-pagination';
 
 interface Props {
   searchParams: Promise<{
-    page?:     string;
     category?: string;
     sizes?:    string;
     min?:      string;
@@ -23,7 +22,6 @@ interface Props {
 
 export default async function ProductsPage(props: Props) {
   const searchParams = await props.searchParams;
-  const page        = searchParams.page ? parseInt(searchParams.page) : 1;
   const catSlug     = searchParams.category?.toLowerCase();
   const sizesParam  = searchParams.sizes?.split(',').filter(Boolean) as Size[] | undefined;
   const minPrice    = searchParams.min   ? parseFloat(searchParams.min)  : undefined;
@@ -49,7 +47,7 @@ export default async function ProductsPage(props: Props) {
   }
 
   const { products, totalPages, variantColors } = await getPaginatedProductsWithImages({
-    page,
+    page:       1,
     categoryId,
     sizes:      sizesParam,
     minPrice,
@@ -57,10 +55,6 @@ export default async function ProductsPage(props: Props) {
     sortBy,
     colorNames: colorNames.length > 0 ? colorNames : undefined,
   });
-
-  if (products.length === 0 && page > 1) {
-    redirect(catSlug ? `/products?category=${catSlug}` : '/products');
-  }
 
   const heading = activeCategory?.name ?? 'Colección';
   const sub     = catSlug ? 'Categoría' : 'Todas las piezas';
@@ -103,12 +97,17 @@ export default async function ProductsPage(props: Props) {
             <Link href="/products" className="btn-primary inline-block mt-6">Limpiar filtros</Link>
           </div>
         ) : (
-          <>
-            <ProductGridWithLayout products={products} variantColors={variantColors} />
-            <div className="mt-10">
-              <Pagination totalPages={totalPages} />
-            </div>
-          </>
+          <InfiniteProductGrid
+            initialProducts={products}
+            initialVariantColors={variantColors}
+            totalPages={totalPages}
+            categoryId={categoryId}
+            sizes={sizesParam}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            sortBy={sortBy}
+            colorNames={colorNames.length > 0 ? colorNames : undefined}
+          />
         )}
       </section>
     </>

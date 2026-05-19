@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { useRecentlyViewedStore } from '@/store';
 import { currencyFormat } from '@/utils';
 
+const PLACEHOLDER = '/imgs/placeholder.jpg';
+
 const imgSrc = (url: string) =>
-  !url ? '/imgs/placeholder.jpg' : url.startsWith('http') ? url : `/products/${url}`;
+  !url ? PLACEHOLDER : url.startsWith('http') || url.startsWith('/') ? url : `/products/${url}`;
 
 export function HomeRecentlyViewed() {
   const items  = useRecentlyViewedStore((s) => s.items);
@@ -45,6 +47,7 @@ export function HomeRecentlyViewed() {
                 sizes="(max-width: 768px) 50vw, 25vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = PLACEHOLDER; }}
               />
             </div>
             <div className="mt-3">

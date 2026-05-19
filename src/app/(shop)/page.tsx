@@ -3,13 +3,13 @@ export const revalidate = 60;
 import Link from 'next/link';
 import Image from 'next/image';
 import { getFeaturedProducts, getSiteConfig } from '@/actions';
-import { ProductGrid } from '@/components';
+import { HomeRecentlyViewed } from './ui/HomeRecentlyViewed';
+import { ProductGridItem } from '@/components';
 import {
   IoLeafOutline,
   IoDiamondOutline,
   IoShieldCheckmarkOutline,
 } from 'react-icons/io5';
-import { HomeRecentlyViewed } from './ui/HomeRecentlyViewed';
 
 const features = [
   {
@@ -116,7 +116,17 @@ export default async function Home() {
               Ver todas
             </Link>
           </div>
-          <ProductGrid products={featuredProducts} variantColors={featuredColors} />
+          {/* Mobile: scroll horizontal — 2 cards visibles + ~25% de la 3ra asoma */}
+          <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 -mr-6 md:mr-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-x-visible">
+            {featuredProducts.map((product) => (
+              <div key={product.slug} className="shrink-0 w-[43%] md:w-auto">
+                <ProductGridItem
+                  product={product}
+                  colorVariants={featuredColors[product.id]}
+                />
+              </div>
+            ))}
+          </div>
         </section>
       )}
 

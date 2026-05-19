@@ -5,7 +5,7 @@ import { PlaceOrder } from './ui/PlaceOrder';
 
 export default function CheckoutPage() {
   return (
-    <div className="max-w-6xl mx-auto px-6 py-16 mb-24">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-16 mb-16 md:mb-24">
 
       <div className="mb-12">
         <h1 className={`${titleFont.className} text-3xl font-normal text-kyzz-dark`}>
