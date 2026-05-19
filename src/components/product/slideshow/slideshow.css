@@ -12,6 +12,7 @@
 /* ── Desktop: layout horizontal (thumbnails a la izquierda) ── */
 /* display:flex se aplica via Tailwind en el componente para no conflictuar con .hidden */
 .slideshow-wrapper {
+  display: flex;
   gap: 8px;
   align-items: flex-start;
   /* aspect-ratio impulsa la altura desde el ancho de la columna → imagen más alargada */

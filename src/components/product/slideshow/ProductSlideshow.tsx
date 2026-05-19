@@ -23,7 +23,7 @@ export const ProductSlideshow = ({ images, title, className }: Props) => {
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperObject>();
 
   return (
-    <div className={`flex slideshow-wrapper ${className ?? ''}`}>
+    <div className={`slideshow-wrapper ${className ?? ''}`}>
 
       {/* ── Miniaturas verticales (izquierda) ── */}
       <Swiper

@@ -15,6 +15,8 @@ interface Props {
   colorVariants?: ProductColorEntry[];
   /** En 3 columnas mobile el espacio es reducido: texto más pequeño, swatches más chicos */
   compactMode?:   boolean;
+  /** Hint para el srcset: debe coincidir con el tamaño visual real según las columnas activas */
+  imageSizes?:    string;
 }
 
 const PLACEHOLDER = '/imgs/placeholder.jpg';
@@ -24,7 +26,7 @@ const imgSrc = (url: string | null | undefined) =>
   : `/products/${url}`;
 
 // ── Card grid normal ──────────────────────────────────────────────────────────
-export const ProductGridItem = ({ product, listView = false, colorVariants = [], compactMode = false }: Props) => {
+export const ProductGridItem = ({ product, listView = false, colorVariants = [], compactMode = false, imageSizes }: Props) => {
   const hasColors     = colorVariants.length > 0;
   const firstColorImg = hasColors && colorVariants[0].image ? colorVariants[0].image : null;
   const isSoldOut     = (product.inStock ?? 0) <= 0;
@@ -106,7 +108,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [],
             src={imgSrc(mainImage)}
             alt={product.title}
             fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes={imageSizes ?? '(max-width: 640px) 50vw, 33vw'}
             className={`object-cover transition-all duration-500 group-hover:scale-105 ${isSoldOut ? 'opacity-60' : ''}`}
             onError={() => setMainImage(PLACEHOLDER)}
             onMouseEnter={() => {

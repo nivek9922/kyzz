@@ -1,21 +1,11 @@
 export const revalidate = 60;
 
-import { redirect } from 'next/navigation';
 import { getFeaturedProductsPaginated } from '@/actions';
-import { Pagination, ProductGridWithLayout } from '@/components';
+import { InfiniteProductGrid } from '@/components';
 import { titleFont } from '@/config/fonts';
 
-interface Props {
-  searchParams: Promise<{ page?: string }>;
-}
-
-export default async function ColeccionEspecialPage(props: Props) {
-  const searchParams = await props.searchParams;
-  const page = searchParams.page ? parseInt(searchParams.page) : 1;
-
-  const { products, totalPages, variantColors } = await getFeaturedProductsPaginated({ page });
-
-  if (products.length === 0 && page > 1) redirect('/coleccion-especial');
+export default async function ColeccionEspecialPage() {
+  const { products, totalPages, variantColors } = await getFeaturedProductsPaginated({ page: 1 });
 
   return (
     <>
@@ -44,12 +34,12 @@ export default async function ColeccionEspecialPage(props: Props) {
             </p>
           </div>
         ) : (
-          <>
-            <ProductGridWithLayout products={products} variantColors={variantColors} />
-            <div className="mt-10">
-              <Pagination totalPages={totalPages} />
-            </div>
-          </>
+          <InfiniteProductGrid
+            initialProducts={products}
+            initialVariantColors={variantColors}
+            totalPages={totalPages}
+            isFeatured={true}
+          />
         )}
       </section>
     </>
