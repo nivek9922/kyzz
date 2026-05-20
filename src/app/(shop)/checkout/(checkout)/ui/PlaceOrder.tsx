@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { toast } from 'sonner';
 import { titleFont } from "@/config/fonts";
 import { placeOrder } from "@/actions";
-import { useAddressStore, useCartStore, useCouponStore } from "@/store";
+import { useAddressStore, useCartStore, useCouponStore, useGuestStore } from "@/store";
 import { currencyFormat } from "@/utils";
 import { useShallow } from "zustand/react/shallow";
 import { gaBeginCheckout, gaPurchase } from "@/lib/gtag";
@@ -26,6 +26,10 @@ export const PlaceOrder = () => {
 
   const { coupon, removeCoupon } = useCouponStore(
     useShallow((s) => ({ coupon: s.coupon, removeCoupon: s.removeCoupon }))
+  );
+
+  const { guestEmail, clearGuestEmail } = useGuestStore(
+    useShallow((s) => ({ guestEmail: s.guestEmail, clearGuestEmail: s.clearGuestEmail }))
   );
 
   const couponDiscount = coupon?.discount ?? 0;
@@ -62,7 +66,7 @@ export const PlaceOrder = () => {
       colorName:  product.colorName,
     }));
 
-    const resp = await placeOrder(productsToOrder, address, coupon?.code);
+    const resp = await placeOrder(productsToOrder, address, coupon?.code, guestEmail ?? undefined);
 
     if (!resp.ok) {
       toast.error('No se pudo confirmar el pedido', { id: toastId, description: resp.message });
@@ -79,6 +83,7 @@ export const PlaceOrder = () => {
     });
     clearCart();
     removeCoupon();
+    clearGuestEmail();
     router.replace("/orders/" + resp.order?.id);
   };
 

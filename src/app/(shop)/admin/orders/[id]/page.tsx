@@ -58,6 +58,15 @@ export default async function AdminOrderDetailPage(props: Props) {
                 <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Teléfono</p>
                 <p className="text-kyzz-dark">{address.phone}</p>
               </div>
+              <div>
+                <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Email</p>
+                <p className="text-kyzz-dark truncate">
+                  {order.user?.email ?? order.guestEmail ?? '—'}
+                  {!order.user?.email && order.guestEmail && (
+                    <span className="ml-1.5 text-[9px] tracking-widest uppercase text-kyzz-muted opacity-60">invitado</span>
+                  )}
+                </p>
+              </div>
               <div className="sm:col-span-2">
                 <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Dirección de entrega</p>
                 <p className="text-kyzz-dark">{address.address}{address.address2 ? `, ${address.address2}` : ''}</p>

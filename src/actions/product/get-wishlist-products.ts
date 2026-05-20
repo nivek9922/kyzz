@@ -10,6 +10,7 @@ export async function getWishlistProducts(ids: string[]) {
     select: {
       id:          true,
       title:       true,
+      description: true,
       slug:        true,
       price:       true,
       inStock:     true,

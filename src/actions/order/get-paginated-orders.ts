@@ -18,8 +18,9 @@ export const getPaginatedOrders = async ({ page = 1, take = 15, query }: Options
   const where = query?.trim()
     ? {
         OR: [
-          { id:   { contains: query, mode: 'insensitive' as const } },
-          { user: { email: { contains: query, mode: 'insensitive' as const } } },
+          { id:         { contains: query, mode: 'insensitive' as const } },
+          { user:       { email: { contains: query, mode: 'insensitive' as const } } },
+          { guestEmail: { contains: query, mode: 'insensitive' as const } },
           { OrderAddress: { firstName: { contains: query, mode: 'insensitive' as const } } },
           { OrderAddress: { lastName:  { contains: query, mode: 'insensitive' as const } } },
         ],
