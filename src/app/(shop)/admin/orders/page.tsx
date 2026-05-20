@@ -106,7 +106,12 @@ export default async function AdminOrdersPage(props: Props) {
                     <p className="text-sm text-kyzz-dark truncate">
                       {order.OrderAddress?.firstName} {order.OrderAddress?.lastName}
                     </p>
-                    <p className="text-[10px] text-kyzz-muted truncate">{order.user?.email}</p>
+                    <p className="text-[10px] text-kyzz-muted truncate">
+                      {order.user?.email ?? order.guestEmail ?? '—'}
+                      {!order.user?.email && order.guestEmail && (
+                        <span className="ml-1 text-[9px] tracking-widest uppercase opacity-60">invitado</span>
+                      )}
+                    </p>
                   </div>
 
                   {/* Importe con desglose */}

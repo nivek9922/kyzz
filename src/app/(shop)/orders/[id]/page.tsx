@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 
 import { getOrderById } from "@/actions/order/get-order-by-id";
+import { auth } from "@/auth";
 import { currencyFormat } from "@/utils";
 import { OrderStatus, PayPalButton, ProductImage } from "@/components";
 import { titleFont } from "@/config/fonts";
+import { GuestOrderPrompt } from "./ui/GuestOrderPrompt";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -23,13 +25,14 @@ const STEP_INDEX: Record<string, number> = {
 export default async function OrdersByIdPage(props: Props) {
   const params = await props.params;
   const { id } = params;
-  const { ok, order } = await getOrderById(id);
+  const [{ ok, order }, session] = await Promise.all([getOrderById(id), auth()]);
 
   if (!ok) redirect("/");
 
-  const address  = order!.OrderAddress;
-  const shortId  = id.split("-").at(-1)?.toUpperCase();
-  const shipIdx  = order!.cancelledAt ? -2 : STEP_INDEX[order!.shippingStatus ?? 'pending'] ?? 0;
+  const address         = order!.OrderAddress;
+  const shortId         = id.split("-").at(-1)?.toUpperCase();
+  const shipIdx         = order!.cancelledAt ? -2 : STEP_INDEX[order!.shippingStatus ?? 'pending'] ?? 0;
+  const showGuestPrompt = !order!.userId && !session?.user;
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-14">
@@ -256,6 +259,12 @@ export default async function OrdersByIdPage(props: Props) {
           </div>
 
         </div>
+
+        {/* Prompt de cuenta para invitados */}
+        {showGuestPrompt && (
+          <GuestOrderPrompt email={order!.guestEmail} orderId={id} />
+        )}
+
       </div>
     </div>
   );

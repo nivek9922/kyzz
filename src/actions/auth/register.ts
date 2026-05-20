@@ -20,10 +20,12 @@ export const registerUser = async( name: string, email: string, password: string
   }
 
   try {
+    const normalizedEmail = parsed.data.email.toLowerCase();
+
     const user = await prisma.user.create({
       data: {
         name:     parsed.data.name,
-        email:    parsed.data.email.toLowerCase(),
+        email:    normalizedEmail,
         password: bcryptjs.hashSync(parsed.data.password),
       },
       select: {
@@ -31,6 +33,12 @@ export const registerUser = async( name: string, email: string, password: string
         name:  true,
         email: true,
       },
+    });
+
+    // Reclamar órdenes de invitado hechas con este email
+    await prisma.order.updateMany({
+      where: { guestEmail: normalizedEmail, userId: null },
+      data:  { userId: user.id, guestEmail: null },
     });
 
     return { ok: true, user, message: 'Usuario creado' };
