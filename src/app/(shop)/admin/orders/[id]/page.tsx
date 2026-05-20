@@ -37,6 +37,15 @@ export default async function AdminOrderDetailPage(props: Props) {
           <span className={`text-[10px] tracking-widest uppercase px-3 py-1 border ${order.isPaid ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : order.cancelledAt ? 'text-red-500 bg-red-50 border-red-200' : 'text-kyzz-muted bg-kyzz-tertiary border-kyzz-secondary'}`}>
             {order.cancelledAt ? 'Cancelada' : order.isPaid ? 'Pagada' : 'Sin pagar'}
           </span>
+          {order.paymentGateway && (
+            <span className={`text-[10px] tracking-widest uppercase px-3 py-1 border ${
+              order.paymentGateway === 'wompi'  ? 'text-blue-700 bg-blue-50 border-blue-200' :
+              order.paymentGateway === 'paypal' ? 'text-indigo-700 bg-indigo-50 border-indigo-200' :
+              'text-kyzz-muted bg-kyzz-tertiary border-kyzz-secondary'
+            }`}>
+              {order.paymentGateway === 'wompi' ? 'Wompi' : order.paymentGateway === 'paypal' ? 'PayPal' : 'Manual'}
+            </span>
+          )}
         </div>
         <div className="w-6 h-px bg-kyzz-secondary mt-3" />
       </div>
@@ -183,6 +192,37 @@ export default async function AdminOrderDetailPage(props: Props) {
             isPaid={order.isPaid}
             isCancelled={!!order.cancelledAt}
           />
+
+          {/* Panel de transacción */}
+          {order.isPaid && (
+            <div className="kyzz-panel p-6 mt-6 space-y-3">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted">Transacción</p>
+              <div className="space-y-2 text-[12px]">
+                <div className="flex justify-between gap-4">
+                  <span className="text-kyzz-muted">Gateway</span>
+                  <span className="text-kyzz-dark font-medium uppercase tracking-widest">
+                    {order.paymentGateway ?? '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-kyzz-muted shrink-0">Fecha de pago</span>
+                  <span className="text-kyzz-dark text-right">
+                    {order.paidAt
+                      ? new Date(order.paidAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
+                      : '—'}
+                  </span>
+                </div>
+                {order.transactionId && (
+                  <div className="flex flex-col gap-1 pt-1 border-t border-kyzz-secondary">
+                    <span className="text-kyzz-muted">Referencia</span>
+                    <span className="text-kyzz-dark font-mono text-[11px] break-all">
+                      {order.transactionId}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

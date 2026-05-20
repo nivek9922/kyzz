@@ -51,7 +51,7 @@ export const paypalCheckPayment = async (paypalOrderId: string) => {
 
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data:  { isPaid: true, paidAt: new Date(), shippingStatus: 'processing' },
+      data:  { isPaid: true, paidAt: new Date(), shippingStatus: 'processing', paymentGateway: 'paypal' },
       include: {
         user:         { select: { email: true, name: true } },
         OrderItem:    { include: { product: { select: { title: true } } } },

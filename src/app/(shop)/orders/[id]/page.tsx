@@ -4,8 +4,10 @@ import { getOrderById } from "@/actions/order/get-order-by-id";
 import { auth } from "@/auth";
 import { currencyFormat } from "@/utils";
 import { OrderStatus, PayPalButton, ProductImage } from "@/components";
+import { WompiButton } from "@/components/payments/WompiButton";
 import { titleFont } from "@/config/fonts";
 import { GuestOrderPrompt } from "./ui/GuestOrderPrompt";
+import { WompiReturnHandler } from "./ui/WompiReturnHandler";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -36,6 +38,8 @@ export default async function OrdersByIdPage(props: Props) {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-14">
+
+      <WompiReturnHandler orderId={id} isPaid={order?.isPaid ?? false} />
 
       {/* Cabecera */}
       <div className="mb-10">
@@ -253,7 +257,11 @@ export default async function OrdersByIdPage(props: Props) {
               ) : order?.isPaid ? (
                 <OrderStatus isPaid={true} />
               ) : (
-                <PayPalButton amount={order!.total} orderId={order!.id} />
+                <PaymentOptions
+                  orderId={order!.id}
+                  amount={order!.total}
+                  email={order!.user?.email ?? order!.guestEmail}
+                />
               )}
             </div>
           </div>
@@ -265,6 +273,38 @@ export default async function OrdersByIdPage(props: Props) {
           <GuestOrderPrompt email={order!.guestEmail} orderId={id} />
         )}
 
+      </div>
+    </div>
+  );
+}
+
+// ── Selector de métodos de pago ───────────────────────────────────────────────
+function PaymentOptions({
+  orderId, amount, email,
+}: { orderId: string; amount: number; email?: string | null }) {
+  return (
+    <div className="space-y-4">
+      {/* Wompi — primario para Colombia */}
+      <div className="border border-kyzz-secondary p-4 space-y-3">
+        <p className="text-[10px] tracking-[0.25em] uppercase text-kyzz-muted">
+          Pagos en Colombia
+        </p>
+        <WompiButton orderId={orderId} amount={amount} email={email} />
+      </div>
+
+      {/* Divisor */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-kyzz-secondary" />
+        <span className="text-[10px] tracking-widest text-kyzz-muted uppercase">o</span>
+        <div className="flex-1 h-px bg-kyzz-secondary" />
+      </div>
+
+      {/* PayPal — alternativa internacional */}
+      <div className="border border-kyzz-secondary p-4 space-y-3">
+        <p className="text-[10px] tracking-[0.25em] uppercase text-kyzz-muted">
+          Pago internacional
+        </p>
+        <PayPalButton amount={amount} orderId={orderId} />
       </div>
     </div>
   );
