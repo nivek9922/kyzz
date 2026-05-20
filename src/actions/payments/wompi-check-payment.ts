@@ -48,7 +48,8 @@ export const wompiCheckPayment = async (wompiTransactionId: string, orderId: str
 
     const { data: tx }: { data: WompiTransactionResponse } = await resp.json();
 
-    if (tx.reference !== orderId) {
+    // La referencia tiene formato "orderId-timestamp" para evitar duplicados en Wompi.
+    if (tx.reference.substring(0, orderId.length) !== orderId) {
       return { ok: false, message: 'La referencia de la transacción no coincide' };
     }
 

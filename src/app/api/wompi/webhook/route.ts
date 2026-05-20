@@ -62,8 +62,9 @@ export async function POST(req: NextRequest) {
     return Response.json({ ok: true });
   }
 
-  const tx      = data.transaction;
-  const orderId = tx.reference;
+  const tx = data.transaction;
+  // La reference tiene formato "orderId-timestamp" — extraemos solo el UUID (36 chars).
+  const orderId = tx.reference.substring(0, 36);
   const txId    = tx.id;
   const status  = tx.status;
 

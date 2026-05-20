@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { toast } from 'sonner';
@@ -57,6 +57,12 @@ export const WompiButton = ({ orderId, amount, email }: Props) => {
   const [ready,   setReady]   = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Si el script ya estaba cargado de una visita anterior (navegación SPA),
+  // window.WidgetCheckout ya existe y onLoad no vuelve a dispararse.
+  useEffect(() => {
+    if (window.WidgetCheckout) setReady(true);
+  }, []);
+
   // Wompi trabaja en centavos de COP
   const amountInCents = Math.round(amount * 100);
 
@@ -94,21 +100,35 @@ export const WompiButton = ({ orderId, amount, email }: Props) => {
       return;
     }
 
-    const { ok, integrity, message } = await wompiCreatePayment(orderId, amountInCents);
-    if (!ok || !integrity) {
+    const { ok, integrity, reference, message } = await wompiCreatePayment(orderId, amountInCents);
+    if (!ok || !integrity || !reference) {
       toast.error(message ?? 'No se pudo iniciar el pago');
       setLoading(false);
       return;
     }
 
-    // Safety net: si el widget nunca llama el callback (error de red, 403, etc.)
-    // reseteamos loading después de 90s para no dejar el botón atascado.
     const safetyTimer = setTimeout(() => setLoading(false), 90_000);
+
+    // Detectar cierre del widget sin transacción — el callback no dispara si el
+    // usuario cierra el overlay antes de iniciar ningún pago. Hacemos polling
+    // buscando el iframe de Wompi: cuando aparece y luego desaparece = fue cerrado.
+    let callbackFired = false;
+    let widgetSeen    = false;
+    const pollId      = setInterval(() => {
+      const frame = document.querySelector('iframe[src*="checkout.wompi"]');
+      if (frame) {
+        widgetSeen = true;
+      } else if (widgetSeen && !callbackFired) {
+        clearInterval(pollId);
+        clearTimeout(safetyTimer);
+        setLoading(false);
+      }
+    }, 250);
 
     const checkout = new window.WidgetCheckout({
       currency:      'COP',
       amountInCents,
-      reference:     orderId,
+      reference,
       publicKey:     WOMPI_PUBLIC_KEY,
       redirectUrl:   `${appOrigin}/orders/${orderId}`,
       signature:     { integrity },
@@ -116,6 +136,8 @@ export const WompiButton = ({ orderId, amount, email }: Props) => {
     });
 
     checkout.open(async ({ transaction }) => {
+      callbackFired = true;
+      clearInterval(pollId);
       clearTimeout(safetyTimer);
       setLoading(false);
 
@@ -183,7 +205,7 @@ export const WompiButton = ({ orderId, amount, email }: Props) => {
 
       {ready && (
         <p className="text-[10px] text-kyzz-muted text-center mt-2 tracking-widest">
-          Tarjeta · PSE · Nequi · Bancolombia
+          Tarjeta · PSE · Nequi · DaviPlata · Bancolombia
         </p>
       )}
     </>

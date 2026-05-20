@@ -42,10 +42,13 @@ export const wompiCreatePayment = async (orderId: string, amountInCents: number)
       }
     }
 
-    const rawString = `${orderId}${amountInCents}COP${integritySecret}`;
-    const integrity = crypto.createHash('sha256').update(rawString).digest('hex');
+    // Sufijo timestamp garantiza referencia única por intento — Wompi rechaza
+    // una nueva transacción si ya existe otra (incluso rechazada) con la misma reference.
+    const reference  = `${orderId}-${Date.now()}`;
+    const rawString  = `${reference}${amountInCents}COP${integritySecret}`;
+    const integrity  = crypto.createHash('sha256').update(rawString).digest('hex');
 
-    return { ok: true as const, integrity };
+    return { ok: true as const, integrity, reference };
   } catch {
     return { ok: false as const, message: 'Error al generar firma de pago' };
   }

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getOrderById } from "@/actions/order/get-order-by-id";
 import { auth } from "@/auth";
 import { currencyFormat } from "@/utils";
-import { OrderStatus, PayPalButton, ProductImage } from "@/components";
+import { OrderStatus, ProductImage } from "@/components";
 import { WompiButton } from "@/components/payments/WompiButton";
 import { titleFont } from "@/config/fonts";
 import { GuestOrderPrompt } from "./ui/GuestOrderPrompt";
@@ -292,20 +292,6 @@ function PaymentOptions({
         <WompiButton orderId={orderId} amount={amount} email={email} />
       </div>
 
-      {/* Divisor */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-kyzz-secondary" />
-        <span className="text-[10px] tracking-widest text-kyzz-muted uppercase">o</span>
-        <div className="flex-1 h-px bg-kyzz-secondary" />
-      </div>
-
-      {/* PayPal — alternativa internacional */}
-      <div className="border border-kyzz-secondary p-4 space-y-3">
-        <p className="text-[10px] tracking-[0.25em] uppercase text-kyzz-muted">
-          Pago internacional
-        </p>
-        <PayPalButton amount={amount} orderId={orderId} />
-      </div>
     </div>
   );
 }
