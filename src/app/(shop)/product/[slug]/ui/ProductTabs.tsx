@@ -77,13 +77,13 @@ const TABS: Tab[] = [
     content: (
       <div className="space-y-3 text-sm text-kyzz-muted leading-relaxed">
         <p>
-          Puedes pagar con tarjeta de crédito o débito, PSE, Nequi o transferencia
-          por la App Bancolombia, todo a través de nuestra pasarela de pagos segura.
+          Procesamos todos los pagos a través de <span className="text-kyzz-dark">Wompi</span>,
+          la pasarela oficial de Bancolombia. Elige el método que prefieras:
         </p>
         <ul className="space-y-2 list-none">
           <li className="flex items-center gap-2">
             <span className="w-1 h-1 rounded-full bg-kyzz-muted shrink-0" />
-            Tarjeta de crédito y débito (Visa, Mastercard)
+            Tarjeta débito o crédito — Visa, Mastercard, American Express
           </li>
           <li className="flex items-center gap-2">
             <span className="w-1 h-1 rounded-full bg-kyzz-muted shrink-0" />
@@ -95,7 +95,15 @@ const TABS: Tab[] = [
           </li>
           <li className="flex items-center gap-2">
             <span className="w-1 h-1 rounded-full bg-kyzz-muted shrink-0" />
-            Bancolombia a la mano
+            DaviPlata
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-kyzz-muted shrink-0" />
+            Transferencia Bancolombia
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-kyzz-muted shrink-0" />
+            QR Interoperable
           </li>
         </ul>
       </div>

@@ -4,18 +4,37 @@ import { authConfig } from './auth.config';
 
 const { auth } = NextAuth(authConfig);
 
-function buildCsp(nonce: string): string {
+const WOMPI_DOMAINS = 'https://checkout.wompi.co https://sandbox.wompi.co https://production.wompi.co';
+const PAYPAL_DOMAINS = 'https://www.paypal.com https://www.sandbox.paypal.com https://*.paypal.com https://api-m.sandbox.paypal.com https://api-m.paypal.com';
+const GA_DOMAINS    = 'https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com';
+
+// CSP estricto (nonce) para la mayoría de páginas
+function buildStrictCsp(nonce: string): string {
   return [
     "default-src 'self'",
-    // unsafe-eval required by PayPal SDK (uses eval() internally — cannot be removed without replacing PayPal)
-    // nonce replaces unsafe-inline: inline scripts must carry the per-request nonce to execute
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-eval' https://www.paypal.com https://www.sandbox.paypal.com https://www.googletagmanager.com`,
-    // unsafe-inline required by Framer Motion (sets style="" attributes at runtime for animations)
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    `script-src 'self' 'nonce-${nonce}' 'unsafe-eval' ${PAYPAL_DOMAINS} https://www.googletagmanager.com https://checkout.wompi.co`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://checkout.wompi.co",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://www.paypalobjects.com https://www.google-analytics.com https://www.googletagmanager.com",
-    "connect-src 'self' https://api-m.sandbox.paypal.com https://api-m.paypal.com https://www.sandbox.paypal.com https://www.paypal.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com",
-    "frame-src https://www.paypal.com https://www.sandbox.paypal.com https://*.paypal.com",
+    `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://www.paypalobjects.com ${GA_DOMAINS} https://checkout.wompi.co`,
+    `connect-src 'self' ${PAYPAL_DOMAINS} ${GA_DOMAINS} ${WOMPI_DOMAINS}`,
+    `frame-src ${PAYPAL_DOMAINS} https://checkout.wompi.co`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
+}
+
+// CSP permisivo para páginas de orden — Wompi y PayPal inyectan scripts inline
+// que no llevan nonce propio, por lo que unsafe-inline es necesario aquí.
+function buildPaymentCsp(): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${PAYPAL_DOMAINS} https://www.googletagmanager.com https://checkout.wompi.co`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://checkout.wompi.co",
+    "font-src 'self' https://fonts.gstatic.com https://checkout.wompi.co",
+    `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://www.paypalobjects.com ${GA_DOMAINS} https://checkout.wompi.co`,
+    `connect-src 'self' ${PAYPAL_DOMAINS} ${GA_DOMAINS} ${WOMPI_DOMAINS}`,
+    `frame-src ${PAYPAL_DOMAINS} https://checkout.wompi.co`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -23,11 +42,18 @@ function buildCsp(nonce: string): string {
 }
 
 export default auth((req) => {
+  const { pathname } = req.nextUrl;
+
+  // /orders/[id] y /checkout/ cargan widgets de pago que inyectan scripts inline
+  const isPaymentPage =
+    (pathname.startsWith('/orders/') && pathname !== '/orders') ||
+    pathname.startsWith('/checkout');
+
   const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
-  const csp = buildCsp(nonce);
+  const csp   = isPaymentPage ? buildPaymentCsp() : buildStrictCsp(nonce);
 
   const reqHeaders = new Headers(req.headers);
-  reqHeaders.set('x-nonce', nonce);
+  if (!isPaymentPage) reqHeaders.set('x-nonce', nonce);
 
   const res = NextResponse.next({ request: { headers: reqHeaders } });
   res.headers.set('Content-Security-Policy', csp);

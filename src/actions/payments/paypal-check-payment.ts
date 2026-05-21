@@ -51,7 +51,7 @@ export const paypalCheckPayment = async (paypalOrderId: string) => {
 
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data:  { isPaid: true, paidAt: new Date(), shippingStatus: 'processing' },
+      data:  { isPaid: true, paidAt: new Date(), shippingStatus: 'processing', paymentGateway: 'paypal' },
       include: {
         user:         { select: { email: true, name: true } },
         OrderItem:    { include: { product: { select: { title: true } } } },
@@ -61,10 +61,14 @@ export const paypalCheckPayment = async (paypalOrderId: string) => {
 
     try {
       const { user, OrderItem, OrderAddress } = updatedOrder;
-      if (user?.email && process.env.RESEND_API_KEY) {
+      const recipientEmail = user?.email ?? updatedOrder.guestEmail;
+      const recipientName  = user?.name?.split(' ')[0]
+        ?? OrderAddress?.firstName
+        ?? 'Cliente';
+      if (recipientEmail && process.env.RESEND_API_KEY) {
         const html = await render(OrderConfirmationEmail({
           orderId,
-          firstName: user.name?.split(' ')[0] ?? 'Cliente',
+          firstName: recipientName,
           items:     OrderItem.map(i => ({
             title:    i.product.title,
             size:     i.size,
@@ -79,7 +83,7 @@ export const paypalCheckPayment = async (paypalOrderId: string) => {
         }));
         await resend.emails.send({
           from:    EMAIL_FROM,
-          to:      user.email,
+          to:      recipientEmail,
           subject: `KYZZ · Pago confirmado #${orderId.split('-').at(-1)?.toUpperCase()}`,
           html,
         });

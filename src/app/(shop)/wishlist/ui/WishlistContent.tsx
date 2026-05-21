@@ -171,16 +171,19 @@ const WishlistListItem = ({ product, onRemove }: CardProps) => (
       </button>
     </div>
 
-    <div className="flex flex-col justify-between py-1 flex-1 min-w-0">
-      <div>
-        <Link
-          href={`/product/${product.slug}`}
-          className="block text-sm text-kyzz-dark hover:text-kyzz-primary transition-colors truncate"
-        >
-          {product.title}
-        </Link>
-      </div>
-      <span className="text-sm text-kyzz-muted">{currencyFormat(product.price)}</span>
+    <div className="flex flex-col gap-1.5 py-1 flex-1 min-w-0">
+      <Link
+        href={`/product/${product.slug}`}
+        className="block text-sm text-kyzz-dark hover:text-kyzz-primary transition-colors truncate"
+      >
+        {product.title}
+      </Link>
+      {product.description && (
+        <p className="text-[12px] text-kyzz-muted leading-relaxed line-clamp-2 hidden sm:block">
+          {product.description}
+        </p>
+      )}
+      <span className="text-sm text-kyzz-muted mt-auto">{currencyFormat(product.price)}</span>
     </div>
   </article>
 );

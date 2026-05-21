@@ -56,14 +56,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
     async jwt({ token, user, account }) {
       if (user) {
+        let dbUserId: string | undefined;
+        const userEmail = user.email?.toLowerCase();
+
         if (account?.provider === 'google') {
-          // Fetch our DB user to get the correct id and role
-          const dbUser = await prisma.user.findUnique({
-            where: { email: user.email! },
-          });
+          const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
           token.data = dbUser ?? user;
+          dbUserId   = dbUser?.id;
         } else {
           token.data = user;
+          dbUserId   = user.id ?? undefined;
+        }
+
+        // Reclamar órdenes de invitado hechas con este email al iniciar sesión
+        if (dbUserId && userEmail) {
+          await prisma.order.updateMany({
+            where: { guestEmail: userEmail, userId: null },
+            data:  { userId: dbUserId, guestEmail: null },
+          });
         }
       }
       return token;

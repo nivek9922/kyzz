@@ -8,20 +8,13 @@ export const getOrderById = async( id: string ) => {
 
   const session = await auth();
 
-  if ( !session?.user ) {
-    return {
-      ok: false,
-      message: 'Debe de estar autenticado'
-    }
-  }
-
-
   try {
 
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
         OrderAddress: true,
+        user:         { select: { email: true, name: true } },
         OrderItem: {
           select: {
             price:     true,
@@ -78,6 +71,15 @@ export const getOrderById = async( id: string ) => {
     });
 
     if( !order ) throw `${ id } no existe`;
+
+    if ( !session?.user ) {
+      // Permitir acceso sin sesión SOLO si es una orden de invitado (userId === null).
+      // El UUID de 128 bits sirve como token de acceso opaco.
+      if ( order.userId !== null ) {
+        return { ok: false, message: 'Debe de estar autenticado' };
+      }
+      return { ok: true, order };
+    }
 
     if ( session.user.role === 'user' ) {
       if ( session.user.id !== order.userId ) {

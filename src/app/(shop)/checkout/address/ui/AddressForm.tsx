@@ -2,17 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import clsx from 'clsx';
-
-
 import type { Address, Country } from '@/interfaces';
-import { useAddressStore } from '@/store';
+import { useAddressStore, useGuestStore } from '@/store';
 import { deleteUserAddress, setUserAddress } from '@/actions';
 
-
 type FormInputs = {
+  email?: string;
   firstName: string;
   lastName: string;
   address: string;
@@ -24,62 +21,64 @@ type FormInputs = {
   rememberAddress: boolean;
 }
 
-
 interface Props {
   countries: Country[];
   userStoredAddress?: Partial<Address>;
+  isGuest?: boolean;
 }
 
-
-export const AddressForm = ({ countries, userStoredAddress = {} }: Props) => {
-
+export const AddressForm = ({ countries, userStoredAddress = {}, isGuest = false }: Props) => {
   const router = useRouter();
   const { handleSubmit, register, formState: { isValid }, reset } = useForm<FormInputs>({
-    defaultValues: {
-      ...(userStoredAddress as any),
-      rememberAddress: false,
-    }
+    defaultValues: { ...(userStoredAddress as any), rememberAddress: false },
   });
 
-  useSession({ required: true });
-
-  const setAddress = useAddressStore( state => state.setAddress );
-  const address = useAddressStore( state => state.address );
-
-
+  const setAddress    = useAddressStore((state) => state.setAddress);
+  const address       = useAddressStore((state) => state.address);
+  const setGuestEmail = useGuestStore((state) => state.setGuestEmail);
 
   useEffect(() => {
-    if ( address.firstName ) {
-      reset(address);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  
+    if (address.firstName) reset(address as any);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-
-
-
-  const onSubmit = async( data: FormInputs ) => {
-    
-
-    const { rememberAddress, ...restAddress } = data;
-
+  const onSubmit = async (data: FormInputs) => {
+    const { rememberAddress, email, ...restAddress } = data;
     setAddress(restAddress);
 
-    if ( rememberAddress ) {
-      await setUserAddress(restAddress);
-    } else {
-      await deleteUserAddress();
+    if (isGuest && email) {
+      setGuestEmail(email);
+    } else if (!isGuest) {
+      if (rememberAddress) {
+        await setUserAddress(restAddress);
+      } else {
+        await deleteUserAddress();
+      }
     }
 
     router.push('/checkout');
-
-  }
-
-
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+
+      {/* Email — solo para invitados */}
+      {isGuest && (
+        <div className="sm:col-span-2 flex flex-col gap-1">
+          <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">
+            Correo electrónico
+          </label>
+          <input
+            type="email"
+            className="kyzz-input"
+            placeholder="para enviarte la confirmación"
+            {...register('email', {
+              required: true,
+              pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Email inválido' },
+            })}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-1">
         <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Nombres</label>
@@ -113,10 +112,7 @@ export const AddressForm = ({ countries, userStoredAddress = {} }: Props) => {
 
       <div className="flex flex-col gap-1">
         <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">País</label>
-        <select
-          className="kyzz-input cursor-pointer"
-          {...register('country', { required: true })}
-        >
+        <select className="kyzz-input cursor-pointer" {...register('country', { required: true })}>
           <option value="">Seleccionar país</option>
           {countries.map((country) => (
             <option key={country.id} value={country.id}>{country.name}</option>
@@ -129,27 +125,25 @@ export const AddressForm = ({ countries, userStoredAddress = {} }: Props) => {
         <input type="text" className="kyzz-input" {...register('phone', { required: true })} />
       </div>
 
-      {/* Checkbox + submit */}
       <div className="sm:col-span-2 flex flex-col gap-6">
-        <label className="flex items-center gap-3 cursor-pointer group">
-          <input
-            type="checkbox"
-            className="w-4 h-4 border border-kyzz-secondary accent-kyzz-primary cursor-pointer"
-            id="rememberAddress"
-            {...register('rememberAddress')}
-          />
-          <span className="text-sm text-kyzz-muted group-hover:text-kyzz-dark transition-colors">
-            Recordar esta dirección
-          </span>
-        </label>
+        {!isGuest && (
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              className="w-4 h-4 border border-kyzz-secondary accent-kyzz-primary cursor-pointer"
+              id="rememberAddress"
+              {...register('rememberAddress')}
+            />
+            <span className="text-sm text-kyzz-muted group-hover:text-kyzz-dark transition-colors">
+              Recordar esta dirección
+            </span>
+          </label>
+        )}
 
         <button
           disabled={!isValid}
           type="submit"
-          className={clsx({
-            'btn-primary': isValid,
-            'btn-disabled': !isValid,
-          })}
+          className={clsx({ 'btn-primary': isValid, 'btn-disabled': !isValid })}
         >
           Continuar
         </button>

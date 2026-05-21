@@ -22,8 +22,7 @@ export const LoginForm = () => {
         description: 'Verifica tu correo y contraseña.',
       });
     }
-  // nonce cambia en cada intento → el effect siempre dispara aunque el status sea el mismo
-  }, [state?.nonce]);
+  }, [state]);
 
   return (
     <form action={dispatch} className="flex flex-col gap-5">

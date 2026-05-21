@@ -51,17 +51,22 @@ export const updateOrderShipping = async ({
       try {
         const order = await prisma.order.findUnique({
           where: { id: orderId },
-          include: { user: { select: { email: true, name: true } } },
+          include: {
+            user:         { select: { email: true, name: true } },
+            OrderAddress: { select: { firstName: true } },
+          },
         });
-        if (order?.user?.email) {
+        const recipientEmail = order?.user?.email ?? order?.guestEmail;
+        const recipientName  = order?.user?.name?.split(' ')[0] ?? order?.OrderAddress?.firstName ?? 'Cliente';
+        if (recipientEmail) {
           const html = await render(OrderShippedEmail({
             orderId,
-            firstName:    order.user.name?.split(' ')[0] ?? 'Cliente',
+            firstName:    recipientName,
             trackingCode: trackingCode || undefined,
           }));
           await resend.emails.send({
             from: EMAIL_FROM,
-            to:   order.user.email,
+            to:   recipientEmail,
             subject: `KYZZ · Tu pedido #${orderId.split('-').at(-1)?.toUpperCase()} está en camino`,
             html,
           });

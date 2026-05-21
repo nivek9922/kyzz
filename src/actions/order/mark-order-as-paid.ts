@@ -14,9 +14,10 @@ export const markOrderAsPaid = async (orderId: string) => {
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        isPaid: true,
-        paidAt: new Date(),
-        transactionId: `MANUAL-${Date.now()}`,
+        isPaid:         true,
+        paidAt:         new Date(),
+        transactionId:  `MANUAL-${Date.now()}`,
+        paymentGateway: 'manual',
       },
     });
 

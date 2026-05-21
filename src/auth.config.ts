@@ -15,10 +15,13 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const protectedPaths = ['/checkout', '/orders', '/profile', '/admin'];
-      const isProtected = protectedPaths.some((path) =>
-        nextUrl.pathname.startsWith(path)
-      );
+      // /checkout excluded: guests can checkout (F06), security in place-order.ts.
+      // /orders/[id] excluded: guests access their order by UUID (getOrderById validates).
+      // Only /orders (list) requires auth — guests have no order history.
+      const prefixProtected = ['/profile', '/admin'];
+      const isProtected =
+        prefixProtected.some((path) => nextUrl.pathname.startsWith(path)) ||
+        nextUrl.pathname === '/orders';
 
       if (isProtected && !isLoggedIn) {
         return Response.redirect(

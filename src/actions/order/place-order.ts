@@ -16,14 +16,16 @@ interface ProductToOrder {
 export const placeOrder = async (
   productIds:  ProductToOrder[],
   address:     Address,
-  couponCode?: string
+  couponCode?: string,
+  guestEmail?: string,
 ) => {
-  const session = await auth();
-  const userId  = session?.user.id;
-  const userEmail = session?.user.email?.toLowerCase();
+  const session        = await auth();
+  const userId         = session?.user?.id;
+  const userEmail      = session?.user?.email?.toLowerCase();
+  const effectiveEmail = userEmail ?? guestEmail?.toLowerCase().trim();
 
-  if (!userId) {
-    return { ok: false, message: "No hay sesión de usuario" };
+  if (!userId && !effectiveEmail) {
+    return { ok: false, message: "Proporciona un email para continuar como invitado." };
   }
 
   // ── Precios snapshot ────────────────────────────────────
@@ -90,11 +92,11 @@ export const placeOrder = async (
 
       // 3. Validar cupón dentro de la transacción (nunca confiar en el cliente)
       let couponDiscount = 0;
-      let appliedCode:    string | undefined;
+      let appliedCode:     string | undefined;
       let appliedCouponId: string | undefined;
 
-      if (couponCode && userEmail) {
-        const upper = couponCode.trim().toUpperCase();
+      if (couponCode && effectiveEmail) {
+        const upper  = couponCode.trim().toUpperCase();
         const coupon = await tx.coupon.findUnique({ where: { code: upper } });
 
         const valid =
@@ -105,17 +107,15 @@ export const placeOrder = async (
           (coupon.minimumAmount === null || subTotal >= coupon.minimumAmount);
 
         if (valid) {
-          // Subscriber-only check
           if (coupon.subscriberOnly) {
-            const sub = await tx.subscriber.findUnique({ where: { email: userEmail } });
+            const sub = await tx.subscriber.findUnique({ where: { email: effectiveEmail } });
             if (!sub?.isActive) throw new Error('Cupón exclusivo para suscriptoras del newsletter.');
           }
-          // Not already used
           const used = await tx.couponRedemption.findUnique({
-            where: { couponId_email: { couponId: coupon.id, email: userEmail } },
+            where: { couponId_email: { couponId: coupon.id, email: effectiveEmail } },
           });
           if (!used?.orderId) {
-            couponDiscount = coupon.type === 'PERCENTAGE'
+            couponDiscount  = coupon.type === 'PERCENTAGE'
               ? Math.round(subTotal * (coupon.value / 100))
               : Math.min(coupon.value, subTotal);
             appliedCode     = coupon.code;
@@ -129,7 +129,8 @@ export const placeOrder = async (
       // 4. Crear orden
       const order = await tx.order.create({
         data: {
-          userId,
+          userId:         userId ?? null,
+          guestEmail:     userId ? null : (effectiveEmail ?? null),
           itemsInOrder,
           subTotal,
           tax,
@@ -157,12 +158,12 @@ export const placeOrder = async (
         data: { ...restAddress, countryId: country, orderId: order.id },
       });
 
-      // 6. Registrar redención del cupón y actualizar contador
-      if (appliedCouponId && userEmail) {
+      // 6. Registrar redención del cupón
+      if (appliedCouponId && effectiveEmail) {
         await tx.couponRedemption.upsert({
-          where: { couponId_email: { couponId: appliedCouponId, email: userEmail } },
+          where:  { couponId_email: { couponId: appliedCouponId, email: effectiveEmail } },
           update: { orderId: order.id, redeemedAt: new Date() },
-          create: { couponId: appliedCouponId, email: userEmail, orderId: order.id },
+          create: { couponId: appliedCouponId, email: effectiveEmail, orderId: order.id },
         });
         await tx.coupon.update({
           where: { id: appliedCouponId },

@@ -47,6 +47,12 @@ enum ShippingStatus {
   returned
 }
 
+enum PaymentGateway {
+  paypal
+  wompi
+  manual
+}
+
 model Category {
   id      String    @id @default(uuid())
   name    String    @unique
@@ -148,19 +154,22 @@ model Order {
   updatedAt DateTime @updatedAt
 
   // Relaciones
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
+  user       User?   @relation(fields: [userId], references: [id])
+  userId     String?
+  guestEmail String?
 
   OrderItem    OrderItem[]
   OrderAddress OrderAddress?
 
   transactionId  String?
+  paymentGateway PaymentGateway?
   couponCode     String?
   couponDiscount Float   @default(0)
 
   redemption CouponRedemption?
 
   @@index([userId])
+  @@index([guestEmail])
 }
 
 model OrderItem {

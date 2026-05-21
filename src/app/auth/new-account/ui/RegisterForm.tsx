@@ -14,9 +14,16 @@ type FormInputs = {
   password: string;
 };
 
-export const RegisterForm = () => {
+interface Props {
+  defaultEmail?:   string;
+  callbackUrl?:    string;
+}
+
+export const RegisterForm = ({ defaultEmail, callbackUrl }: Props) => {
   const [loading, setLoading] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>();
+  const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>({
+    defaultValues: { email: defaultEmail ?? '' },
+  });
 
   const onSubmit: SubmitHandler<FormInputs> = async (data) => {
     setLoading(true);
@@ -32,7 +39,9 @@ export const RegisterForm = () => {
 
     toast.success('Cuenta creada', { description: 'Bienvenida a KYZZ.' });
     await login(email.toLowerCase(), password);
-    window.location.replace('/');
+    // Sólo permitir rutas relativas para prevenir open redirect
+    const safeRedirect = callbackUrl?.startsWith('/') ? callbackUrl : '/';
+    window.location.replace(safeRedirect);
   };
 
   return (
@@ -62,8 +71,14 @@ export const RegisterForm = () => {
           className={`kyzz-input ${errors.email ? 'border-red-400' : ''}`}
           type="email"
           autoComplete="email"
+          readOnly={!!defaultEmail}
           {...register('email', { required: true, pattern: /^\S+@\S+$/i })}
         />
+        {defaultEmail && (
+          <p className="text-[10px] text-kyzz-muted">
+            Usa este email para vincular tu pedido de invitado a la nueva cuenta.
+          </p>
+        )}
         {errors.email && <p className="text-xs text-red-500">Correo electrónico inválido</p>}
       </div>
 
@@ -101,7 +116,7 @@ export const RegisterForm = () => {
       {/* Divisor */}
       <div className="flex items-center gap-4 my-1">
         <div className="flex-1 h-px bg-kyzz-secondary" />
-        <span className="text-[10px] tracking-widest text-kyzz-muted uppercase">o</span>
+        <span className="text-[10px] tracking-widests text-kyzz-muted uppercase">o</span>
         <div className="flex-1 h-px bg-kyzz-secondary" />
       </div>
 
@@ -114,4 +129,3 @@ export const RegisterForm = () => {
     </form>
   );
 };
-
