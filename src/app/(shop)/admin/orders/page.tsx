@@ -96,7 +96,7 @@ export default async function AdminOrdersPage(props: Props) {
                       #{order.id.split('-').at(-1)?.toUpperCase()}
                     </p>
                     <p className="text-[10px] text-kyzz-muted mt-0.5">
-                      {new Date(order.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                      {new Date(order.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', timeZone: 'America/Bogota' })}
                       {' · '}{itemCount} {itemCount === 1 ? 'producto' : 'productos'}
                     </p>
                   </div>

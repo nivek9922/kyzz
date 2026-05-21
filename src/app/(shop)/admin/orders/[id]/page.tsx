@@ -208,7 +208,7 @@ export default async function AdminOrderDetailPage(props: Props) {
                   <span className="text-kyzz-muted shrink-0">Fecha de pago</span>
                   <span className="text-kyzz-dark text-right">
                     {order.paidAt
-                      ? new Date(order.paidAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
+                      ? new Date(order.paidAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' })
                       : '—'}
                   </span>
                 </div>

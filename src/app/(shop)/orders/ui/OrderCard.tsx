@@ -35,6 +35,7 @@ export const OrderCard = ({ order }: Props) => {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "America/Bogota",
   });
 
   // Hasta 3 imágenes de vista previa
