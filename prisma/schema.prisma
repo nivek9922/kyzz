@@ -47,6 +47,12 @@ enum ShippingStatus {
   returned
 }
 
+enum PaymentGateway {
+  paypal
+  wompi
+  manual
+}
+
 model Category {
   id      String    @id @default(uuid())
   name    String    @unique
@@ -156,6 +162,7 @@ model Order {
   OrderAddress OrderAddress?
 
   transactionId  String?
+  paymentGateway PaymentGateway?
   couponCode     String?
   couponDiscount Float   @default(0)
 
