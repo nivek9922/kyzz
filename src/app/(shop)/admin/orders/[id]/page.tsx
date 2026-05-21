@@ -39,11 +39,11 @@ export default async function AdminOrderDetailPage(props: Props) {
           </span>
           {order.paymentGateway && (
             <span className={`text-[10px] tracking-widest uppercase px-3 py-1 border ${
-              order.paymentGateway === 'wompi'  ? 'text-blue-700 bg-blue-50 border-blue-200' :
-              order.paymentGateway === 'paypal' ? 'text-indigo-700 bg-indigo-50 border-indigo-200' :
-              'text-kyzz-muted bg-kyzz-tertiary border-kyzz-secondary'
+              order.paymentGateway === 'wompi'
+                ? 'text-blue-700 bg-blue-50 border-blue-200'
+                : 'text-kyzz-muted bg-kyzz-tertiary border-kyzz-secondary'
             }`}>
-              {order.paymentGateway === 'wompi' ? 'Wompi' : order.paymentGateway === 'paypal' ? 'PayPal' : 'Manual'}
+              {order.paymentGateway === 'wompi' ? 'Wompi' : 'Manual'}
             </span>
           )}
         </div>

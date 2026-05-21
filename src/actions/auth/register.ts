@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma';
 import bcryptjs from 'bcryptjs';
 import { z } from 'zod';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 const registerSchema = z.object({
   name:     z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(80).trim(),
@@ -11,6 +12,12 @@ const registerSchema = z.object({
 });
 
 export const registerUser = async( name: string, email: string, password: string ) => {
+  // Máx. 5 registros por IP cada 5 min — frena creación masiva de cuentas.
+  const ip = await getClientIp();
+  if (!rateLimit(`register:${ip}`, 5, 300_000)) {
+    return { ok: false, message: 'Demasiados intentos, espera unos minutos.' };
+  }
+
   const parsed = registerSchema.safeParse({ name, email, password });
   if (!parsed.success) {
     return {

@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { render } from '@react-email/components';
 import { resend, EMAIL_FROM } from '@/lib/resend';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { ContactNotificationEmail } from '@/emails/ContactNotificationEmail';
 import { ContactAutoReplyEmail } from '@/emails/ContactAutoReplyEmail';
 
@@ -30,6 +31,12 @@ export async function sendContactMessage(
   _prevState: ContactState,
   formData: FormData,
 ): Promise<ContactState> {
+  // Máx. 3 mensajes por IP cada minuto — frena spam del formulario.
+  const ip = await getClientIp();
+  if (!rateLimit(`contact:${ip}`, 3, 60_000)) {
+    return { status: 'error', message: 'Demasiados mensajes, espera unos minutos.' };
+  }
+
   const raw = {
     name:    formData.get('name'),
     email:   formData.get('email'),

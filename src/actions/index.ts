@@ -29,11 +29,8 @@ export { cancelUnpaidOrders,
          getCancellableOrdersCount } from './order/cancel-unpaid-orders';
 
 // ─── Payments ───────────────────────────────────────────────
-export { setTransactionId }             from './payments/set-transaction-id';
-export { paypalCheckPayment }           from './payments/paypal-check-payment';
-export { verifyExistingPaypalPayment }  from './payments/verify-existing-paypal-payment';
-export { wompiCreatePayment }           from './payments/wompi-create-payment';
-export { wompiCheckPayment }            from './payments/wompi-check-payment';
+export { wompiCreatePayment } from './payments/wompi-create-payment';
+export { wompiCheckPayment }  from './payments/wompi-check-payment';
 
 // ─── Product ────────────────────────────────────────────────
 export { deleteProduct }                   from './product/delete-product';

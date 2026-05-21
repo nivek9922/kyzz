@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { Product, Prisma } from '@prisma/client';
@@ -26,6 +27,11 @@ const productSchema = z.object({
 });
 
 export const createUpdateProduct = async (formData: FormData) => {
+  const session = await auth();
+  if (session?.user.role !== 'admin') {
+    return { ok: false, message: 'No autorizado' };
+  }
+
   const data = Object.fromEntries(formData);
   const productParsed = productSchema.safeParse(data);
 
@@ -142,9 +148,9 @@ const ALLOWED_MIME_TYPES = new Set([
 const uploadImages = async (images: File[]) => {
   try {
     const uploadPromises = images.map(async (image) => {
-      const mimeType = image.type || 'image/jpeg';
-      if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-        console.error(`Tipo de imagen no soportado: ${mimeType}`);
+      const mimeType = image.type;
+      if (!mimeType || !ALLOWED_MIME_TYPES.has(mimeType)) {
+        console.error(`Tipo de imagen no permitido: ${mimeType || '(sin tipo)'}`);
         return null;
       }
       try {
