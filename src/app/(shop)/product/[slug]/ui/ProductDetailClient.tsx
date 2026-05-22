@@ -1,7 +1,21 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ProductMobileSlideshow, ProductSlideshow, StockLabel } from '@/components';
+import { StockLabel } from '@/components';
+
+const SlideshowSkeleton = () => (
+  <div className="w-full aspect-[3/4] bg-kyzz-secondary/30 animate-pulse" />
+);
+
+const ProductMobileSlideshow = dynamic(
+  () => import('@/components/product/slideshow/ProductMobileSlideshow').then((m) => ({ default: m.ProductMobileSlideshow })),
+  { ssr: false, loading: SlideshowSkeleton },
+);
+const ProductSlideshow = dynamic(
+  () => import('@/components/product/slideshow/ProductSlideshow').then((m) => ({ default: m.ProductSlideshow })),
+  { ssr: false, loading: SlideshowSkeleton },
+);
 import { currencyFormat } from '@/utils';
 import { useRecentlyViewedStore } from '@/store';
 import { AddToCart } from './AddToCart';

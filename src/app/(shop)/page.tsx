@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getFeaturedProducts, getSiteConfig } from '@/actions';
 import { HomeRecentlyViewed } from './ui/HomeRecentlyViewed';
-import { ProductGridItem } from '@/components';
+import { ProductGridItem, ViewItemListTracker } from '@/components';
 import {
   IoLeafOutline,
   IoDiamondOutline,
@@ -49,6 +49,7 @@ export default async function Home() {
               alt="Hero KYZZ"
               fill
               priority
+              sizes="100vw"
               className="object-cover object-center"
             />
             <div className="absolute inset-0 bg-kyzz-dark/30" />
@@ -116,6 +117,7 @@ export default async function Home() {
               Ver todas
             </Link>
           </div>
+          <ViewItemListTracker listName="coleccion_especial" products={featuredProducts} />
           {/* Mobile: scroll horizontal — 2 cards visibles + ~25% de la 3ra asoma */}
           <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 -mr-6 md:mr-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-x-visible">
             {featuredProducts.map((product) => (
@@ -123,6 +125,7 @@ export default async function Home() {
                 <ProductGridItem
                   product={product}
                   colorVariants={featuredColors[product.id]}
+                  listName="coleccion_especial"
                 />
               </div>
             ))}

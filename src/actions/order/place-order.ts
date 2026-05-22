@@ -2,6 +2,7 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from "@/config/constants";
+import { notifyLowStock } from "@/lib/notify-low-stock";
 import type { Address, Size } from "@/interfaces";
 import type { Prisma } from "@prisma/client";
 
@@ -32,6 +33,9 @@ export const placeOrder = async (
   const products = await prisma.product.findMany({
     where: { id: { in: productIds.map((p) => p.productId) } },
   });
+
+  // Snapshot del stock previo (para detectar cruce de umbral y alertar al admin)
+  const previousStock = new Map(products.map((p) => [p.id, p.inStock]));
 
   type DbProduct = (typeof products)[number];
 
@@ -92,8 +96,9 @@ export const placeOrder = async (
 
       // 3. Validar cupón dentro de la transacción (nunca confiar en el cliente)
       let couponDiscount = 0;
-      let appliedCode:     string | undefined;
-      let appliedCouponId: string | undefined;
+      let appliedCode:       string | undefined;
+      let appliedCouponId:   string | undefined;
+      let appliedUsageLimit: number | null = null;
 
       if (couponCode && effectiveEmail) {
         const upper  = couponCode.trim().toUpperCase();
@@ -118,8 +123,9 @@ export const placeOrder = async (
             couponDiscount  = coupon.type === 'PERCENTAGE'
               ? Math.round(subTotal * (coupon.value / 100))
               : Math.min(coupon.value, subTotal);
-            appliedCode     = coupon.code;
-            appliedCouponId = coupon.id;
+            appliedCode       = coupon.code;
+            appliedCouponId   = coupon.id;
+            appliedUsageLimit = coupon.usageLimit;
           }
         }
       }
@@ -165,14 +171,27 @@ export const placeOrder = async (
           update: { orderId: order.id, redeemedAt: new Date() },
           create: { couponId: appliedCouponId, email: effectiveEmail, orderId: order.id },
         });
-        await tx.coupon.update({
-          where: { id: appliedCouponId },
-          data:  { usageCount: { increment: 1 } },
+        // Incremento atómico: el WHERE incluye el límite para que la BD lo
+        // imponga bajo concurrencia (el row-lock serializa transacciones
+        // simultáneas → evita TOCTOU sobre usageCount). Si ya se alcanzó el
+        // límite, count === 0 y revertimos toda la orden.
+        const incremented = await tx.coupon.updateMany({
+          where: {
+            id: appliedCouponId,
+            ...(appliedUsageLimit !== null ? { usageCount: { lt: appliedUsageLimit } } : {}),
+          },
+          data: { usageCount: { increment: 1 } },
         });
+        if (incremented.count === 0) {
+          throw new Error('El cupón alcanzó su límite de uso.');
+        }
       }
 
       return { order, orderAddress };
     });
+
+    // Alerta de stock bajo al admin (no afecta el resultado de la orden)
+    await notifyLowStock(previousStock);
 
     return { ok: true, order: prismaTx.order };
 

@@ -62,8 +62,9 @@ export async function getCartRecommendations(
   // 4. Query up to 30 candidate products
   const candidates = await prisma.product.findMany({
     where: {
-      id:       { notIn: cartProductIds },
-      variants: { some: { stock: { gt: 0 } } },
+      id:         { notIn: cartProductIds },
+      isArchived: false,
+      variants:   { some: { stock: { gt: 0 } } },
       ...(targetSlugs.length > 0
         ? { category: { slug: { in: targetSlugs } } }
         : {}),

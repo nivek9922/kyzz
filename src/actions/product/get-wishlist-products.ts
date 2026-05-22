@@ -6,7 +6,7 @@ export async function getWishlistProducts(ids: string[]) {
   if (ids.length === 0) return [];
 
   return prisma.product.findMany({
-    where: { id: { in: ids } },
+    where: { id: { in: ids }, isArchived: false },
     select: {
       id:          true,
       title:       true,

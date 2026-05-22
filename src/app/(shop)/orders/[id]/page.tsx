@@ -8,6 +8,7 @@ import { WompiButton } from "@/components/payments/WompiButton";
 import { titleFont } from "@/config/fonts";
 import { GuestOrderPrompt } from "./ui/GuestOrderPrompt";
 import { WompiReturnHandler } from "./ui/WompiReturnHandler";
+import { ReturnRequestForm } from "./ui/ReturnRequestForm";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -267,6 +268,17 @@ export default async function OrdersByIdPage(props: Props) {
           </div>
 
         </div>
+
+        {/* Devolución — solo para usuarios logueados con orden entregada */}
+        {session?.user?.id && (
+          <ReturnRequestForm
+            orderId={id}
+            canRequest={!!order!.isPaid && order!.shippingStatus === 'delivered' && !order!.cancelledAt}
+            existingReturn={order!.returnRequest
+              ? { status: order!.returnRequest.status, reason: order!.returnRequest.reason, createdAt: order!.returnRequest.createdAt }
+              : null}
+          />
+        )}
 
         {/* Prompt de cuenta para invitados */}
         {showGuestPrompt && (

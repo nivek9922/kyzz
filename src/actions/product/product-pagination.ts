@@ -14,15 +14,16 @@ export type VariantColor    = ProductColorEntry & { slug: string };
 export type VariantColorMap = ProductColorsMap;
 
 interface PaginationOptions {
-  page?:        number;
-  take?:        number;
-  categoryId?:  string;
-  query?:       string;
-  sizes?:       Size[];
-  minPrice?:    number;
-  maxPrice?:    number;
-  sortBy?:      SortOption;
-  colorNames?:  string[];
+  page?:         number;
+  take?:         number;
+  categoryId?:   string;
+  query?:        string;
+  sizes?:        Size[];
+  minPrice?:     number;
+  maxPrice?:     number;
+  sortBy?:       SortOption;
+  colorNames?:   string[];
+  showArchived?: boolean;
 }
 
 export const getPaginatedProductsWithImages = async ({
@@ -35,11 +36,13 @@ export const getPaginatedProductsWithImages = async ({
   maxPrice,
   sortBy = 'newest',
   colorNames,
+  showArchived = false,
 }: PaginationOptions) => {
   if (isNaN(Number(page))) page = 1;
   if (page < 1) page = 1;
 
   const where: Prisma.ProductWhereInput = {
+    isArchived: showArchived,
     ...(categoryId ? { categoryId } : {}),
     ...(sizes && sizes.length > 0 ? { sizes: { hasSome: sizes } } : {}),
     ...(minPrice !== undefined || maxPrice !== undefined ? {

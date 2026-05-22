@@ -151,7 +151,7 @@ interface CardProps {
 const WishlistListItem = ({ product, onRemove }: CardProps) => (
   <article className="group flex gap-5 py-5">
     <div className="relative shrink-0 w-24 h-32 sm:w-32 sm:h-44 overflow-hidden bg-kyzz-tertiary">
-      <Link href={`/product/${product.slug}`}>
+      <Link href={`/product/${product.slug}`} className="block relative w-full h-full">
         <Image
           src={imgSrc(product)}
           alt={product.title}
@@ -192,7 +192,7 @@ const WishlistListItem = ({ product, onRemove }: CardProps) => (
 const WishlistCard = ({ product, onRemove }: CardProps) => (
   <article className="group fade-in">
     <div className="relative aspect-[3/4] overflow-hidden bg-kyzz-tertiary">
-      <Link href={`/product/${product.slug}`}>
+      <Link href={`/product/${product.slug}`} className="block relative w-full h-full">
         <Image
           src={imgSrc(product)}
           alt={product.title}

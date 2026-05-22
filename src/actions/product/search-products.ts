@@ -11,6 +11,7 @@ export const searchProducts = async (query: string) => {
     const products = await prisma.product.findMany({
       take: 12,
       where: {
+        isArchived: false,
         OR: [
           { title: { contains: q, mode: 'insensitive' } },
           { tags:  { has: q } },
