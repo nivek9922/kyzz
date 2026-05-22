@@ -1,4 +1,16 @@
+import { headers } from 'next/headers';
+
 const buckets = new Map<string, { count: number; resetAt: number }>();
+
+/**
+ * IP del cliente para usar como clave de rate-limit. En Vercel viene en
+ * `x-forwarded-for` (primer valor); cae a `x-real-ip` y luego a 'unknown'.
+ */
+export async function getClientIp(): Promise<string> {
+  const h = await headers();
+  const fwd = h.get('x-forwarded-for');
+  return fwd?.split(',')[0]?.trim() || h.get('x-real-ip') || 'unknown';
+}
 
 /**
  * Rate limiter en memoria (best-effort). En serverless funciona en instancias

@@ -156,7 +156,7 @@ export const CouponsClient = ({ initialCoupons, initialRedemptions }: Props) => 
                         </td>
                         <td className="py-4 pr-5 text-[11px] text-kyzz-muted">
                           {c.expiresAt
-                            ? <span className={expired ? "text-red-400" : ""}>{new Date(c.expiresAt).toLocaleDateString("es-CO")}</span>
+                            ? <span className={expired ? "text-red-400" : ""}>{new Date(c.expiresAt).toLocaleDateString("es-CO", { timeZone: "America/Bogota" })}</span>
                             : "—"}
                         </td>
                         <td className="py-4">
@@ -196,7 +196,7 @@ export const CouponsClient = ({ initialCoupons, initialRedemptions }: Props) => 
                   {initialRedemptions.map((r) => (
                     <tr key={r.id} className="hover:bg-kyzz-tertiary/40 transition-colors">
                       <td className="py-3.5 pr-5 text-[11px] text-kyzz-muted whitespace-nowrap">
-                        {new Date(r.redeemedAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}
+                        {new Date(r.redeemedAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short", timeZone: "America/Bogota" })}
                       </td>
                       <td className="py-3.5 pr-5 text-[12px] text-kyzz-dark">{r.email}</td>
                       <td className="py-3.5 pr-5">

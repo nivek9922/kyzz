@@ -1,6 +1,7 @@
 'use server';
 
 import prisma from '@/lib/prisma';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -26,6 +27,12 @@ export const subscribeNewsletter = async (
   email: string,
   name?: string,
 ): Promise<NewsletterResult> => {
+  // Máx. 4 suscripciones por IP cada minuto — frena spam de registros.
+  const ip = await getClientIp();
+  if (!rateLimit(`newsletter:${ip}`, 4, 60_000)) {
+    return { ok: false, message: 'Demasiados intentos, espera un momento.' };
+  }
+
   const trimmedEmail = email.trim().toLowerCase();
   const trimmedName  = name?.trim() || undefined;
 

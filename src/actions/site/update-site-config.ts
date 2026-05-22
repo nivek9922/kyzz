@@ -7,6 +7,8 @@ import { v2 as cloudinary } from 'cloudinary';
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4 MB — límite seguro bajo el tope de Vercel (4.5 MB)
 
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']);
+
 cloudinary.config(process.env.CLOUDINARY_URL ?? '');
 
 export const updateSiteConfig = async (formData: FormData) => {
@@ -33,6 +35,9 @@ export const updateSiteConfig = async (formData: FormData) => {
       }
 
       const mimeType = heroImage.type;
+      if (!mimeType || !ALLOWED_MIME_TYPES.has(mimeType)) {
+        return { ok: false, message: 'Solo se permiten imágenes JPEG, PNG, WebP o AVIF.' };
+      }
       const buffer   = await heroImage.arrayBuffer();
       const base64   = Buffer.from(buffer).toString('base64');
 

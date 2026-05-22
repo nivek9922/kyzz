@@ -13,7 +13,6 @@ export * from './products/InfiniteProductGrid';
 export * from './orders/OrderStatus';
 
 
-export * from './paypal/PayPalButton';
 export * from './payments/WompiButton';
 
 

@@ -1,7 +1,9 @@
-export const revalidate = 604800; // 7 días
+// Fallback ISR: 1h. Las mutaciones admin usan revalidateTag para invalidación inmediata.
+export const revalidate = 3600;
 
 import { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { getProductBySlug, getProductVariants } from "@/actions";
 import { getProductColors as fetchProductColors } from "@/actions/product/manage-product-color";
 import { ProductDetailClient } from './ui/ProductDetailClient';
@@ -10,9 +12,27 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+/** Todos los datos de la PDP en un solo bloque cacheado por slug. */
+function getProductPageData(slug: string) {
+  return unstable_cache(
+    async () => {
+      const product = await getProductBySlug(slug);
+      if (!product) return null;
+      const [productColors, variants] = await Promise.all([
+        fetchProductColors(product.id),
+        getProductVariants(product.id),
+      ]);
+      return { product, productColors, variants };
+    },
+    [`product-page:${slug}`],
+    { tags: [`product:${slug}`], revalidate: 3600 },
+  )();
+}
+
 export async function generateMetadata(props: Props, _parent: ResolvingMetadata): Promise<Metadata> {
-  const params  = await props.params;
-  const product = await getProductBySlug(params.slug);
+  const params = await props.params;
+  const data   = await getProductPageData(params.slug);
+  const product = data?.product;
 
   const rawImage = product?.images[0];
   const ogImage  = rawImage?.startsWith('http') ? rawImage : rawImage ? `/products/${rawImage}` : undefined;
@@ -30,15 +50,12 @@ export async function generateMetadata(props: Props, _parent: ResolvingMetadata)
 }
 
 export default async function ProductBySlugPage(props: Props) {
-  const params  = await props.params;
-  const product = await getProductBySlug(params.slug);
+  const params = await props.params;
+  const data   = await getProductPageData(params.slug);
 
-  if (!product) notFound();
+  if (!data) notFound();
 
-  const [productColors, variants] = await Promise.all([
-    fetchProductColors(product.id),
-    getProductVariants(product.id),
-  ]);
+  const { product, productColors, variants } = data;
 
   const colors = productColors.map((pc) => ({
     id:             pc.id,
