@@ -8,7 +8,7 @@ export const getFeaturedProducts = async () => {
     const products = await prisma.product.findMany({
       take: 3,
       // Auto out-of-stock: los agotados no ocupan un slot curado del home.
-      where: { isFeatured: true, inStock: { gt: 0 } },
+      where: { isFeatured: true, isArchived: false, inStock: { gt: 0 } },
       include: {
         ProductImage: { take: 2, select: { url: true } },
       },

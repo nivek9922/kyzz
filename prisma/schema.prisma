@@ -77,6 +77,7 @@ model Product {
   slug        String   @unique
   tags        String[] @default([])
   isFeatured  Boolean  @default(false)
+  isArchived  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -91,6 +92,7 @@ model Product {
   reviews       Review[]
 
   @@index([isFeatured])
+  @@index([isArchived])
   @@index([categoryId])
 }
 

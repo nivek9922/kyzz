@@ -43,3 +43,4 @@ export * from './ui/admin/CancelExpiredOrdersButton';
 export * from './ui/admin/DeleteProductButton';
 export * from './ui/admin/MarkOrderPaidButton';
 export * from './ui/admin/ToggleFeaturedButton';
+export * from './ui/admin/ArchivedProductActions';

@@ -11,7 +11,7 @@ interface Options {
 export const getFeaturedProductsPaginated = async ({ page = 1, take = 12 }: Options = {}) => {
   if (isNaN(Number(page)) || page < 1) page = 1;
 
-  const where = { isFeatured: true };
+  const where = { isFeatured: true, isArchived: false };
 
   const [products, totalCount] = await Promise.all([
     prisma.product.findMany({

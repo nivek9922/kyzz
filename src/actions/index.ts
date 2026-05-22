@@ -37,6 +37,7 @@ export { deleteProduct }                   from './product/delete-product';
 export { deleteProductImage }              from './product/delete-product-image';
 export { createUpdateProduct }             from './product/create-update-product';
 export { toggleProductFeatured }           from './product/toggle-product-featured';
+export { toggleProductArchived }           from './product/archive-product';
 export { getFeaturedProducts }             from './product/get-featured-products';
 export { getFeaturedProductsPaginated }    from './product/get-featured-products-paginated';
 export { getProductBySlug }                from './product/get-product-by-slug';

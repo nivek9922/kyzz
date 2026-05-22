@@ -1,10 +1,15 @@
 "use client";
 
+import dynamic from 'next/dynamic';
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
-import { NewsletterPopup } from "@/components/ui/NewsletterPopup";
 import { AnalyticsUser } from "@/components/analytics/AnalyticsUser";
 import { WishlistSync } from "@/components/analytics/WishlistSync";
+
+const NewsletterPopup = dynamic(
+  () => import('@/components/ui/NewsletterPopup').then((m) => ({ default: m.NewsletterPopup })),
+  { ssr: false },
+);
 
 interface Props {
   children: React.ReactNode;

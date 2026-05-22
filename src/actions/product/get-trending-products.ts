@@ -55,7 +55,7 @@ export const getTrendingProducts = async (limit = 5): Promise<QuickSearchResult[
     if (topItems.length > 0) {
       const ids = topItems.map((i) => i.productId).filter(Boolean);
       const products = await prisma.product.findMany({
-        where:  { id: { in: ids }, ...HAS_IMAGE },
+        where:  { id: { in: ids }, isArchived: false, ...HAS_IMAGE },
         select: SELECT,
         take:   limit,
       });
@@ -74,7 +74,7 @@ export const getTrendingProducts = async (limit = 5): Promise<QuickSearchResult[
   // Fallback: productos destacados
   try {
     const featured = await prisma.product.findMany({
-      where:   { isFeatured: true, ...HAS_IMAGE },
+      where:   { isFeatured: true, isArchived: false, ...HAS_IMAGE },
       select:  SELECT,
       orderBy: { createdAt: 'desc' },
       take:    limit,
