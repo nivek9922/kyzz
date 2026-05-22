@@ -147,6 +147,7 @@ export const SiteConfigForm = ({ config }: Props) => {
               src={imagePreview}
               alt="Hero preview"
               fill
+              sizes="(max-width: 1024px) 100vw, 800px"
               className="object-cover"
             />
             <button

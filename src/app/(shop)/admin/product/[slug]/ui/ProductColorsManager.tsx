@@ -298,7 +298,7 @@ export const ProductColorsManager = ({
               <div className="grid grid-cols-3 gap-2 mt-3">
                 {previews.map((url, i) => (
                   <div key={i} className="relative aspect-[3/4] bg-kyzz-tertiary overflow-hidden">
-                    <Image src={url} alt={`preview-${i}`} fill className="object-cover" unoptimized />
+                    <Image src={url} alt={`preview-${i}`} fill sizes="(max-width: 768px) 33vw, 150px" className="object-cover" unoptimized />
                   </div>
                 ))}
               </div>

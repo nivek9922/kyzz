@@ -20,15 +20,16 @@ function buildStrictCsp(nonce: string): string {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "upgrade-insecure-requests",
   ].join('; ');
 }
 
-// CSP permisivo para páginas de orden — Wompi inyecta scripts inline
-// que no llevan nonce propio, por lo que unsafe-inline es necesario aquí.
+// CSP permisivo para páginas de pago — Wompi inyecta scripts inline sin nonce.
+// Se quita unsafe-eval (Wompi no lo necesita) pero se mantiene unsafe-inline.
 function buildPaymentCsp(): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://checkout.wompi.co`,
+    `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://checkout.wompi.co`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://checkout.wompi.co",
     "font-src 'self' https://fonts.gstatic.com https://checkout.wompi.co",
     `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com ${GA_DOMAINS} https://checkout.wompi.co`,
@@ -37,6 +38,7 @@ function buildPaymentCsp(): string {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "upgrade-insecure-requests",
   ].join('; ');
 }
 

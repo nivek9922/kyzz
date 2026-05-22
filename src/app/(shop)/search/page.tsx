@@ -1,5 +1,5 @@
 import { searchProducts } from '@/actions';
-import { ProductGrid } from '@/components';
+import { ProductGrid, ViewItemListTracker } from '@/components';
 import { titleFont } from '@/config/fonts';
 import { SearchBar } from './ui/SearchBar';
 
@@ -44,7 +44,8 @@ export default async function SearchPage(props: Props) {
           <p className="text-xs text-kyzz-muted mb-8 tracking-wide">
             {products.length} resultado{products.length !== 1 ? 's' : ''}
           </p>
-          <ProductGrid products={products} />
+          <ViewItemListTracker listName="search_results" products={products} />
+          <ProductGrid products={products} listName="search_results" />
         </>
       )}
 

@@ -6,11 +6,17 @@ import { ProductGridItem } from './ProductGridItem';
 export type Columns = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 interface Props {
-  products:       Product[];
-  columns?:       Columns;
-  variantColors?: ProductColorsMap;
-  gapOverride?:   string;
-  compactMode?:   boolean;
+  products:        Product[];
+  columns?:        Columns;
+  variantColors?:  ProductColorsMap;
+  gapOverride?:    string;
+  compactMode?:    boolean;
+  /** Nombre de la lista para atribución GA4 (select_item). */
+  listName?:       string;
+  /** Desactiva priority en todas las imágenes. Usar cuando el layout depende
+   *  de localStorage (columnas configurables) para evitar preloads con sizes
+   *  incorrectos que generan "preloaded but not used". */
+  disablePriority?: boolean;
 }
 
 const colsClass: Record<Columns, string> = {
@@ -35,14 +41,19 @@ const imageSizesMap: Record<Columns, string> = {
   6: '(max-width: 640px) 33vw, 16vw',
 };
 
-export const ProductGrid = ({ products, columns = 3, variantColors = {}, gapOverride, compactMode = false }: Props) => {
+export const ProductGrid = ({ products, columns = 3, variantColors = {}, gapOverride, compactMode = false, listName, disablePriority = false }: Props) => {
   const isListView  = columns === 1;
   const gap         = gapOverride ?? 'gap-6';
   const imageSizes  = imageSizesMap[columns];
 
+  // priority solo cuando el layout es estable (no viene de localStorage).
+  // Cuando disablePriority=true el layout depende de useGridLayout y las
+  // columnas cambian tras la hidratación → los preloads SSR quedan obsoletos.
+  const priorityCount = disablePriority || isListView ? 0 : Math.min(columns, 4);
+
   return (
     <div className={isListView ? 'flex flex-col' : `grid ${colsClass[columns]} ${gap} mb-10`}>
-      {products.map((product) => (
+      {products.map((product, index) => (
         <ProductGridItem
           key={product.slug}
           product={product}
@@ -50,6 +61,8 @@ export const ProductGrid = ({ products, columns = 3, variantColors = {}, gapOver
           colorVariants={variantColors[product.id]}
           compactMode={compactMode}
           imageSizes={imageSizes}
+          priority={index < priorityCount}
+          {...(listName ? { listName } : {})}
         />
       ))}
     </div>

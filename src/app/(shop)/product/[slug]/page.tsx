@@ -6,7 +6,10 @@ import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { getProductBySlug, getProductVariants } from "@/actions";
 import { getProductColors as fetchProductColors } from "@/actions/product/manage-product-color";
+import { getProductReviews } from "@/actions/review/get-product-reviews";
+import { auth } from '@/auth';
 import { ProductDetailClient } from './ui/ProductDetailClient';
+import { ProductReviews } from './ui/ProductReviews';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -56,6 +59,10 @@ export default async function ProductBySlugPage(props: Props) {
   if (!data) notFound();
 
   const { product, productColors, variants } = data;
+  const [session, reviewData] = await Promise.all([
+    auth(),
+    getProductReviews(product.id),
+  ]);
 
   const colors = productColors.map((pc) => ({
     id:             pc.id,
@@ -74,6 +81,14 @@ export default async function ProductBySlugPage(props: Props) {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 mb-16">
       <ProductDetailClient product={product} colors={colors} variants={variantList} />
+      <ProductReviews
+        productId={product.id}
+        reviews={reviewData.reviews}
+        summary={reviewData.summary}
+        userReview={reviewData.userReview}
+        hasPurchased={reviewData.hasPurchased}
+        isLoggedIn={!!session?.user?.id}
+      />
     </div>
   );
 }

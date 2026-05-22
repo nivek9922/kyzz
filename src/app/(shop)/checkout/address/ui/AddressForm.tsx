@@ -5,8 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import clsx from 'clsx';
 import type { Address, Country } from '@/interfaces';
-import { useAddressStore, useGuestStore } from '@/store';
+import { useAddressStore, useCartStore, useGuestStore } from '@/store';
 import { deleteUserAddress, setUserAddress } from '@/actions';
+import { captureAbandonedCart } from '@/actions/order/capture-abandoned-cart';
+import { gaAddShippingInfo } from '@/lib/gtag';
+import { useShallow } from 'zustand/react/shallow';
 
 type FormInputs = {
   email?: string;
@@ -36,6 +39,7 @@ export const AddressForm = ({ countries, userStoredAddress = {}, isGuest = false
   const setAddress    = useAddressStore((state) => state.setAddress);
   const address       = useAddressStore((state) => state.address);
   const setGuestEmail = useGuestStore((state) => state.setGuestEmail);
+  const cart          = useCartStore(useShallow((s) => s.cart));
 
   useEffect(() => {
     if (address.firstName) reset(address as any);
@@ -54,6 +58,25 @@ export const AddressForm = ({ countries, userStoredAddress = {}, isGuest = false
       } else {
         await deleteUserAddress();
       }
+    }
+
+    gaAddShippingInfo({
+      value: cart.reduce((s, p) => s + p.price * p.quantity, 0),
+      items: cart.map((p) => ({ id: p.id, name: p.title, price: p.price, quantity: p.quantity })),
+    });
+
+    // Captura silenciosa del carrito abandonado (se envía email si no paga en > 3h)
+    const cartEmail = isGuest ? data.email : undefined;
+    if (cartEmail) {
+      void captureAbandonedCart(
+        cartEmail,
+        cart.map((p) => ({
+          id: p.id, title: p.title, price: p.price,
+          quantity: p.quantity, size: p.size, slug: p.slug,
+          image: p.image, colorName: p.colorName ?? undefined,
+          variantId: p.variantId ?? undefined,
+        })),
+      );
     }
 
     router.push('/checkout');

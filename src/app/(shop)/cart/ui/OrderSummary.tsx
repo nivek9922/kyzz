@@ -2,36 +2,15 @@
 
 import { useCartStore } from "@/store";
 import { currencyFormat } from "@/utils";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { FreeShippingBar } from "@/components";
 
+// Solo se monta desde CartContent cuando el carrito ya está hidratado y tiene
+// ítems, por eso no necesita guard de carga ni manejar el estado vacío.
 export const OrderSummary = () => {
-  const router = useRouter();
-  const [loaded, setLoaded] = useState(false);
   const { itemsInCart, subTotal, tax, shipping, total } = useCartStore(
     useShallow((state) => state.getSummaryInformation())
   );
-
-  useEffect(() => { setLoaded(true); }, []);
-
-  useEffect(() => {
-    if (itemsInCart === 0 && loaded) router.replace('/empty');
-  }, [itemsInCart, loaded, router]);
-
-  if (!loaded) {
-    return (
-      <div className="space-y-4 animate-pulse">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="flex justify-between">
-            <div className="h-3 w-24 bg-kyzz-secondary/40" />
-            <div className="h-3 w-16 bg-kyzz-secondary/40" />
-          </div>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-3">

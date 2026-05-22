@@ -1,27 +1,27 @@
 'use client';
 
 import { toast } from 'sonner';
-import { IoTrashOutline } from 'react-icons/io5';
-import { deleteProduct } from '@/actions';
+import { IoArchiveOutline } from 'react-icons/io5';
+import { toggleProductArchived } from '@/actions';
 
 interface Props {
-  productId: string;
+  productId:    string;
   productTitle: string;
 }
 
 export const DeleteProductButton = ({ productId, productTitle }: Props) => {
   const handleClick = () => {
-    toast(`¿Eliminar "${productTitle}"?`, {
-      description: 'Esta acción no se puede deshacer.',
+    toast('Archivar producto', {
+      description: `"${productTitle}" — Dejará de aparecer en la tienda. Puedes restaurarlo en Productos → Archivados.`,
       duration: 8000,
       action: {
-        label: 'Eliminar',
+        label: 'Archivar',
         onClick: async () => {
-          const { ok, message } = await deleteProduct(productId);
+          const { ok, message } = await toggleProductArchived(productId);
           if (ok) {
-            toast.success('Producto eliminado');
+            toast.success('Producto archivado');
           } else {
-            toast.error(message ?? 'No se pudo eliminar');
+            toast.error(message ?? 'No se pudo archivar');
           }
         },
       },
@@ -35,10 +35,11 @@ export const DeleteProductButton = ({ productId, productTitle }: Props) => {
   return (
     <button
       onClick={handleClick}
-      className="hidden md:flex items-center justify-center w-8 h-8 border border-kyzz-secondary text-kyzz-muted hover:border-red-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-      aria-label="Eliminar producto"
+      title="Archivar producto"
+      className="hidden md:flex items-center justify-center w-8 h-8 border border-kyzz-secondary text-kyzz-muted hover:border-amber-300 hover:text-amber-500 transition-colors opacity-0 group-hover:opacity-100"
+      aria-label="Archivar producto"
     >
-      <IoTrashOutline size={13} />
+      <IoArchiveOutline size={13} />
     </button>
   );
 };

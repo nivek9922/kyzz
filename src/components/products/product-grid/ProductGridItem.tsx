@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { Product } from '@/interfaces';
 import { currencyFormat } from '@/utils';
+import { gaSelectItem } from '@/lib/gtag';
 import type { ProductColorEntry } from '@/actions/product/product-pagination';
 import { WishlistButton } from './WishlistButton';
 
@@ -17,6 +18,10 @@ interface Props {
   compactMode?:   boolean;
   /** Hint para el srcset: debe coincidir con el tamaño visual real según las columnas activas */
   imageSizes?:    string;
+  /** Precarga la imagen (above-fold) para mejorar LCP. Solo en las primeras del grid. */
+  priority?:      boolean;
+  /** Nombre de la lista para atribución GA4 (select_item). */
+  listName?:      string;
 }
 
 const PLACEHOLDER = '/imgs/placeholder.jpg';
@@ -26,7 +31,7 @@ const imgSrc = (url: string | null | undefined) =>
   : `/products/${url}`;
 
 // ── Card grid normal ──────────────────────────────────────────────────────────
-export const ProductGridItem = ({ product, listView = false, colorVariants = [], compactMode = false, imageSizes }: Props) => {
+export const ProductGridItem = ({ product, listView = false, colorVariants = [], compactMode = false, imageSizes, priority = false, listName = 'product_list' }: Props) => {
   const hasColors     = colorVariants.length > 0;
   const firstColorImg = hasColors && colorVariants[0].image ? colorVariants[0].image : null;
   const isSoldOut     = (product.inStock ?? 0) <= 0;
@@ -47,16 +52,20 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [],
     // Mantiene el color seleccionado al salir
   };
 
+  const handleSelect = () =>
+    gaSelectItem({ listName, id: product.id, name: product.title, price: product.price });
+
   if (listView) {
     return (
       <article className="group fade-in flex gap-5 py-5 border-b border-kyzz-secondary">
-        <Link href={`/product/${product.slug}`} className="shrink-0 overflow-hidden">
+        <Link href={`/product/${product.slug}`} onClick={handleSelect} className="shrink-0 overflow-hidden">
           <div className="relative w-24 h-32 sm:w-32 sm:h-44 overflow-hidden bg-kyzz-tertiary">
             <Image
               src={imgSrc(mainImage)}
               alt={product.title}
               fill
               sizes="128px"
+              priority={priority}
               className={`object-cover transition-all duration-500 group-hover:scale-105 ${isSoldOut ? 'opacity-60' : ''}`}
             onError={() => setMainImage(PLACEHOLDER)}
             />
@@ -73,6 +82,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [],
           <div>
             <Link
               href={`/product/${product.slug}`}
+              onClick={handleSelect}
               className="block text-sm text-kyzz-dark hover:text-kyzz-primary transition-colors duration-200"
             >
               {product.title}
@@ -97,7 +107,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [],
 
   return (
     <article className="group fade-in">
-      <Link href={`/product/${product.slug}`} className="block overflow-hidden">
+      <Link href={`/product/${product.slug}`} onClick={handleSelect} className="block overflow-hidden">
         <div
           className="relative aspect-[3/4] overflow-hidden bg-kyzz-tertiary"
           onMouseLeave={() => {
@@ -109,6 +119,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [],
             alt={product.title}
             fill
             sizes={imageSizes ?? '(max-width: 640px) 50vw, 33vw'}
+            priority={priority}
             className={`object-cover transition-all duration-500 group-hover:scale-105 ${isSoldOut ? 'opacity-60' : ''}`}
             onError={() => setMainImage(PLACEHOLDER)}
             onMouseEnter={() => {
@@ -130,6 +141,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [],
       <div className={compactMode ? 'pt-2 pb-1' : 'pt-3 pb-2'}>
         <Link
           href={`/product/${product.slug}`}
+          onClick={handleSelect}
           className={`block text-kyzz-dark hover:text-kyzz-primary transition-colors duration-200 truncate ${
             compactMode ? 'text-[11px] leading-snug' : 'text-sm'
           }`}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { IoHeart, IoHeartOutline } from 'react-icons/io5';
 import { useWishlistStore } from '@/store';
+import { gaAddToWishlist } from '@/lib/gtag';
 
 interface Props {
   productId: string;
@@ -26,6 +27,7 @@ export const WishlistButton = ({ productId }: Props) => {
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!inWishlist) gaAddToWishlist({ id: productId });
         toggle(productId);
       }}
       className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
