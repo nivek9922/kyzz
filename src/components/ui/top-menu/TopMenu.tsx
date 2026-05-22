@@ -147,7 +147,7 @@ export const TopMenu = ({ categories = [] }: Props) => {
             </Link>
 
             <Link
-              href={mounted && totalItems > 0 ? "/cart" : "/empty"}
+              href="/cart"
               className="relative text-kyzz-dark hover:text-kyzz-primary transition-colors"
               aria-label="Carrito"
             >

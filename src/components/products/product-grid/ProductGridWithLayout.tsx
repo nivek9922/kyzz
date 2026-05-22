@@ -42,6 +42,7 @@ export const ProductGridWithLayout = ({ products, variantColors = {}, totalCount
         variantColors={variantColors}
         gapOverride={gapClass}
         compactMode={isMobile && effectiveCols === 3}
+        disablePriority
       />
     </>
   );

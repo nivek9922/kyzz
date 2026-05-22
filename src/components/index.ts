@@ -12,6 +12,10 @@ export * from './products/InfiniteProductGrid';
 
 export * from './orders/OrderStatus';
 
+export * from './analytics/AnalyticsUser';
+export * from './analytics/ViewItemListTracker';
+export * from './analytics/WishlistSync';
+
 
 export * from './payments/WompiButton';
 

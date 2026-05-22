@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { toast } from 'sonner';
 import { wompiCreatePayment, wompiCheckPayment } from '@/actions';
+import { gaAddPaymentInfo } from '@/lib/gtag';
 
 // ── Tipos del Widget de Wompi ─────────────────────────────────────────────────
 declare global {
@@ -106,6 +107,8 @@ export const WompiButton = ({ orderId, amount, email }: Props) => {
       setLoading(false);
       return;
     }
+
+    gaAddPaymentInfo({ value: amount, items: [], paymentType: 'Wompi' });
 
     const safetyTimer = setTimeout(() => setLoading(false), 90_000);
 

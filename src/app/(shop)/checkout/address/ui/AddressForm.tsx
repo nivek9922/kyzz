@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import clsx from 'clsx';
 import type { Address, Country } from '@/interfaces';
-import { useAddressStore, useGuestStore } from '@/store';
+import { useAddressStore, useCartStore, useGuestStore } from '@/store';
 import { deleteUserAddress, setUserAddress } from '@/actions';
+import { gaAddShippingInfo } from '@/lib/gtag';
+import { useShallow } from 'zustand/react/shallow';
 
 type FormInputs = {
   email?: string;
@@ -36,6 +38,7 @@ export const AddressForm = ({ countries, userStoredAddress = {}, isGuest = false
   const setAddress    = useAddressStore((state) => state.setAddress);
   const address       = useAddressStore((state) => state.address);
   const setGuestEmail = useGuestStore((state) => state.setGuestEmail);
+  const cart          = useCartStore(useShallow((s) => s.cart));
 
   useEffect(() => {
     if (address.firstName) reset(address as any);
@@ -55,6 +58,11 @@ export const AddressForm = ({ countries, userStoredAddress = {}, isGuest = false
         await deleteUserAddress();
       }
     }
+
+    gaAddShippingInfo({
+      value: cart.reduce((s, p) => s + p.price * p.quantity, 0),
+      items: cart.map((p) => ({ id: p.id, name: p.title, price: p.price, quantity: p.quantity })),
+    });
 
     router.push('/checkout');
   };

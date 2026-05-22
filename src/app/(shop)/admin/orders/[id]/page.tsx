@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getOrderById } from '@/actions/order/get-order-by-id';
+import { getCustomerStats } from '@/actions/order/get-customer-stats';
 import { currencyFormat } from '@/utils';
 import { ProductImage } from '@/components';
 import { titleFont } from '@/config/fonts';
 import { ShippingPanel } from './ui/ShippingPanel';
+import { OrderTimeline } from './ui/OrderTimeline';
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -18,6 +20,7 @@ export default async function AdminOrderDetailPage(props: Props) {
   const { ok, order } = await getOrderById(id);
   if (!ok || !order) redirect('/admin/orders');
 
+  const customer     = await getCustomerStats({ userId: order.userId, email: order.guestEmail, excludeOrderId: id });
   const address      = order.OrderAddress!;
   const shortId      = id.split('-').at(-1)?.toUpperCase();
   const discount     = order.couponDiscount ?? 0;
@@ -57,7 +60,18 @@ export default async function AdminOrderDetailPage(props: Props) {
 
           {/* Info cliente */}
           <div className="kyzz-panel p-6">
-            <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mb-4">Cliente</p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted">Cliente</p>
+              {customer && (
+                <span className={`text-[9px] tracking-widest uppercase px-2.5 py-1 border ${
+                  customer.isReturning
+                    ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                    : 'text-kyzz-muted bg-kyzz-tertiary border-kyzz-secondary'
+                }`}>
+                  {customer.isReturning ? 'Recurrente' : 'Nueva clienta'}
+                </span>
+              )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Nombre</p>
@@ -82,6 +96,25 @@ export default async function AdminOrderDetailPage(props: Props) {
                 <p className="text-kyzz-muted">{address.postalCode} {address.city} · {address.countryId}</p>
               </div>
             </div>
+
+            {/* CRM: valor del cliente */}
+            {customer && (
+              <div className="grid grid-cols-2 gap-4 mt-5 pt-4 border-t border-kyzz-secondary">
+                <div>
+                  <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Valor (LTV)</p>
+                  <p className="text-sm text-kyzz-dark font-medium">{currencyFormat(customer.totalSpent)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Órdenes pagadas</p>
+                  <p className="text-sm text-kyzz-dark font-medium">
+                    {customer.paidCount}
+                    {customer.orderCount > customer.paidCount && (
+                      <span className="text-kyzz-muted font-normal"> / {customer.orderCount} totales</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Productos */}
@@ -191,6 +224,14 @@ export default async function AdminOrderDetailPage(props: Props) {
             currentNotes={order.shippingNotes ?? null}
             isPaid={order.isPaid}
             isCancelled={!!order.cancelledAt}
+          />
+
+          <OrderTimeline
+            createdAt={order.createdAt}
+            paidAt={order.paidAt}
+            shippedAt={order.shippedAt}
+            deliveredAt={order.deliveredAt}
+            cancelledAt={order.cancelledAt}
           />
 
           {/* Panel de transacción */}

@@ -177,6 +177,7 @@ export const NewsletterComposer = ({ products, subscriberCount }: Props) => {
                         src={p.imageUrl.startsWith('http') ? p.imageUrl : `/products/${p.imageUrl}`}
                         alt={p.title}
                         fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         className="object-cover"
                       />
                     ) : (
