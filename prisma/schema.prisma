@@ -82,6 +82,7 @@ model Product {
   variants      ProductVariant[]
 
   @@index([isFeatured])
+  @@index([categoryId])
 }
 
 model ProductImage {
@@ -170,6 +171,9 @@ model Order {
 
   @@index([userId])
   @@index([guestEmail])
+  @@index([isPaid])
+  @@index([paidAt])
+  @@index([shippingStatus])
 }
 
 model OrderItem {

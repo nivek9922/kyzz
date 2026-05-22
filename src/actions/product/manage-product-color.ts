@@ -1,7 +1,7 @@
 'use server';
 
 import { v2 as cloudinary } from 'cloudinary';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
 
@@ -52,6 +52,7 @@ export async function addProductColor(formData: FormData) {
 
     revalidatePath(`/admin/product/${product?.slug}`);
     revalidatePath(`/product/${product?.slug}`);
+    revalidateTag(`product:${product?.slug}`);
 
     // Retornar las imágenes creadas para actualizar el estado del cliente
     const createdImages = await prisma.productColorImage.findMany({
@@ -97,6 +98,7 @@ export async function removeProductColor(productColorId: string) {
 
     revalidatePath(`/admin/product/${pc.product.slug}`);
     revalidatePath(`/product/${pc.product.slug}`);
+    revalidateTag(`product:${pc.product.slug}`);
 
     return { ok: true };
   } catch (error) {
@@ -136,6 +138,7 @@ export async function addColorImage(formData: FormData) {
 
     revalidatePath(`/admin/product/${pc?.product.slug}`);
     revalidatePath(`/product/${pc?.product.slug}`);
+    revalidateTag(`product:${pc?.product.slug}`);
 
     return { ok: true, image: img };
   } catch (error) {
@@ -166,6 +169,7 @@ export async function removeColorImage(imageId: string) {
 
     revalidatePath(`/admin/product/${img.productColor.product.slug}`);
     revalidatePath(`/product/${img.productColor.product.slug}`);
+    revalidateTag(`product:${img.productColor.product.slug}`);
 
     return { ok: true };
   } catch (error) {

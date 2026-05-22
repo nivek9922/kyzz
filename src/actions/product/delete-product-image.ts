@@ -1,12 +1,18 @@
 'use server';
 
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import {v2 as cloudinary} from 'cloudinary';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 cloudinary.config( process.env.CLOUDINARY_URL ?? '' );
 
 
 export const deleteProductImage = async( imageId: number, imageUrl: string ) => {
+
+  const session = await auth();
+  if (session?.user.role !== 'admin') {
+    return { ok: false, message: 'No autorizado' };
+  }
 
   if ( !imageUrl.startsWith('http') ) {
     return {
@@ -41,6 +47,7 @@ export const deleteProductImage = async( imageId: number, imageUrl: string ) => 
     revalidatePath(`/admin/products`)
     revalidatePath(`/admin/product/${ deletedImage.product.slug }`);
     revalidatePath(`/product/${ deletedImage.product.slug }`);
+    revalidateTag(`product:${ deletedImage.product.slug }`);
 
     return { ok: true };
 

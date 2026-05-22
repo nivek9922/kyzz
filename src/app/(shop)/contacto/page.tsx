@@ -21,7 +21,7 @@ export default function ContactPage() {
 
   useEffect(() => {
     if (state?.status === 'success') setShowSuccess(true);
-  }, [state?.status]);
+  }, [state]);
 
   return (
     <main className="max-w-2xl mx-auto px-6 py-20">

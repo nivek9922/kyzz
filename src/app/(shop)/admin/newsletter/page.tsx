@@ -91,7 +91,7 @@ export default async function AdminNewsletterPage() {
                       </span>
                     </td>
                     <td className="py-3.5 text-[11px] text-kyzz-muted">
-                      {s.createdAt.toLocaleDateString("es-CO")}
+                      {s.createdAt.toLocaleDateString("es-CO", { timeZone: "America/Bogota" })}
                     </td>
                   </tr>
                 ))}
