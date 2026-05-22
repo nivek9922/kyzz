@@ -7,6 +7,7 @@ import clsx from 'clsx';
 import type { Address, Country } from '@/interfaces';
 import { useAddressStore, useCartStore, useGuestStore } from '@/store';
 import { deleteUserAddress, setUserAddress } from '@/actions';
+import { captureAbandonedCart } from '@/actions/order/capture-abandoned-cart';
 import { gaAddShippingInfo } from '@/lib/gtag';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -63,6 +64,20 @@ export const AddressForm = ({ countries, userStoredAddress = {}, isGuest = false
       value: cart.reduce((s, p) => s + p.price * p.quantity, 0),
       items: cart.map((p) => ({ id: p.id, name: p.title, price: p.price, quantity: p.quantity })),
     });
+
+    // Captura silenciosa del carrito abandonado (se envía email si no paga en > 3h)
+    const cartEmail = isGuest ? data.email : undefined;
+    if (cartEmail) {
+      void captureAbandonedCart(
+        cartEmail,
+        cart.map((p) => ({
+          id: p.id, title: p.title, price: p.price,
+          quantity: p.quantity, size: p.size, slug: p.slug,
+          image: p.image, colorName: p.colorName ?? undefined,
+          variantId: p.variantId ?? undefined,
+        })),
+      );
+    }
 
     router.push('/checkout');
   };

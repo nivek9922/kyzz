@@ -47,6 +47,13 @@ enum ShippingStatus {
   returned
 }
 
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
 enum PaymentGateway {
   paypal
   wompi
@@ -81,6 +88,7 @@ model Product {
   ProductColors ProductColor[]
   variants      ProductVariant[]
   WishlistItem  WishlistItem[]
+  reviews       Review[]
 
   @@index([isFeatured])
   @@index([categoryId])
@@ -122,6 +130,7 @@ model User {
   // Relaciones
   Order        Order[]
   WishlistItem WishlistItem[]
+  reviews      Review[]
 }
 
 model Country {
@@ -183,7 +192,8 @@ model Order {
   couponCode     String?
   couponDiscount Float   @default(0)
 
-  redemption CouponRedemption?
+  redemption    CouponRedemption?
+  returnRequest ReturnRequest?
 
   @@index([userId])
   @@index([guestEmail])
@@ -338,4 +348,51 @@ model OrderAddress {
 
   Order   Order  @relation(fields: [orderId], references: [id])
   orderId String @unique
+}
+
+// ── Reseñas de producto ────────────────────────────────────────────────────────
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1-5
+  comment   String?  @db.VarChar(600)
+  createdAt DateTime @default(now())
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  @@unique([userId, productId])
+  @@index([productId])
+}
+
+// ── Carrito abandonado ─────────────────────────────────────────────────────────
+model AbandonedCart {
+  id            String    @id @default(uuid())
+  email         String
+  items         Json      // instantánea de CartProductType[]
+  recoveryToken String    @unique @default(uuid())
+  emailSentAt   DateTime?
+  recoveredAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+// ── Solicitudes de devolución / RMA ───────────────────────────────────────────
+model ReturnRequest {
+  id              String       @id @default(uuid())
+  reason          String
+  details         String?      @db.VarChar(1000)
+  status          ReturnStatus @default(PENDING)
+  adminNotes      String?      // solo visible para el admin, nunca se envía al cliente
+  customerMessage String?      // se incluye en el email al cliente al cambiar estado
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String @unique
+
+  @@index([status])
 }

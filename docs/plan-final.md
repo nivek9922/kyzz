@@ -19,6 +19,7 @@ KYZZ va a abrir pagos reales. El core (catálogo → carrito → checkout → Wo
 
 ---
 
+
 ## Resumen ejecutivo (severidad verificada)
 
 | # | Hallazgo | Severidad | Estado |
@@ -142,36 +143,6 @@ Cero tests, cero CI, sin Vitest/RTL/Playwright instalados. Único quality gate h
 - Inventario: bloqueo auto out-of-stock, import/export, punto de reorden.
 - Workflow de devoluciones/RMA + UI de reembolso.
 
-#### P1 — Gestión de catálogo por temporadas (Archivar productos)
-**Contexto de negocio:** KYZZ rota colecciones por temporada — una blusa de la colección anterior debe poder retirarse del catálogo sin perder el historial de pedidos asociado. El hard-delete actual falla cuando el producto tiene `OrderItem` referenciados.
-**Solución diseñada:** Soft delete con campo `isArchived Boolean @default(false)` en `Product`. El botón "Eliminar" del admin archiva (nunca borra de BD); un botón "Restaurar" revierte. Los productos archivados desaparecen del catálogo público, búsquedas, destacados y trending, pero siguen siendo visibles en admin con badge "Archivado" y opacidad reducida.
-**Archivos a tocar:**
-- `prisma/schema.prisma` → añadir `isArchived` + `@@index([isArchived])`
-- `actions/product/delete-product.ts` → cambiar hard-delete por `update({ isArchived: true })`
-- `actions/product/delete-product.ts` → añadir export `restoreProduct`
-- `actions/index.ts` → exportar `restoreProduct`
-- Todas las queries públicas → añadir `isArchived: false` en `where`: `product-pagination`, `get-product-by-slug`, `get-stock-by-slug`, `get-featured-products`, `get-featured-products-paginated`, `search-products`, `search-products-quick`, `get-trending-products`
-- `product-pagination.ts` → añadir `includeArchived?: boolean` para que admin vea todos
-- `admin/products/page.tsx` → pasar `includeArchived: true`, mostrar badge y opacidad en archivados
-- `components/ui/admin/DeleteProductButton.tsx` → toggle archivar/restaurar con iconos distintos (papelera / reload verde)
-
-#### P2 — Bug: no se pueden eliminar imágenes de productos importados
-**Causa identificada:** `deleteProductImage` extrae solo el nombre de archivo (`imageUrl.split('/').pop()?.split('.')[0]`) ignorando la carpeta. En Cloudinary el `public_id` incluye la ruta completa (ej. `kyzz/products/abc123`). Para URLs de Unsplash u otras fuentes externas, el extract produce un string inválido que hace fallar el SDK.
-**Solución diseñada:** extraer el public_id correcto desde `/upload/` en adelante (sin versión `vNNN`). Para URLs no-Cloudinary, omitir el destroy y solo borrar el registro de BD.
-```ts
-// Dentro del try/catch existente:
-const uploadMarker = '/upload/';
-const uploadIdx = imageUrl.indexOf(uploadMarker);
-const isCloudinary = imageUrl.includes('res.cloudinary.com') && uploadIdx !== -1;
-if (isCloudinary) {
-  const afterUpload = imageUrl.slice(uploadIdx + uploadMarker.length);
-  const publicId = afterUpload.replace(/^v\d+\//, '').replace(/\.[^/.]+$/, '');
-  await cloudinary.uploader.destroy(publicId);
-}
-// luego prisma.productImage.delete(...)
-```
-**Archivo:** `src/actions/product/delete-product-image.ts` — reemplazar las líneas 24-27 y asegurar que el `cloudinary.uploader.destroy` quede dentro del try/catch.
-
 ### 🟢 Nivel 4 — Optimizaciones avanzadas
 - `next/dynamic` para Swiper, formularios admin y popup.
 - Split de componentes >300 líneas.
@@ -233,3 +204,117 @@ Instalar **Vitest + @testing-library/react + Playwright**. Pirámide pragmática
 ---
 
 > **Siguiente paso sugerido:** convertir el **Nivel 1** en un plan de implementación ejecutable (es barato y elimina los bloqueadores reales). El resto se ataca por niveles a tu ritmo. No implementar nada hasta tu aprobación.
+
+---
+
+## Mejoras de Devoluciones / RMA (pendientes — implementar después del lanzamiento)
+
+> Base ya implementada: solicitud cliente → estados PENDING/APPROVED/REJECTED/COMPLETED → email automático al cambiar estado. Lo que falta es trazabilidad del ciclo físico de la devolución.
+
+### RMA-1 — Campo de instrucciones al aprobar *(~20 min · MUY URGENTE)*
+Cuando el admin aprueba, escribe instrucciones personalizadas que llegan en el email de aprobación:
+dirección física de envío, cómo empacar, plazo máximo (ej. 5 días hábiles), qué couriers aceptar.
+**Sin esto la clienta no sabe qué hacer después de que le dices "aprobada".**
+
+### RMA-2 — La clienta sube su número de guía *(~45 min)*
+Después de la aprobación, la clienta ve un campo en su orden para ingresar el número de guía de Coordinadora/Servientrega.
+El admin lo ve en el panel de devoluciones y puede rastrearlo manualmente en la web del courier.
+Cierra el loop sin WhatsApp: el admin sabe cuándo esperar el paquete.
+
+### RMA-3 — Estado intermedio "Paquete recibido – en inspección" *(~30 min)*
+Agrega estado **RECEIVED** entre APPROVED y COMPLETED.
+- Admin recibe el paquete → clic "Paquete recibido" → email a clienta: *"Recibimos tu devolución, estamos verificando (1-2 días hábiles)"*
+- Admin inspecciona → si OK → COMPLETED (email: "Todo correcto, enviamos la nueva talla / procesamos reembolso")
+- Si no OK → REJECTED con nota explicando por qué (ej. llegó sin etiquetas, usado)
+**Protege legalmente al admin: queda registro de cuándo llegó y qué decidiste tras verlo.**
+
+### RMA-4 — Política de días automática *(~30 min)*
+Bloquear el botón "Solicitar devolución" si la orden fue entregada hace más de N días (configurable: 15 o 30).
+Mostrar mensaje claro: *"El plazo de devolución de 30 días venció el DD/MM/YYYY"*.
+Hoy el sistema permite solicitar devolución de una orden de hace 2 años.
+
+### RMA-5 — Upload de foto por la clienta *(~1h)*
+Para motivos "Producto defectuoso" o "Llegó dañado": la clienta sube foto antes de que el admin apruebe.
+El admin ve la foto en el panel antes de decidir.
+Evita fraudes y elimina el intercambio de fotos por WhatsApp.
+
+### RMA-6 — Admin ingresa tracking del nuevo envío *(~20 min)*
+Cuando el admin envía la pieza de reemplazo, ingresa el tracking de Coordinadora/Servientrega.
+La clienta recibe email con el código y puede rastrearlo. Igual al flujo de la orden original.
+
+### RMA-7 — Integración API de mensajería *(~2-3 semanas · solo cuando el volumen lo justifique)*
+Ver sección "Mensajería" más abajo. Implementar solo cuando superes ~20-30 devoluciones/mes.
+Hasta entonces el flujo manual (RMA-1 a RMA-6) es suficiente y más barato.
+
+---
+
+## Mensajería / Couriers — análisis para integración futura
+
+### Opciones en Colombia
+
+| Opción | API | Cobertura | Costo integración | Mejor para |
+|--------|-----|-----------|-------------------|------------|
+| **Envia.com** | ✅ Limpia, REST | Nacional · multi-carrier | Gratis (pagas por envío) | **Recomendada** — agrega Coordinadora + Servientrega + TCC en una sola API |
+| **Coordinadora** | ✅ Disponible | Nacional | Requiere cuenta comercial | Directo, buena cobertura rural |
+| **Servientrega** | ✅ Disponible | Nacional · más puntos urbanos | Requiere cuenta comercial | Más conocida por clientes |
+| **Interrapidísimo** | ⚠️ Limitada | Nacional | Más compleja | No recomendada para e-commerce |
+
+### ¿Cuánto cuesta un envío de devolución?
+- **Envío estándar nacional**: $9.000 – $15.000 COP por paquete (hasta 1 kg)
+- **Quién paga**: depende de tu política
+  - Defecto / error tuyo → KYZZ paga el retorno
+  - Cambio de talla / arrepentimiento → la clienta paga (o cobras un fee de $5.000-$8.000)
+- **Con API** generas la guía automáticamente y envías el PDF por email a la clienta → ella imprime y va al punto más cercano
+
+### Recomendación: Envia.com
+- Una sola cuenta, una sola API → accede a Coordinadora, Servientrega, TCC, etc.
+- Compara tarifas en tiempo real entre carriers
+- Genera guías programáticamente (POST /shipments → recibe PDF)
+- Tiene sandbox para testing
+- Documentación: envia.com/developers
+- Sin costo mensual fijo, solo pagas por envío (tarifas negociadas, más baratas que retail)
+
+---
+
+## Flujo completo SIN integración de mensajería (solución manual — aplicar desde ya)
+
+Este flujo cubre RMA-1 a RMA-6 sin ninguna API de courier. Es el que debes usar hasta que el volumen justifique la integración.
+
+```
+1. Clienta solicita devolución en su orden (motivo + detalles)
+      ↓
+2. Admin revisa en /admin/devoluciones
+   · Si OK → Aprueba con instrucciones (RMA-1):
+     "Empaca con etiquetas originales. Envía a: [dirección KYZZ].
+      Usa Coordinadora o Servientrega. Plazo: 5 días hábiles.
+      Cuando lo envíes, ingresa el número de guía en tu orden."
+      ↓
+3. Clienta empaca, va a punto de Coordinadora, paga el envío (o KYZZ lo asume)
+   Ingresa el número de guía en su orden (RMA-2)
+      ↓
+4. Admin ve la guía, la rastrea en coordinadora.com.co manualmente
+   Cuando llega el paquete → clic "Paquete recibido" (RMA-3 estado RECEIVED)
+   Email a clienta: "Recibimos tu devolución, verificando en 1-2 días"
+      ↓
+5. Admin inspecciona el producto:
+   · Etiquetas intactas, sin uso, dentro del plazo → todo OK
+   · Ingresa tracking del nuevo envío (RMA-6)
+   · Marca COMPLETED → email a clienta con tracking del nuevo producto
+      ↓ (si hay problema)
+   · Producto llegó sin etiquetas / usado → REJECTED con nota
+   · Email a clienta explicando por qué no se puede procesar
+      ↓
+6. Clienta recibe nuevo producto o reembolso
+   El reembolso se hace manual desde Wompi dashboard (hoy no hay reembolso automático)
+```
+
+### Lo que hace transparente el proceso para la clienta
+- Después de cada acción del admin recibe un email explicando el estado exacto
+- Puede ver el estado en tiempo real entrando a "Mis pedidos" → orden → sección devolución
+- Sabe exactamente qué debe hacer y cuándo esperar respuesta
+
+### Lo que hace seguro el proceso para el admin
+- Todo queda registrado con timestamps en BD (cuándo solicitó, cuándo aprobaste, cuándo llegó, cuándo inspeccionaste)
+- Las notas internas son solo para ti (la clienta no las ve)
+- El estado RECEIVED antes de COMPLETED te protege: no puedes ser acusada de haber recibido algo que no procesaste
+- Para reembolsos: el historial de la devolución es evidencia ante Wompi si hay disputa

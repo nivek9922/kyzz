@@ -1,20 +1,46 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { IoBagHandleOutline } from 'react-icons/io5';
 import { useCartStore } from '@/store';
 import { titleFont } from '@/config/fonts';
 import { gaViewCart } from '@/lib/gtag';
+import { markCartRecovered } from '@/actions/order/capture-abandoned-cart';
 import { ProductsInCart } from './ProductsInCart';
 import { OrderSummary } from './OrderSummary';
 import { CartScrollable } from './CartScrollable';
 
 export const CartContent = () => {
-  const cart = useCartStore((s) => s.cart);
+  const cart        = useCartStore((s) => s.cart);
+  const addToCart   = useCartStore((s) => s.addProductTocart);
   const [loaded, setLoaded] = useState(false);
-  const viewTracked = useRef(false);
+  const viewTracked  = useRef(false);
+  const recovered    = useRef(false);
+  const searchParams = useSearchParams();
+
   useEffect(() => { setLoaded(true); }, []);
+
+  // Recuperación de carrito abandonado: ?recover=TOKEN
+  useEffect(() => {
+    const token = searchParams.get('recover');
+    if (!token || recovered.current) return;
+    recovered.current = true;
+
+    markCartRecovered(token).then((items) => {
+      if (!items?.length) return;
+      items.forEach((item: any) => {
+        addToCart({
+          id: item.id, title: item.title, price: item.price,
+          quantity: item.quantity, size: item.size, slug: item.slug,
+          image: item.image ?? '', colorName: item.colorName ?? null,
+          variantId: item.variantId ?? null,
+        });
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // view_cart (GA4) — una vez al ver el carrito con artículos
   useEffect(() => {

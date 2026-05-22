@@ -4,6 +4,9 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
+import { resend, EMAIL_FROM } from '@/lib/resend';
+import { render } from '@react-email/components';
+import { AbandonedCartEmail } from '@/emails/AbandonedCartEmail';
 
 const EXPIRY_HOURS = 24;
 
@@ -101,9 +104,50 @@ export async function runCancelUnpaidOrders(): Promise<{ ok: boolean; cancelledC
       products.forEach((p) => revalidateTag(`product:${p.slug}`));
     }
 
+    // 4. Enviar emails de recuperación de carrito abandonado (>3h, sin email enviado aún)
+    await sendAbandonedCartEmails();
+
     return { ok: true, cancelledCount: expiredOrders.length };
   } catch (error) {
     console.error('[cancelUnpaidOrders]', error);
     return { ok: false, message: 'Error al cancelar las órdenes' };
+  }
+}
+
+async function sendAbandonedCartEmails() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl || !process.env.RESEND_API_KEY) return;
+
+  const cutoff = new Date(Date.now() - 3 * 60 * 60 * 1000); // > 3 horas
+
+  try {
+    const carts = await prisma.abandonedCart.findMany({
+      where: { emailSentAt: null, recoveredAt: null, createdAt: { lt: cutoff } },
+      take: 50,
+    });
+
+    for (const cart of carts) {
+      const items = cart.items as any[];
+      if (!items?.length) continue;
+
+      const total = items.reduce((s: number, i: any) => s + i.price * i.quantity, 0);
+      const recoveryUrl = `${appUrl}/cart?recover=${cart.recoveryToken}`;
+
+      const html = await render(AbandonedCartEmail({ items, recoveryUrl, total }));
+
+      await resend.emails.send({
+        from:    EMAIL_FROM,
+        to:      cart.email,
+        subject: 'Olvidaste algo en KYZZ',
+        html,
+      });
+
+      await prisma.abandonedCart.update({
+        where: { id: cart.id },
+        data:  { emailSentAt: new Date() },
+      });
+    }
+  } catch (err) {
+    console.error('[sendAbandonedCartEmails]', err);
   }
 }
