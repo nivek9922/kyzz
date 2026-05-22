@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { Size } from '@prisma/client';
 import prisma from '@/lib/prisma';
@@ -117,6 +117,7 @@ export async function updateProductVariants(input: {
     revalidatePath(`/admin/product/${result.slug}`);
     revalidatePath(`/product/${result.slug}`);
     revalidatePath('/products');
+    revalidateTag(`product:${result.slug}`);
 
     return { ok: true };
   } catch (error) {

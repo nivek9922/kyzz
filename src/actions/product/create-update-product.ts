@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { Product, Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { v2 as cloudinary } from 'cloudinary';
@@ -124,6 +124,7 @@ export const createUpdateProduct = async (formData: FormData) => {
     revalidatePath(`/admin/product/${prismaTx.product.slug}`);
     revalidatePath(`/product/${prismaTx.product.slug}`);
     revalidatePath('/');
+    revalidateTag(`product:${prismaTx.product.slug}`);
 
     const finalImages = await prisma.productImage.findMany({
       where: { productId: prismaTx.product.id },

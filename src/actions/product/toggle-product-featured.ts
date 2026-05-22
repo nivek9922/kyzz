@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
@@ -47,6 +47,7 @@ export const toggleProductFeatured = async (productId: string) => {
     revalidatePath(`/admin/product/${product.slug}`);
     revalidatePath('/');
     revalidatePath('/coleccion-especial');
+    revalidateTag(`product:${product.slug}`);
 
     return { ok: true, isFeatured: newFeatured };
   } catch (error) {

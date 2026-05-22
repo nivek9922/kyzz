@@ -142,6 +142,36 @@ Cero tests, cero CI, sin Vitest/RTL/Playwright instalados. Único quality gate h
 - Inventario: bloqueo auto out-of-stock, import/export, punto de reorden.
 - Workflow de devoluciones/RMA + UI de reembolso.
 
+#### P1 — Gestión de catálogo por temporadas (Archivar productos)
+**Contexto de negocio:** KYZZ rota colecciones por temporada — una blusa de la colección anterior debe poder retirarse del catálogo sin perder el historial de pedidos asociado. El hard-delete actual falla cuando el producto tiene `OrderItem` referenciados.
+**Solución diseñada:** Soft delete con campo `isArchived Boolean @default(false)` en `Product`. El botón "Eliminar" del admin archiva (nunca borra de BD); un botón "Restaurar" revierte. Los productos archivados desaparecen del catálogo público, búsquedas, destacados y trending, pero siguen siendo visibles en admin con badge "Archivado" y opacidad reducida.
+**Archivos a tocar:**
+- `prisma/schema.prisma` → añadir `isArchived` + `@@index([isArchived])`
+- `actions/product/delete-product.ts` → cambiar hard-delete por `update({ isArchived: true })`
+- `actions/product/delete-product.ts` → añadir export `restoreProduct`
+- `actions/index.ts` → exportar `restoreProduct`
+- Todas las queries públicas → añadir `isArchived: false` en `where`: `product-pagination`, `get-product-by-slug`, `get-stock-by-slug`, `get-featured-products`, `get-featured-products-paginated`, `search-products`, `search-products-quick`, `get-trending-products`
+- `product-pagination.ts` → añadir `includeArchived?: boolean` para que admin vea todos
+- `admin/products/page.tsx` → pasar `includeArchived: true`, mostrar badge y opacidad en archivados
+- `components/ui/admin/DeleteProductButton.tsx` → toggle archivar/restaurar con iconos distintos (papelera / reload verde)
+
+#### P2 — Bug: no se pueden eliminar imágenes de productos importados
+**Causa identificada:** `deleteProductImage` extrae solo el nombre de archivo (`imageUrl.split('/').pop()?.split('.')[0]`) ignorando la carpeta. En Cloudinary el `public_id` incluye la ruta completa (ej. `kyzz/products/abc123`). Para URLs de Unsplash u otras fuentes externas, el extract produce un string inválido que hace fallar el SDK.
+**Solución diseñada:** extraer el public_id correcto desde `/upload/` en adelante (sin versión `vNNN`). Para URLs no-Cloudinary, omitir el destroy y solo borrar el registro de BD.
+```ts
+// Dentro del try/catch existente:
+const uploadMarker = '/upload/';
+const uploadIdx = imageUrl.indexOf(uploadMarker);
+const isCloudinary = imageUrl.includes('res.cloudinary.com') && uploadIdx !== -1;
+if (isCloudinary) {
+  const afterUpload = imageUrl.slice(uploadIdx + uploadMarker.length);
+  const publicId = afterUpload.replace(/^v\d+\//, '').replace(/\.[^/.]+$/, '');
+  await cloudinary.uploader.destroy(publicId);
+}
+// luego prisma.productImage.delete(...)
+```
+**Archivo:** `src/actions/product/delete-product-image.ts` — reemplazar las líneas 24-27 y asegurar que el `cloudinary.uploader.destroy` quede dentro del try/catch.
+
 ### 🟢 Nivel 4 — Optimizaciones avanzadas
 - `next/dynamic` para Swiper, formularios admin y popup.
 - Split de componentes >300 líneas.
