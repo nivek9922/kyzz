@@ -4,8 +4,6 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
-const FEATURED_LIMIT = 3;
-
 export const toggleProductFeatured = async (productId: string) => {
   const session = await auth();
   if (session?.user.role !== 'admin') {
@@ -20,23 +18,7 @@ export const toggleProductFeatured = async (productId: string) => {
 
     if (!product) return { ok: false, message: 'Producto no encontrado' };
 
-    let newFeatured = !product.isFeatured;
-
-    if (newFeatured) {
-      // Enforce FEATURED_LIMIT: unfeature the oldest if at capacity
-      const currentFeatured = await prisma.product.findMany({
-        where: { isFeatured: true, id: { not: productId } },
-        orderBy: { createdAt: 'asc' },
-        select: { id: true },
-      });
-
-      if (currentFeatured.length >= FEATURED_LIMIT) {
-        await prisma.product.update({
-          where: { id: currentFeatured[0].id },
-          data: { isFeatured: false },
-        });
-      }
-    }
+    const newFeatured = !product.isFeatured;
 
     await prisma.product.update({
       where: { id: productId },

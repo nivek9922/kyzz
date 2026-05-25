@@ -73,8 +73,6 @@ export function HomeCategorySection({ categories }: Props) {
   const [desktopCanPrev, setDesktopCanPrev] = useState(false);
   const [desktopCanNext, setDesktopCanNext] = useState(categories.length > 4);
 
-  if (categories.length === 0) return null;
-
   const goTo = useCallback((i: number) => {
     const el = trackRef.current;
     if (!el) return;
@@ -115,6 +113,8 @@ export function HomeCategorySection({ categories }: Props) {
       stopTimer();
     };
   }, [categories.length, startTimer, stopTimer]);
+
+  if (categories.length === 0) return null;
 
   const onScroll = () => {
     const el = trackRef.current;
