@@ -61,10 +61,12 @@ enum PaymentGateway {
 }
 
 model Category {
-  id      String    @id @default(uuid())
-  name    String    @unique
-  slug    String    @unique @default("")
-  Product Product[]
+  id            String    @id @default(uuid())
+  name          String    @unique
+  slug          String    @unique @default("")
+  imageUrl      String?
+  imageLightBg  Boolean   @default(false)
+  Product       Product[]
 }
 
 model Product {
@@ -276,12 +278,15 @@ model ProductVariant {
 }
 
 model SiteConfig {
-  id           String   @id @default("main")
-  heroTitle    String   @default("Kyzz: Basics for every you")
-  heroSubtitle String   @default("Nueva colección")
-  heroCta      String   @default("Explorar colección")
-  heroImageUrl String?
-  updatedAt    DateTime @updatedAt
+  id                 String   @id @default("main")
+  heroTitle          String   @default("Kyzz: Basics for every you")
+  heroSubtitle       String   @default("Nueva colección")
+  heroCta            String   @default("Explorar colección")
+  heroImageUrl       String?
+  heroVideoUrl       String?
+  brandStoryImageUrl String?
+  brandStoryText     String?
+  updatedAt          DateTime @updatedAt
 }
 
 model Subscriber {

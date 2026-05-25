@@ -10,10 +10,12 @@ export { logout }              from './auth/logout';
 export { registerUser }        from './auth/register';
 
 // ─── Category ───────────────────────────────────────────────
-export { getCategories }   from './category/get-categories';
-export { createCategory }  from './category/create-category';
-export { updateCategory }  from './category/update-category';
-export { deleteCategory }  from './category/delete-category';
+export { getCategories }      from './category/get-categories';
+export { createCategory }     from './category/create-category';
+export { updateCategory }     from './category/update-category';
+export { deleteCategory }     from './category/delete-category';
+export { updateCategoryImage }      from './category/update-category-image';
+export { updateCategoryImageStyle } from './category/update-category-image-style';
 
 // ─── Country ────────────────────────────────────────────────
 export { getCountries } from './country/get-countries';

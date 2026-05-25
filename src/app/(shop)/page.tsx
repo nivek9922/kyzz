@@ -2,37 +2,16 @@ export const revalidate = 60;
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { getFeaturedProducts, getSiteConfig } from '@/actions';
+import { getFeaturedProducts, getSiteConfig, getCategories } from '@/actions';
 import { HomeRecentlyViewed } from './ui/HomeRecentlyViewed';
+import { HomeCategorySection } from './ui/HomeCategorySection';
 import { ProductGridItem, ViewItemListTracker } from '@/components';
-import {
-  IoLeafOutline,
-  IoDiamondOutline,
-  IoShieldCheckmarkOutline,
-} from 'react-icons/io5';
-
-const features = [
-  {
-    icon: IoLeafOutline,
-    title: 'Calidad Premium',
-    desc: 'Materiales seleccionados meticulosamente para asegurar una durabilidad y tacto excepcionales.',
-  },
-  {
-    icon: IoDiamondOutline,
-    title: 'Diseño Único',
-    desc: 'Siluetas atemporales con un enfoque minimalista que trasciende las tendencias pasajeras.',
-  },
-  {
-    icon: IoShieldCheckmarkOutline,
-    title: 'Precio Justo',
-    desc: 'Lujo accesible. Creemos en la transparencia y en ofrecer un valor real por cada pieza.',
-  },
-];
 
 export default async function Home() {
-  const [featuredData, config] = await Promise.all([
+  const [featuredData, config, categories] = await Promise.all([
     getFeaturedProducts(),
     getSiteConfig(),
+    getCategories(),
   ]);
   const { products: featuredProducts, variantColors: featuredColors } = featuredData;
 
@@ -86,18 +65,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── Features ─────────────────────────────────────────── */}
-      <section className="bg-kyzz-neutral py-20 border-b border-kyzz-secondary">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
-          {features.map(({ icon: Icon, title, desc }) => (
-            <div key={title}>
-              <Icon className="text-kyzz-primary mx-auto mb-4" size={26} strokeWidth={1} />
-              <h3 className="font-serif text-lg text-kyzz-dark mb-3">{title}</h3>
-              <p className="text-sm text-kyzz-muted leading-relaxed">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ── Categorías ───────────────────────────────────────── */}
+      <HomeCategorySection categories={categories} />
 
       {/* ── Colección Especial ────────────────────────────────── */}
       {featuredProducts.length > 0 && (
