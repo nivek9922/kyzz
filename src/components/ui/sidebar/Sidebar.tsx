@@ -25,7 +25,7 @@ const CATEGORIES = [
   { label: "Chaquetas",  href: "/products?category=chaquetas" },
 ];
 
-export const Sidebar = () => {
+export const Sidebar = ({ showFeatured = false }: { showFeatured?: boolean }) => {
   const isMobileMenuOpen = useUIStore((state) => state.isMobileMenuOpen);
   const closeMobileMenu  = useUIStore((state) => state.closeMobileMenu);
 
@@ -88,13 +88,15 @@ export const Sidebar = () => {
               onClick={closeMobileMenu}
             />
 
-            <MobileLink
-              href="/coleccion-especial"
-              label="Colección Especial"
-              icon={<IoStarOutline size={16} />}
-              onClick={closeMobileMenu}
-              highlight
-            />
+            {showFeatured && (
+              <MobileLink
+                href="/coleccion-especial"
+                label="Colección Especial"
+                icon={<IoStarOutline size={16} />}
+                onClick={closeMobileMenu}
+                highlight
+              />
+            )}
 
             {/* Categorías */}
             <div className="mt-4">

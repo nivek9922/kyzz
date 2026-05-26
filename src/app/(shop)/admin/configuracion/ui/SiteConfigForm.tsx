@@ -39,11 +39,13 @@ export const SiteConfigForm = ({ config }: Props) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
 
   const handleRemoveImage = () => {
+    if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setImageFile(null);
     setImagePreview(null);
     if (fileRef.current) fileRef.current.value = '';
@@ -52,11 +54,13 @@ export const SiteConfigForm = ({ config }: Props) => {
   const handleBrandImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (brandImagePreview?.startsWith('blob:')) URL.revokeObjectURL(brandImagePreview);
     setBrandImageFile(file);
     setBrandImagePreview(URL.createObjectURL(file));
   };
 
   const handleRemoveBrandImage = () => {
+    if (brandImagePreview?.startsWith('blob:')) URL.revokeObjectURL(brandImagePreview);
     setBrandImageFile(null);
     setBrandImagePreview(null);
     if (brandImageRef.current) brandImageRef.current.value = '';

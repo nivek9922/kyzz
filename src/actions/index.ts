@@ -41,6 +41,7 @@ export { createUpdateProduct }             from './product/create-update-product
 export { toggleProductFeatured }           from './product/toggle-product-featured';
 export { toggleProductArchived }           from './product/archive-product';
 export { getFeaturedProducts }             from './product/get-featured-products';
+export { getFeaturedCount }                from './product/get-featured-count';
 export { getNewArrivals }                  from './product/get-new-arrivals';
 export { getFeaturedProductsPaginated }    from './product/get-featured-products-paginated';
 export { getProductBySlug }                from './product/get-product-by-slug';

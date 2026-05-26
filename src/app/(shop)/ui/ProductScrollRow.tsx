@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import { ProductGridItem } from '@/components';
 import type { ProductColorEntry } from '@/actions/product/product-pagination';
@@ -21,14 +21,25 @@ export function ProductScrollRow({ products, variantColors, listName, desktopCol
   const hasDragged  = useRef(false);
   const [grabbing,  setGrabbing]  = useState(false);
   const [canPrev,   setCanPrev]   = useState(false);
-  const [canNext,   setCanNext]   = useState(true);
+  const [canNext,   setCanNext]   = useState(false);
 
-  const onTrackScroll = () => {
+  const checkArrows = useCallback(() => {
     const el = trackRef.current;
     if (!el) return;
     setCanPrev(el.scrollLeft > 1);
     setCanNext(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
-  };
+  }, []);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    checkArrows();
+    const ro = new ResizeObserver(checkArrows);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [checkArrows]);
+
+  const onTrackScroll = checkArrows;
 
   const scroll = (dir: 1 | -1) => {
     const el = trackRef.current;

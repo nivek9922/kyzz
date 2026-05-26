@@ -78,11 +78,13 @@ export default async function Home() {
         variantColors={newArrivalsData.variantColors}
       />
 
-      {/* ── Colección Especial ────────────────────────────────── */}
-      <HomeFeaturedSection
-        products={featuredData.products}
-        variantColors={featuredData.variantColors}
-      />
+      {/* ── Colección Especial — solo si hay ≥ 3 destacados ─── */}
+      {featuredData.products.length >= 3 && (
+        <HomeFeaturedSection
+          products={featuredData.products}
+          variantColors={featuredData.variantColors}
+        />
+      )}
 
       {/* ── Brand Story / Frase de marca ─────────────────────────── */}
       <HomeEditorialSplit
