@@ -68,11 +68,13 @@ export { updatePaletteColor }   from './color-palette/update-palette-color';
 export { deletePaletteColor }   from './color-palette/delete-palette-color';
 
 // ─── Site Config ─────────────────────────────────────────────
-export { getSiteConfig }         from './site/get-site-config';
-export { updateSiteConfig }      from './site/update-site-config';
-export { subscribeNewsletter }   from './site/subscribe-newsletter';
-export { sendNewsletter }        from './site/send-newsletter';
-export type { NewsletterProduct } from './site/send-newsletter';
+export { getSiteConfig }                  from './site/get-site-config';
+export { updateSiteConfig }               from './site/update-site-config';
+export { getCloudinaryVideoSignature }    from './site/get-cloudinary-video-signature';
+export { saveHeroVideo }                  from './site/save-hero-video';
+export { subscribeNewsletter }            from './site/subscribe-newsletter';
+export { sendNewsletter }                 from './site/send-newsletter';
+export type { NewsletterProduct }         from './site/send-newsletter';
 
 // ─── User ───────────────────────────────────────────────────
 export { changeUserRole }      from './user/change-user-role';

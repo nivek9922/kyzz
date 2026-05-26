@@ -284,6 +284,7 @@ model SiteConfig {
   heroCta            String   @default("Explorar colección")
   heroImageUrl       String?
   heroVideoUrl       String?
+  heroPosterUrl      String?
   brandStoryImageUrl String?
   brandStoryText     String?
   updatedAt          DateTime @updatedAt

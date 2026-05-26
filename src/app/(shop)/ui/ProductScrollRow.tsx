@@ -97,13 +97,19 @@ export function ProductScrollRow({ products, variantColors, listName, desktopCol
           <div
             key={product.slug}
             data-card
-            className={`shrink-0 w-[43%] ${desktopCols === 3 ? 'md:w-96' : 'md:w-72'}`}
+            className={
+              desktopCols === 3
+                ? 'shrink-0 w-[43%] md:w-[calc(33.333%-16px)]'
+                : 'shrink-0 w-[43%] md:w-[calc(25%-18px)]'
+            }
           >
             <ProductGridItem
               product={product}
               colorVariants={variantColors[product.id]}
               listName={listName}
-              imageSizes="(max-width: 768px) 43vw, 288px"
+              imageSizes={desktopCols === 3
+                ? '(max-width: 768px) 43vw, 33vw'
+                : '(max-width: 768px) 43vw, 25vw'}
               priority={idx < 2}
             />
           </div>

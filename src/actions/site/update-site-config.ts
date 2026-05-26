@@ -51,10 +51,20 @@ export const updateSiteConfig = async (formData: FormData) => {
       console.log(`[updateSiteConfig] Imagen subida OK: ${result.public_id}`);
     }
 
+    // Read existing video fields so the text/image save doesn't wipe them
+    const existing = await prisma.siteConfig.findUnique({
+      where: { id: 'main' },
+      select: { heroVideoUrl: true, heroPosterUrl: true },
+    });
+
     await prisma.siteConfig.upsert({
       where:  { id: 'main' },
       update: { heroTitle, heroSubtitle, heroCta, heroImageUrl },
-      create: { id: 'main', heroTitle, heroSubtitle, heroCta, heroImageUrl },
+      create: {
+        id: 'main', heroTitle, heroSubtitle, heroCta, heroImageUrl,
+        heroVideoUrl:  existing?.heroVideoUrl  ?? null,
+        heroPosterUrl: existing?.heroPosterUrl ?? null,
+      },
     });
 
     revalidatePath('/');
