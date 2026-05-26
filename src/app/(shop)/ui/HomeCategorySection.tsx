@@ -28,7 +28,7 @@ const FALLBACK_BG = [
 function CategoryCard({ cat, i, sizes }: { cat: Category; i: number; sizes: string }) {
   return (
     <Link href={`/products?category=${cat.slug}`} className="group block">
-      <div className="relative overflow-hidden aspect-[3/4]">
+      <div className="relative overflow-hidden aspect-[4/5]">
         {cat.imageUrl ? (
           <Image
             src={cat.imageUrl}
