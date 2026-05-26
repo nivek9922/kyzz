@@ -7,6 +7,7 @@ import { HomeRecentlyViewed } from './ui/HomeRecentlyViewed';
 import { HomeCategorySection } from './ui/HomeCategorySection';
 import { HomeNewArrivalsSection } from './ui/HomeNewArrivalsSection';
 import { HomeFeaturedSection } from './ui/HomeFeaturedSection';
+import { HomeEditorialSplit } from './ui/HomeEditorialSplit';
 import { HeroVideo } from './ui/HeroVideo';
 
 export default async function Home() {
@@ -83,19 +84,11 @@ export default async function Home() {
         variantColors={featuredData.variantColors}
       />
 
-      {/* ── Frase de marca ───────────────────────────────────── */}
-      <section className="bg-kyzz-tertiary py-24 text-center px-6">
-        <blockquote className="font-serif text-2xl md:text-4xl text-kyzz-dark max-w-2xl mx-auto leading-snug italic">
-          &ldquo;Un beso a tu estilo propio.<br />Kyzz nace de la unión y el detalle.&rdquo;
-        </blockquote>
-        <div className="kyzz-divider mt-8" />
-        <Link
-          href="/products"
-          className="mt-8 inline-block text-[11px] tracking-[0.25em] uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors"
-        >
-          Explorar todas las piezas →
-        </Link>
-      </section>
+      {/* ── Brand Story / Frase de marca ─────────────────────────── */}
+      <HomeEditorialSplit
+        imageUrl={config.brandStoryImageUrl ?? null}
+        text={config.brandStoryText ?? null}
+      />
 
       {/* ── Viste recientemente ───────────────────────────────── */}
       <HomeRecentlyViewed />

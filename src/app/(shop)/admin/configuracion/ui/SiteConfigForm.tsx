@@ -8,12 +8,14 @@ import { updateSiteConfig, getCloudinaryVideoSignature, saveHeroVideo } from '@/
 
 interface Props {
   config: {
-    heroTitle:     string;
-    heroSubtitle:  string;
-    heroCta:       string;
-    heroImageUrl:  string | null;
-    heroVideoUrl:  string | null;
-    heroPosterUrl: string | null;
+    heroTitle:          string;
+    heroSubtitle:       string;
+    heroCta:            string;
+    heroImageUrl:       string | null;
+    heroVideoUrl:       string | null;
+    heroPosterUrl:      string | null;
+    brandStoryImageUrl: string | null;
+    brandStoryText:     string | null;
   };
 }
 
@@ -27,8 +29,12 @@ export const SiteConfigForm = ({ config }: Props) => {
   const [videoUrl,       setVideoUrl]       = useState<string | null>(config.heroVideoUrl ?? null);
   const [posterUrl,      setPosterUrl]      = useState<string | null>(config.heroPosterUrl ?? null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
-  const fileRef      = useRef<HTMLInputElement>(null);
-  const videoFileRef = useRef<HTMLInputElement>(null);
+  const [brandText,         setBrandText]         = useState(config.brandStoryText ?? '');
+  const [brandImagePreview, setBrandImagePreview] = useState<string | null>(config.brandStoryImageUrl);
+  const [brandImageFile,    setBrandImageFile]    = useState<File | null>(null);
+  const fileRef          = useRef<HTMLInputElement>(null);
+  const videoFileRef     = useRef<HTMLInputElement>(null);
+  const brandImageRef    = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,6 +47,19 @@ export const SiteConfigForm = ({ config }: Props) => {
     setImageFile(null);
     setImagePreview(null);
     if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const handleBrandImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBrandImageFile(file);
+    setBrandImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveBrandImage = () => {
+    setBrandImageFile(null);
+    setBrandImagePreview(null);
+    if (brandImageRef.current) brandImageRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,6 +84,9 @@ export const SiteConfigForm = ({ config }: Props) => {
       formData.append('heroCta', heroCta);
       if (imageFile) formData.append('heroImage', imageFile);
       if (config.heroImageUrl) formData.append('currentHeroImageUrl', config.heroImageUrl);
+      formData.append('brandStoryText', brandText);
+      if (brandImageFile) formData.append('brandStoryImage', brandImageFile);
+      if (brandImagePreview && !brandImageFile) formData.append('currentBrandStoryImageUrl', brandImagePreview);
 
       const result = await updateSiteConfig(formData);
 
@@ -326,6 +348,78 @@ export const SiteConfigForm = ({ config }: Props) => {
               {uploadingVideo ? 'Subiendo video...' : 'Subir video'}
             </span>
             <span className="text-xs">MP4, WebM · Máx 200 MB</span>
+          </button>
+        )}
+      </div>
+
+      {/* Brand Story */}
+      <div className="space-y-4">
+        <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted">
+          Historia de marca — opcional
+        </p>
+        <p className="text-xs text-kyzz-muted leading-relaxed">
+          Sección editorial split imagen/texto en la homepage. Si se deja vacía se muestra la frase de marca por defecto.
+        </p>
+
+        {/* Texto */}
+        <div>
+          <label className="block text-[11px] tracking-widest uppercase text-kyzz-muted mb-2">
+            Texto editorial
+          </label>
+          <textarea
+            className="kyzz-input resize-none min-h-[96px]"
+            value={brandText}
+            onChange={e => setBrandText(e.target.value)}
+            placeholder={'Ej: Un beso a tu estilo propio.\nKyzz nace de la unión y el detalle.'}
+          />
+          <p className="mt-1 text-[10px] text-kyzz-muted">Usa Enter para saltos de línea dentro de la cita.</p>
+        </div>
+
+        {/* Imagen */}
+        <input
+          ref={brandImageRef}
+          type="file"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
+          className="hidden"
+          onChange={handleBrandImageChange}
+        />
+
+        {brandImagePreview ? (
+          <div className="relative w-full aspect-[4/3] overflow-hidden bg-kyzz-tertiary border border-kyzz-secondary">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={brandImagePreview} alt="Brand Story preview" className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={handleRemoveBrandImage}
+              className="absolute top-3 right-3 bg-white/90 hover:bg-white text-kyzz-dark p-1.5 border border-kyzz-secondary transition-colors"
+            >
+              <IoTrashOutline size={14} />
+            </button>
+            {brandImageFile && (
+              <span className="absolute bottom-3 left-3 text-[10px] tracking-widest uppercase bg-kyzz-dark text-white px-2 py-1">
+                Nueva imagen
+              </span>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => brandImageRef.current?.click()}
+            className="w-full border border-dashed border-kyzz-secondary hover:border-kyzz-primary transition-colors flex flex-col items-center justify-center gap-3 py-12 text-kyzz-muted hover:text-kyzz-primary"
+          >
+            <IoCloudUploadOutline size={28} />
+            <span className="text-[11px] tracking-widest uppercase">Subir imagen editorial</span>
+            <span className="text-xs">JPG, PNG, WebP · Máx 4 MB · Proporción 4:3 recomendada</span>
+          </button>
+        )}
+
+        {brandImagePreview && (
+          <button
+            type="button"
+            onClick={() => brandImageRef.current?.click()}
+            className="text-[11px] tracking-widest uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors"
+          >
+            Cambiar imagen
           </button>
         )}
       </div>
