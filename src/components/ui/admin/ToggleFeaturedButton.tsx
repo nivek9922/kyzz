@@ -35,10 +35,10 @@ export const ToggleFeaturedButton = ({ productId, isFeatured: initialFeatured }:
       onClick={handleToggle}
       disabled={loading}
       title={featured ? 'Quitar de Colección Especial' : 'Agregar a Colección Especial'}
-      className={`hidden md:flex items-center justify-center w-8 h-8 transition-colors ${
+      className={`flex items-center justify-center w-8 h-8 transition-colors ${
         featured
           ? 'text-kyzz-primary hover:text-kyzz-muted'
-          : 'text-kyzz-secondary hover:text-kyzz-primary opacity-0 group-hover:opacity-100'
+          : 'text-kyzz-secondary hover:text-kyzz-primary md:opacity-0 md:group-hover:opacity-100'
       } ${loading ? 'opacity-40 cursor-not-allowed' : ''}`}
     >
       {featured ? <IoStar size={14} /> : <IoStarOutline size={14} />}

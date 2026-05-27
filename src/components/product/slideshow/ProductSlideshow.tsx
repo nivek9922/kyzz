@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Swiper as SwiperObject } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { FreeMode, Navigation, Thumbs } from 'swiper/modules';
@@ -21,6 +21,14 @@ interface Props {
 
 export const ProductSlideshow = ({ images, title, className }: Props) => {
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperObject>();
+  const mainSwiperRef = useRef<SwiperObject | null>(null);
+
+  // Reset a la primera imagen cuando cambian las imágenes (ej. al cambiar de color)
+  // sin destruir el Swiper — mucho más barato que un remount via key.
+  useEffect(() => {
+    const s = mainSwiperRef.current;
+    if (s && !s.destroyed) s.slideTo(0, 0);
+  }, [images]);
 
   return (
     <div className={`slideshow-wrapper ${className ?? ''}`}>
@@ -52,6 +60,7 @@ export const ProductSlideshow = ({ images, title, className }: Props) => {
 
       {/* ── Imagen principal (derecha) ── */}
       <Swiper
+        onSwiper={(s) => { mainSwiperRef.current = s; }}
         style={{ '--swiper-navigation-color': '#8C7365' } as React.CSSProperties}
         spaceBetween={0}
         navigation={images.length > 1}

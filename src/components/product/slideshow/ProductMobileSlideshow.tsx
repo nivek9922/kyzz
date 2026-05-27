@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Swiper as SwiperObject } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { FreeMode, Pagination, Thumbs } from 'swiper/modules';
@@ -23,12 +23,21 @@ const THUMB_THRESHOLD = 3;
 
 export const ProductMobileSlideshow = ({ images, title, className }: Props) => {
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperObject>();
+  const mainSwiperRef = useRef<SwiperObject | null>(null);
   const showThumbs = images.length >= THUMB_THRESHOLD;
+
+  // Reset a la primera imagen cuando cambian las imágenes (ej. al cambiar de color)
+  // sin destruir el Swiper — mucho más barato que un remount via key.
+  useEffect(() => {
+    const s = mainSwiperRef.current;
+    if (s && !s.destroyed) s.slideTo(0, 0);
+  }, [images]);
 
   return (
     <div className={className}>
       {/* Imagen principal con dots de paginación */}
       <Swiper
+        onSwiper={(s) => { mainSwiperRef.current = s; }}
         style={{
           '--swiper-pagination-color':                 '#8C7365',
           '--swiper-pagination-bullet-inactive-color': '#C8B8B0',

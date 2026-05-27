@@ -96,7 +96,7 @@ export default async function AdminProductsPage(props: Props) {
           {products.map((product) => (
             <div
               key={product.id}
-              className={`grid grid-cols-[64px_1fr] md:grid-cols-[80px_1fr_120px_100px_80px_80px_40px_40px_40px] gap-3 items-center px-5 py-4 transition-colors group ${
+              className={`grid grid-cols-[64px_1fr_40px] md:grid-cols-[80px_1fr_120px_100px_80px_80px_40px_40px_40px] gap-3 items-center px-5 py-4 transition-colors group ${
                 showArchived ? 'opacity-60 hover:opacity-100' : 'hover:bg-kyzz-tertiary/50'
               }`}
             >

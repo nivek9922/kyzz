@@ -1,12 +1,16 @@
 import prisma from '@/lib/prisma';
 
 const DEFAULT_CONFIG = {
-  id: 'main',
-  heroTitle: 'Kyzz: Basics for every you',
-  heroSubtitle: 'Nueva colección',
-  heroCta: 'Explorar colección',
-  heroImageUrl: null as string | null,
-  updatedAt: new Date(),
+  id:                 'main',
+  heroTitle:          'Kyzz: Tu estilo, tu esencia',
+  heroSubtitle:       'Nueva colección',
+  heroCta:            'Explorar colección',
+  heroImageUrl:       null as string | null,
+  heroVideoUrl:       null as string | null,
+  heroPosterUrl:      null as string | null,
+  brandStoryImageUrl: null as string | null,
+  brandStoryText:     null as string | null,
+  updatedAt:          new Date(),
 };
 
 export const getSiteConfig = async () => {

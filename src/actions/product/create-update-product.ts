@@ -96,11 +96,12 @@ export const createUpdateProduct = async (formData: FormData) => {
       // ── Image upload ────────────────────────────────────────────────
       const incomingFiles = formData.getAll('images') as File[];
       if (incomingFiles.length > 0) {
-        // Enforce 2-image limit: check how many already exist
+        // Cap razonable para evitar uploads masivos accidentales.
+        const MAX_PRODUCT_IMAGES = 12;
         const existingCount = await tx.productImage.count({
           where: { productId: savedProduct.id },
         });
-        const allowedCount = Math.max(0, 2 - existingCount);
+        const allowedCount = Math.max(0, MAX_PRODUCT_IMAGES - existingCount);
         const filesToUpload = incomingFiles.slice(0, allowedCount);
 
         if (filesToUpload.length > 0) {
