@@ -5,8 +5,15 @@ import prisma from "@/lib/prisma";
 
 export type SortOption = 'newest' | 'price_asc' | 'price_desc';
 
-// Colores de un producto en el grid (incluye primera imagen para swatch thumbnail)
-export interface ProductColorEntry { id: string; name: string; hex: string; image: string | null; }
+// Colores de un producto en el grid (incluye primera imagen para swatch thumbnail
+// y segunda imagen opcional para efecto hover de la card).
+export interface ProductColorEntry {
+  id:         string;
+  name:       string;
+  hex:        string;
+  image:      string | null;
+  imageHover: string | null;
+}
 export type ProductColorsMap = Record<string, ProductColorEntry[]>; // productId → colors
 
 // Tipos legacy
@@ -90,13 +97,13 @@ export const getPaginatedProductsWithImages = async ({
       prisma.product.count({ where }),
     ]);
 
-    // Batch-fetch de colores por producto (sin N+1), incluye primera imagen
+    // Batch-fetch de colores por producto (sin N+1), incluye primeras 2 imágenes para hover
     const productIds = products.map((p) => p.id);
     const colorRows  = await prisma.productColor.findMany({
       where: { productId: { in: productIds } },
       include: {
         paletteColor: true,
-        images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        images: { orderBy: { sortOrder: 'asc' }, take: 2 },
       },
       orderBy: { paletteColor: { sortOrder: 'asc' } },
     });
@@ -105,10 +112,11 @@ export const getPaginatedProductsWithImages = async ({
     for (const row of colorRows) {
       if (!variantColors[row.productId]) variantColors[row.productId] = [];
       variantColors[row.productId].push({
-        id:    row.paletteColorId,
-        name:  row.paletteColor.name,
-        hex:   row.paletteColor.hex,
-        image: row.images[0]?.url ?? null,
+        id:         row.paletteColorId,
+        name:       row.paletteColor.name,
+        hex:        row.paletteColor.hex,
+        image:      row.images[0]?.url ?? null,
+        imageHover: row.images[1]?.url ?? null,
       });
     }
 

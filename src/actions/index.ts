@@ -10,10 +10,12 @@ export { logout }              from './auth/logout';
 export { registerUser }        from './auth/register';
 
 // ─── Category ───────────────────────────────────────────────
-export { getCategories }   from './category/get-categories';
-export { createCategory }  from './category/create-category';
-export { updateCategory }  from './category/update-category';
-export { deleteCategory }  from './category/delete-category';
+export { getCategories }      from './category/get-categories';
+export { createCategory }     from './category/create-category';
+export { updateCategory }     from './category/update-category';
+export { deleteCategory }     from './category/delete-category';
+export { updateCategoryImage }      from './category/update-category-image';
+export { updateCategoryImageStyle } from './category/update-category-image-style';
 
 // ─── Country ────────────────────────────────────────────────
 export { getCountries } from './country/get-countries';
@@ -39,6 +41,9 @@ export { createUpdateProduct }             from './product/create-update-product
 export { toggleProductFeatured }           from './product/toggle-product-featured';
 export { toggleProductArchived }           from './product/archive-product';
 export { getFeaturedProducts }             from './product/get-featured-products';
+export { getFeaturedCount }                from './product/get-featured-count';
+export { getBestSellers }                  from './product/get-best-sellers';
+export { getNewArrivals }                  from './product/get-new-arrivals';
 export { getFeaturedProductsPaginated }    from './product/get-featured-products-paginated';
 export { getProductBySlug }                from './product/get-product-by-slug';
 export { getStockBySlug }                  from './product/get-stock-by-slug';
@@ -65,11 +70,13 @@ export { updatePaletteColor }   from './color-palette/update-palette-color';
 export { deletePaletteColor }   from './color-palette/delete-palette-color';
 
 // ─── Site Config ─────────────────────────────────────────────
-export { getSiteConfig }         from './site/get-site-config';
-export { updateSiteConfig }      from './site/update-site-config';
-export { subscribeNewsletter }   from './site/subscribe-newsletter';
-export { sendNewsletter }        from './site/send-newsletter';
-export type { NewsletterProduct } from './site/send-newsletter';
+export { getSiteConfig }                  from './site/get-site-config';
+export { updateSiteConfig }               from './site/update-site-config';
+export { getCloudinaryVideoSignature }    from './site/get-cloudinary-video-signature';
+export { saveHeroVideo }                  from './site/save-hero-video';
+export { subscribeNewsletter }            from './site/subscribe-newsletter';
+export { sendNewsletter }                 from './site/send-newsletter';
+export type { NewsletterProduct }         from './site/send-newsletter';
 
 // ─── User ───────────────────────────────────────────────────
 export { changeUserRole }      from './user/change-user-role';

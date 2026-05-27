@@ -11,9 +11,9 @@ import { SearchOverlay } from "./SearchOverlay";
 
 interface NavCategory { name: string; slug: string; }
 
-interface Props { categories?: NavCategory[]; }
+interface Props { categories?: NavCategory[]; showFeatured?: boolean; }
 
-export const TopMenu = ({ categories = [] }: Props) => {
+export const TopMenu = ({ categories = [], showFeatured = false }: Props) => {
   const openMobileMenu = useUIStore((state) => state.openMobileMenu);
   const openSearch     = useUIStore((state) => state.openSearch);
   const totalItems      = useCartStore((state) => state.getTotalItems());
@@ -90,15 +90,17 @@ export const TopMenu = ({ categories = [] }: Props) => {
                       </Link>
                     ))}
                     {/* Separador + colección especial */}
-                    <div className="border-t border-kyzz-secondary">
-                      <Link
-                        href="/coleccion-especial"
-                        onClick={() => setCatsOpen(false)}
-                        className="block px-5 py-3 text-[11px] tracking-widest uppercase text-kyzz-primary hover:bg-kyzz-tertiary transition-colors"
-                      >
-                        ✦ Colección Especial
-                      </Link>
-                    </div>
+                    {showFeatured && (
+                      <div className="border-t border-kyzz-secondary">
+                        <Link
+                          href="/coleccion-especial"
+                          onClick={() => setCatsOpen(false)}
+                          className="block px-5 py-3 text-[11px] tracking-widest uppercase text-kyzz-primary hover:bg-kyzz-tertiary transition-colors"
+                        >
+                          ✦ Colección Especial
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
