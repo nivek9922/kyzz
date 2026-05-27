@@ -113,7 +113,6 @@ export const ProductDetailClient = ({ product, colors, variants, reviewSummary }
         {/* Mobile */}
         <div className="md:hidden">
           <ProductMobileSlideshow
-            key={`mobile-${selectedColorId ?? 'base'}`}
             title={product.title}
             images={currentImages}
           />
@@ -121,7 +120,6 @@ export const ProductDetailClient = ({ product, colors, variants, reviewSummary }
         {/* Desktop — el wrapper div oculta en mobile, el CSS del slideshow maneja el flex layout */}
         <div className="hidden md:block">
           <ProductSlideshow
-            key={`desktop-${selectedColorId ?? 'base'}`}
             title={product.title}
             images={currentImages}
           />

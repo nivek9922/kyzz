@@ -32,7 +32,7 @@ export function HomeNewArrivalsSection({ products, variantColors }: Props) {
       </div>
 
       <ViewItemListTracker listName="recien_llegadas" products={products} />
-      <ProductScrollRow products={products} variantColors={variantColors} listName="recien_llegadas" />
+      <ProductScrollRow products={products} variantColors={variantColors} listName="recien_llegadas" priorityCount={2} />
 
     </section>
   );

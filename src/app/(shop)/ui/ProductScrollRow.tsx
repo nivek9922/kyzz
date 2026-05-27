@@ -11,9 +11,11 @@ interface Props {
   variantColors: Record<string, ProductColorEntry[]>;
   listName:      string;
   desktopCols?:  3 | 4;
+  /** Cuántos productos iniciales reciben priority (LCP). Default 0 — solo above-the-fold debe pasar >0. */
+  priorityCount?: number;
 }
 
-export function ProductScrollRow({ products, variantColors, listName, desktopCols = 4 }: Props) {
+export function ProductScrollRow({ products, variantColors, listName, desktopCols = 4, priorityCount = 0 }: Props) {
   const trackRef  = useRef<HTMLDivElement>(null);
   const isDragging  = useRef(false);
   const dragStart   = useRef(0);
@@ -121,7 +123,7 @@ export function ProductScrollRow({ products, variantColors, listName, desktopCol
               imageSizes={desktopCols === 3
                 ? '(max-width: 768px) 43vw, 33vw'
                 : '(max-width: 768px) 43vw, 25vw'}
-              priority={idx < 2}
+              priority={idx < priorityCount}
             />
           </div>
         ))}
