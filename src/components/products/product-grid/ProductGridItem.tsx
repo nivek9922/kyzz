@@ -107,7 +107,7 @@ export const ProductGridItem = ({ product, listView = false, colorVariants = [],
 
   return (
     <article className="group fade-in">
-      <Link href={`/product/${product.slug}`} onClick={handleSelect} className="block overflow-hidden">
+      <Link href={`/product/${product.slug}`} onClick={handleSelect} className="block">
         <div
           className="relative aspect-[3/4] overflow-hidden bg-kyzz-tertiary"
           onMouseLeave={() => {
@@ -176,7 +176,7 @@ interface SwatchRowProps {
 }
 
 const ColorSwatchRow = ({ colors, activeId, onHover, onLeave, compact = false }: SwatchRowProps) => (
-  <div className={`flex items-center flex-wrap ${compact ? 'gap-1 mt-1.5' : 'gap-1.5 mt-2.5'}`}>
+  <div className={`flex items-center flex-wrap pl-1.5 ${compact ? 'gap-1 mt-1.5' : 'gap-1.5 mt-2.5'}`}>
     {colors.map((c) => {
       const isActive = c.id === activeId;
       const size     = compact ? 'w-5 h-5' : 'w-7 h-7';
@@ -189,27 +189,29 @@ const ColorSwatchRow = ({ colors, activeId, onHover, onLeave, compact = false }:
           onMouseEnter={() => onHover(c)}
           onMouseLeave={onLeave}
           onClick={(e) => { e.preventDefault(); onHover(c); }}
-          className={`relative ${size} rounded-full overflow-hidden transition-all duration-200 shrink-0 ${
+          className={`relative ${size} rounded-full transition-all duration-200 shrink-0 ${
             isActive
               ? 'ring-2 ring-offset-1 ring-kyzz-dark scale-110'
               : 'ring-1 ring-kyzz-secondary hover:scale-110 hover:ring-kyzz-muted'
           }`}
         >
-          {c.image ? (
-            <Image
-              src={imgSrc(c.image)}
-              alt={c.name}
-              fill
-              sizes="28px"
-              className="object-cover"
-            />
-          ) : (
-            /* Fallback: círculo de color sólido */
-            <span
-              className="absolute inset-0 rounded-full"
-              style={{ backgroundColor: c.hex }}
-            />
-          )}
+          {/* Recorte circular en un div interior para no clipear el ring externo */}
+          <span className="absolute inset-0 rounded-full overflow-hidden">
+            {c.image ? (
+              <Image
+                src={imgSrc(c.image)}
+                alt={c.name}
+                fill
+                sizes="28px"
+                className="object-cover"
+              />
+            ) : (
+              <span
+                className="absolute inset-0"
+                style={{ backgroundColor: c.hex }}
+              />
+            )}
+          </span>
           {/* Overlay sutil para dar profundidad */}
           <span className="absolute inset-0 rounded-full ring-1 ring-inset ring-black/10" />
         </button>

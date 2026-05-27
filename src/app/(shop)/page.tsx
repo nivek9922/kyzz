@@ -2,20 +2,21 @@ export const revalidate = 60;
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { getFeaturedProducts, getSiteConfig, getCategories, getNewArrivals } from '@/actions';
-import { HomeRecentlyViewed } from './ui/HomeRecentlyViewed';
+import { getFeaturedProducts, getSiteConfig, getCategories, getNewArrivals, getBestSellers } from '@/actions';
 import { HomeCategorySection } from './ui/HomeCategorySection';
 import { HomeNewArrivalsSection } from './ui/HomeNewArrivalsSection';
 import { HomeFeaturedSection } from './ui/HomeFeaturedSection';
+import { HomeBestSellersSection } from './ui/HomeBestSellersSection';
 import { HomeEditorialSplit } from './ui/HomeEditorialSplit';
 import { HeroVideo } from './ui/HeroVideo';
 
 export default async function Home() {
-  const [featuredData, config, categories, newArrivalsData] = await Promise.all([
+  const [featuredData, config, categories, newArrivalsData, bestSellersData] = await Promise.all([
     getFeaturedProducts(),
     getSiteConfig(),
     getCategories(),
     getNewArrivals(8),
+    getBestSellers(8),
   ]);
 
   return (
@@ -92,8 +93,11 @@ export default async function Home() {
         text={config.brandStoryText ?? null}
       />
 
-      {/* ── Viste recientemente ───────────────────────────────── */}
-      <HomeRecentlyViewed />
+      {/* ── Las más elegidas ─────────────────────────────────────── */}
+      <HomeBestSellersSection
+        products={bestSellersData.products}
+        variantColors={bestSellersData.variantColors}
+      />
     </>
   );
 }

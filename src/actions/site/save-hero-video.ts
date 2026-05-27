@@ -24,7 +24,7 @@ export const saveHeroVideo = async (
       await prisma.siteConfig.create({
         data: {
           id:           'main',
-          heroTitle:    'Kyzz: Basics for every you',
+          heroTitle:    'Kyzz: Tu estilo, tu esencia',
           heroSubtitle: 'Nueva colección',
           heroCta:      'Explorar colección',
           heroVideoUrl,

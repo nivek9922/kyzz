@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 
 const DEFAULT_CONFIG = {
   id:                 'main',
-  heroTitle:          'Kyzz: Basics for every you',
+  heroTitle:          'Kyzz: Tu estilo, tu esencia',
   heroSubtitle:       'Nueva colección',
   heroCta:            'Explorar colección',
   heroImageUrl:       null as string | null,
