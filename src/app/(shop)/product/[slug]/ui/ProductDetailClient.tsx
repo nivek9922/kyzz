@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { IoStar, IoStarHalf, IoStarOutline } from 'react-icons/io5';
 import { StockLabel } from '@/components';
 
 const SlideshowSkeleton = () => (
@@ -37,12 +38,13 @@ export interface VariantData {
 }
 
 interface Props {
-  product:  Product;
-  colors:   ColorVariantData[];
-  variants: VariantData[];
+  product:        Product;
+  colors:         ColorVariantData[];
+  variants:       VariantData[];
+  reviewSummary?: { average: number; count: number };
 }
 
-export const ProductDetailClient = ({ product, colors, variants }: Props) => {
+export const ProductDetailClient = ({ product, colors, variants, reviewSummary }: Props) => {
 
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
 
@@ -134,6 +136,18 @@ export const ProductDetailClient = ({ product, colors, variants }: Props) => {
         <div>
           <h1 className="font-serif text-3xl text-kyzz-dark leading-snug">{product.title}</h1>
           <p className="mt-2 text-xl text-kyzz-primary font-light">{currencyFormat(product.price)}</p>
+          {reviewSummary && reviewSummary.count > 0 && (
+            <a
+              href="#reseñas"
+              className="inline-flex items-center gap-2 mt-3 group"
+              aria-label={`${reviewSummary.average.toFixed(1)} de 5 estrellas, ${reviewSummary.count} reseñas`}
+            >
+              <Stars value={reviewSummary.average} />
+              <span className="text-xs text-kyzz-muted group-hover:text-kyzz-primary transition-colors">
+                {reviewSummary.count} {reviewSummary.count === 1 ? 'reseña' : 'reseñas'}
+              </span>
+            </a>
+          )}
         </div>
 
         {/* Controles: color + talla + cantidad + botones — agrupados sin dividers */}
@@ -198,6 +212,20 @@ export const ProductDetailClient = ({ product, colors, variants }: Props) => {
 
         <ProductTabs />
       </div>
+    </div>
+  );
+};
+
+// ── Estrellas compactas para el header de la PDP ───────────────────────────────
+const Stars = ({ value }: { value: number }) => {
+  const full  = Math.floor(value);
+  const half  = value - full >= 0.5;
+  const empty = 5 - full - (half ? 1 : 0);
+  return (
+    <div className="flex items-center gap-0.5 text-kyzz-primary">
+      {Array.from({ length: full  }).map((_, i) => <IoStar         key={`f${i}`} size={14} />)}
+      {half  && <IoStarHalf size={14} />}
+      {Array.from({ length: empty }).map((_, i) => <IoStarOutline  key={`e${i}`} size={14} className="text-kyzz-secondary" />)}
     </div>
   );
 };

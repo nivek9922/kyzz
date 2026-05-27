@@ -3,14 +3,16 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { IoHeart, IoHeartOutline, IoHeartDislikeOutline } from 'react-icons/io5';
+import { IoHeartDislikeOutline } from 'react-icons/io5';
 import { useWishlistStore } from '@/store';
 import { getWishlistProducts } from '@/actions/product/get-wishlist-products';
-import { GridLayoutSelector } from '@/components';
+import { GridLayoutSelector, ProductGridItem } from '@/components';
 import { useGridLayout } from '@/hooks/useGridLayout';
 import type { Columns } from '@/components/products/product-grid/ProductGrid';
+import type { ProductColorEntry } from '@/actions/product/product-pagination';
 import { currencyFormat } from '@/utils';
 import { titleFont } from '@/config/fonts';
+import type { Product } from '@/interfaces';
 
 const colsMap: Record<Columns, string> = {
   0: 'grid-cols-1',
@@ -22,64 +24,57 @@ const colsMap: Record<Columns, string> = {
   6: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6',
 };
 
-type WishlistProduct = Awaited<ReturnType<typeof getWishlistProducts>>[number];
-
-const imgSrc = (p: WishlistProduct) => {
-  const url = p.ProductColors[0]?.images[0]?.url ?? p.ProductImage[0]?.url;
-  if (!url) return '/imgs/placeholder.jpg';
-  return url.startsWith('http') ? url : `/products/${url}`;
-};
+interface CachedEntry {
+  product: Product;
+  colors:  ProductColorEntry[] | undefined;
+}
 
 export const WishlistContent = () => {
-  const { items, toggle } = useWishlistStore();
+  const { items } = useWishlistStore();
 
   const { isMobile, effectiveCols, mounted, isListView, handleChange } = useGridLayout({
     storageKeyMobile:  'kyzz-wishlist-cols-mobile',
     storageKeyDesktop: 'kyzz-wishlist-cols-desktop',
   });
 
-  // ── Product cache: ID → data
-  const [productMap, setProductMap] = useState<Map<string, WishlistProduct>>(new Map());
+  // Cache: ID → { product, colors }
+  const [cache, setCache] = useState<Map<string, CachedEntry>>(new Map());
   const [initialLoading, setInitialLoading] = useState(true);
   const [, startTransition] = useTransition();
   const columnsReady = useRef(false);
   useEffect(() => { columnsReady.current = true; }, []);
 
-  // ── Solo fetchea los IDs que no están en cache
   useEffect(() => {
-    const missing = items.filter((id) => !productMap.has(id));
+    const missing = items.filter((id) => !cache.has(id));
 
     if (missing.length === 0) {
-      // Solo removes → no fetch, el memo derivado ya filtra
       setInitialLoading(false);
       return;
     }
 
-    // Primera carga: muestra skeleton; carga adicional (add): silenciosa
-    const isFirstLoad = productMap.size === 0 && items.length > 0;
+    const isFirstLoad = cache.size === 0 && items.length > 0;
     if (isFirstLoad) setInitialLoading(true);
 
     startTransition(() => {
-      getWishlistProducts(missing).then((fetched) => {
-        setProductMap((prev) => {
+      getWishlistProducts(missing).then(({ products, variantColors }) => {
+        setCache((prev) => {
           const next = new Map(prev);
-          fetched.forEach((p) => next.set(p.id, p));
+          for (const p of products) {
+            next.set(p.id, { product: p, colors: variantColors[p.id] });
+          }
           return next;
         });
         setInitialLoading(false);
       });
     });
-  // productMap intencionalmente excluido: solo queremos reaccionar a cambios en items
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
-  // ── Productos a mostrar: orden de la wishlist × cache
-  const displayedProducts = useMemo(
-    () => items.map((id) => productMap.get(id)).filter((p): p is WishlistProduct => !!p),
-    [items, productMap]
+  const displayed = useMemo(
+    () => items.map((id) => cache.get(id)).filter((e): e is CachedEntry => !!e),
+    [items, cache],
   );
 
-  // ── Skeleton de carga inicial
   if (initialLoading) {
     return (
       <div className="grid grid-cols-3 gap-x-4 gap-y-8 mt-10">
@@ -94,8 +89,7 @@ export const WishlistContent = () => {
     );
   }
 
-  // ── Estado vacío
-  if (displayedProducts.length === 0) {
+  if (displayed.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-5 text-center">
         <IoHeartDislikeOutline size={48} className="text-kyzz-secondary" />
@@ -126,14 +120,21 @@ export const WishlistContent = () => {
 
       {isListView ? (
         <div className="divide-y divide-kyzz-secondary">
-          {displayedProducts.map((product) => (
-            <WishlistListItem key={product.id} product={product} onRemove={toggle} />
+          {displayed.map(({ product }) => (
+            <WishlistListItem key={product.id} product={product} />
           ))}
         </div>
       ) : (
         <div className={`grid ${colsMap[effectiveCols]} gap-x-4 gap-y-8`}>
-          {displayedProducts.map((product) => (
-            <WishlistCard key={product.id} product={product} onRemove={toggle} />
+          {displayed.map(({ product, colors }, idx) => (
+            <ProductGridItem
+              key={product.id}
+              product={product}
+              colorVariants={colors}
+              listName="wishlist"
+              imageSizes="(max-width: 640px) 50vw, 25vw"
+              priority={idx < 2}
+            />
           ))}
         </div>
       )}
@@ -141,87 +142,43 @@ export const WishlistContent = () => {
   );
 };
 
-// ── Tarjeta individual extraída para evitar re-renders del padre al hacer toggle
-interface CardProps {
-  product:  WishlistProduct;
-  onRemove: (id: string) => void;
-}
+// ── Vista lista: simple, sin sizes/colors (la lista compacta no los necesita) ──
+const WishlistListItem = ({ product }: { product: Product }) => {
+  const imgUrl = product.images[0];
+  const src = !imgUrl
+    ? '/imgs/placeholder.jpg'
+    : imgUrl.startsWith('http') || imgUrl.startsWith('/')
+      ? imgUrl
+      : `/products/${imgUrl}`;
 
-// ── Vista de lista (cols=1) — espejo de ProductGridItem listView ──────────────
-const WishlistListItem = ({ product, onRemove }: CardProps) => (
-  <article className="group flex gap-5 py-5">
-    <div className="relative shrink-0 w-24 h-32 sm:w-32 sm:h-44 overflow-hidden bg-kyzz-tertiary">
-      <Link href={`/product/${product.slug}`} className="block relative w-full h-full">
-        <Image
-          src={imgSrc(product)}
-          alt={product.title}
-          fill
-          sizes="128px"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-      </Link>
-      <button
-        type="button"
-        onClick={(e) => { e.preventDefault(); onRemove(product.id); }}
-        aria-label="Quitar de favoritos"
-        className="absolute top-1.5 right-1.5 z-10 w-6 h-6 flex items-center justify-center bg-white/80 backdrop-blur-sm hover:bg-white transition-colors group/btn"
-      >
-        <IoHeart size={12} className="text-kyzz-dark group-hover/btn:hidden" />
-        <IoHeartOutline size={12} className="text-kyzz-muted hidden group-hover/btn:block" />
-      </button>
-    </div>
+  return (
+    <article className="group flex gap-5 py-5">
+      <div className="relative shrink-0 w-24 h-32 sm:w-32 sm:h-44 overflow-hidden bg-kyzz-tertiary">
+        <Link href={`/product/${product.slug}`} className="block relative w-full h-full">
+          <Image
+            src={src}
+            alt={product.title}
+            fill
+            sizes="128px"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </Link>
+      </div>
 
-    <div className="flex flex-col gap-1.5 py-1 flex-1 min-w-0">
-      <Link
-        href={`/product/${product.slug}`}
-        className="block text-sm text-kyzz-dark hover:text-kyzz-primary transition-colors truncate"
-      >
-        {product.title}
-      </Link>
-      {product.description && (
-        <p className="text-[12px] text-kyzz-muted leading-relaxed line-clamp-2 hidden sm:block">
-          {product.description}
-        </p>
-      )}
-      <span className="text-sm text-kyzz-muted mt-auto">{currencyFormat(product.price)}</span>
-    </div>
-  </article>
-);
-
-// ── Vista de grid ──────────────────────────────────────────────────────────────
-const WishlistCard = ({ product, onRemove }: CardProps) => (
-  <article className="group fade-in">
-    <div className="relative aspect-[3/4] overflow-hidden bg-kyzz-tertiary">
-      <Link href={`/product/${product.slug}`} className="block relative w-full h-full">
-        <Image
-          src={imgSrc(product)}
-          alt={product.title}
-          fill
-          sizes="(max-width: 640px) 50vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-      </Link>
-
-      {/* Botón quitar favorito */}
-      <button
-        type="button"
-        onClick={(e) => { e.preventDefault(); onRemove(product.id); }}
-        aria-label="Quitar de favoritos"
-        className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center bg-white/80 backdrop-blur-sm hover:bg-white transition-colors group/btn"
-      >
-        <IoHeart size={15} className="text-kyzz-dark group-hover/btn:hidden" />
-        <IoHeartOutline size={15} className="text-kyzz-muted hidden group-hover/btn:block" />
-      </button>
-    </div>
-
-    <div className="pt-3">
-      <Link
-        href={`/product/${product.slug}`}
-        className="block text-sm text-kyzz-dark hover:text-kyzz-primary transition-colors truncate"
-      >
-        {product.title}
-      </Link>
-      <span className="text-sm text-kyzz-muted">{currencyFormat(product.price)}</span>
-    </div>
-  </article>
-);
+      <div className="flex flex-col gap-1.5 py-1 flex-1 min-w-0">
+        <Link
+          href={`/product/${product.slug}`}
+          className="block text-sm text-kyzz-dark hover:text-kyzz-primary transition-colors truncate"
+        >
+          {product.title}
+        </Link>
+        {product.description && (
+          <p className="text-[12px] text-kyzz-muted leading-relaxed line-clamp-2 hidden sm:block">
+            {product.description}
+          </p>
+        )}
+        <span className="text-sm text-kyzz-muted mt-auto">{currencyFormat(product.price)}</span>
+      </div>
+    </article>
+  );
+};

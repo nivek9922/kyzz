@@ -82,15 +82,22 @@ export default async function ProductBySlugPage(props: Props) {
   return (
     <>
       <div className="max-w-7xl mx-auto px-6 py-8 mb-16">
-        <ProductDetailClient product={product} colors={colors} variants={variantList} />
-        <ProductReviews
-          productId={product.id}
-          reviews={reviewData.reviews}
-          summary={reviewData.summary}
-          userReview={reviewData.userReview}
-          hasPurchased={reviewData.hasPurchased}
-          isLoggedIn={!!session?.user?.id}
+        <ProductDetailClient
+          product={product}
+          colors={colors}
+          variants={variantList}
+          reviewSummary={{ average: reviewData.summary.average, count: reviewData.summary.count }}
         />
+        <div id="reseñas">
+          <ProductReviews
+            productId={product.id}
+            reviews={reviewData.reviews}
+            summary={reviewData.summary}
+            userReview={reviewData.userReview}
+            hasPurchased={reviewData.hasPurchased}
+            isLoggedIn={!!session?.user?.id}
+          />
+        </div>
       </div>
       <HomeRecentlyViewed />
     </>

@@ -31,7 +31,7 @@ export const getFeaturedProductsPaginated = async ({ page = 1, take = 12 }: Opti
     where: { productId: { in: productIds } },
     include: {
       paletteColor: true,
-      images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+      images: { orderBy: { sortOrder: 'asc' }, take: 2 },
     },
     orderBy: { paletteColor: { sortOrder: 'asc' } },
   });
@@ -40,10 +40,11 @@ export const getFeaturedProductsPaginated = async ({ page = 1, take = 12 }: Opti
   for (const row of colorRows) {
     if (!variantColors[row.productId]) variantColors[row.productId] = [];
     variantColors[row.productId].push({
-      id:    row.paletteColorId,
-      name:  row.paletteColor.name,
-      hex:   row.paletteColor.hex,
-      image: row.images[0]?.url ?? null,
+      id:         row.paletteColorId,
+      name:       row.paletteColor.name,
+      hex:        row.paletteColor.hex,
+      image:      row.images[0]?.url ?? null,
+      imageHover: row.images[1]?.url ?? null,
     });
   }
 

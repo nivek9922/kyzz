@@ -20,14 +20,19 @@ export const getBestSellers = async (limit = 8) => {
 
     const rawProducts = await prisma.product.findMany({
       where:   { id: { in: topIds }, isArchived: false, inStock: { gt: 0 } },
-      include: { ProductImage: { take: 2, select: { url: true } } },
+      include: {
+        ProductImage:  { take: 2, select: { url: true } },
+        ProductColors: { take: 1, include: { images: { take: 1, select: { id: true } } } },
+      },
     });
 
-    // Preserve ranking order and filter out products with no images
+    // Preserve ranking order and require at least one image source (general OR per color)
     const productMap = new Map(rawProducts.map((p) => [p.id, p]));
     const products = topIds
       .map((id) => productMap.get(id))
-      .filter((p): p is (typeof rawProducts)[0] => p !== undefined && p.ProductImage.length > 0)
+      .filter((p): p is (typeof rawProducts)[0] =>
+        p !== undefined && (p.ProductImage.length > 0 || p.ProductColors.some(c => c.images.length > 0))
+      )
       .slice(0, limit);
 
     if (products.length === 0) return { products: [], variantColors: {} };
@@ -37,7 +42,7 @@ export const getBestSellers = async (limit = 8) => {
       where:   { productId: { in: productIds } },
       include: {
         paletteColor: true,
-        images:       { orderBy: { sortOrder: 'asc' }, take: 1 },
+        images:       { orderBy: { sortOrder: 'asc' }, take: 2 },
       },
       orderBy: { paletteColor: { sortOrder: 'asc' } },
     });
@@ -46,10 +51,11 @@ export const getBestSellers = async (limit = 8) => {
     for (const row of colorRows) {
       if (!variantColors[row.productId]) variantColors[row.productId] = [];
       variantColors[row.productId].push({
-        id:    row.paletteColorId,
-        name:  row.paletteColor.name,
-        hex:   row.paletteColor.hex,
-        image: row.images[0]?.url ?? null,
+        id:         row.paletteColorId,
+        name:       row.paletteColor.name,
+        hex:        row.paletteColor.hex,
+        image:      row.images[0]?.url ?? null,
+        imageHover: row.images[1]?.url ?? null,
       });
     }
 

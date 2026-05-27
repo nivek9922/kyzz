@@ -27,7 +27,7 @@ interface FormInputs {
   images?:     FileList;
 }
 
-const MAX_IMAGES = 2;
+const MAX_IMAGES = 12;
 
 export const ProductForm = ({ product, categories, hasColors = false }: Props) => {
 
@@ -65,7 +65,7 @@ export const ProductForm = ({ product, categories, hasColors = false }: Props) =
     if (files.length > maxNewImages) {
       toast.error(
         maxNewImages === 0
-          ? 'Este producto ya tiene el máximo de imágenes (2)'
+          ? `Este producto ya tiene el máximo de imágenes (${MAX_IMAGES})`
           : `Solo puedes agregar ${maxNewImages} imagen${maxNewImages > 1 ? 'es' : ''} más`
       );
       e.target.value = '';
