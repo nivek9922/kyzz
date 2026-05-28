@@ -94,18 +94,19 @@ export async function updateProductVariants(input: {
         }
       }
 
-      // Sincronizar campos legacy en Product (inStock + sizes) desde variantes
+      // Sincronizar campos legacy en Product (inStock + sizes) desde variantes.
+      // inStock = disponible = Σ(stock - reserved) — coherente con el modelo reservado.
       const allVariants = await tx.productVariant.findMany({
         where:  { productId },
-        select: { size: true, stock: true },
+        select: { size: true, stock: true, reserved: true },
       });
-      const totalStock   = allVariants.reduce((sum, v) => sum + v.stock, 0);
+      const available   = allVariants.reduce((sum, v) => sum + (v.stock - v.reserved), 0);
       const uniqueSizes  = Array.from(new Set(allVariants.map((v) => v.size)));
 
       const product = await tx.product.update({
         where: { id: productId },
         data:  {
-          inStock: totalStock,
+          inStock: available,
           sizes:   { set: uniqueSizes },
         },
         select: { slug: true },

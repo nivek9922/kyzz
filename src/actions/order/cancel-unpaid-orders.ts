@@ -4,11 +4,18 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
+import { releaseStock } from '@/lib/stock-ops';
 import { resend, EMAIL_FROM } from '@/lib/resend';
 import { render } from '@react-email/components';
 import { AbandonedCartEmail } from '@/emails/AbandonedCartEmail';
 
 const EXPIRY_HOURS = 24;
+
+// Filas de orden con sus items, tal como las consultamos para cancelar y liberar.
+type ExpiredOrder = {
+  id: string;
+  OrderItem: { productId: string; quantity: number; variantId: string | null }[];
+};
 
 export const cancelUnpaidOrders = async () => {
   const session = await auth();
@@ -23,78 +30,62 @@ export const cancelUnpaidOrders = async () => {
 
 export const getCancellableOrdersCount = async (): Promise<number> => {
   const expiryDate = new Date(Date.now() - EXPIRY_HOURS * 60 * 60 * 1000);
+  // Solo prepaid no pagados: los COD no se cancelan por antigüedad (su reserva
+  // expira por reservationExpiresAt solo si no se confirman).
   return prisma.order.count({
-    where: { isPaid: false, cancelledAt: null, createdAt: { lt: expiryDate } },
+    where: { isPaid: false, paymentMethod: 'prepaid', cancelledAt: null, createdAt: { lt: expiryDate } },
   });
 };
 
 /** Lógica central — usada por la action admin y por el cron route */
 export async function runCancelUnpaidOrders(): Promise<{ ok: boolean; cancelledCount?: number; message?: string }> {
-  const expiryDate = new Date(Date.now() - EXPIRY_HOURS * 60 * 60 * 1000);
+  const now        = new Date();
+  const expiryDate = new Date(now.getTime() - EXPIRY_HOURS * 60 * 60 * 1000);
+
+  const ORDER_SELECT = {
+    OrderItem: { select: { productId: true, quantity: true, variantId: true } },
+  } as const;
 
   try {
-    const expiredOrders = await prisma.order.findMany({
-      where: { isPaid: false, cancelledAt: null, createdAt: { lt: expiryDate } },
-      include: {
-        OrderItem: {
-          select: { productId: true, quantity: true, variantId: true },
-        },
-      },
+    // 1. Prepaid no pagados con >24h de antigüedad.
+    const prepaidExpired = await prisma.order.findMany({
+      where:   { isPaid: false, paymentMethod: 'prepaid', cancelledAt: null, createdAt: { lt: expiryDate } },
+      include: ORDER_SELECT,
     });
 
+    // 2. COD sin confirmar cuya ventana de reserva ya venció (siguen en pending,
+    //    no se han despachado, así que su stock sigue reservado, no comprometido).
+    const codExpired = await prisma.order.findMany({
+      where: {
+        paymentMethod:        'cod',
+        isPaid:               false,
+        cancelledAt:          null,
+        codConfirmedAt:       null,
+        shippingStatus:       'pending',
+        reservationExpiresAt: { lt: now },
+      },
+      include: ORDER_SELECT,
+    });
+
+    const expiredOrders: ExpiredOrder[] = [...prepaidExpired, ...codExpired];
     if (expiredOrders.length === 0) return { ok: true, cancelledCount: 0 };
 
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Acumular incrementos por variante y productos afectados
-      const variantIncrements = new Map<string, number>();
-      const affectedProductIds = new Set<string>();
+      // Liberar la reserva (reserved -= qty); el stock físico no se toca.
+      const items = expiredOrders.flatMap((o) =>
+        o.OrderItem
+          .filter((i): i is typeof i & { variantId: string } => i.variantId !== null)
+          .map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+      );
+      await releaseStock(tx, items);
 
-      for (const order of expiredOrders) {
-        for (const item of order.OrderItem) {
-          affectedProductIds.add(item.productId);
-          if (item.variantId) {
-            variantIncrements.set(
-              item.variantId,
-              (variantIncrements.get(item.variantId) ?? 0) + item.quantity,
-            );
-          }
-        }
-      }
-
-      // 1. Restaurar stock en cada variante afectada
-      if (variantIncrements.size > 0) {
-        await Promise.all(
-          Array.from(variantIncrements.entries()).map(([variantId, qty]) =>
-            tx.productVariant.update({
-              where: { id: variantId },
-              data:  { stock: { increment: qty } },
-            }),
-          ),
-        );
-
-        // 2. Resincronizar Product.inStock desde suma de variantes (mismo patrón que place-order)
-        await Promise.all(
-          Array.from(affectedProductIds).map(async (pid) => {
-            const agg = await tx.productVariant.aggregate({
-              where: { productId: pid },
-              _sum:  { stock: true },
-            });
-            return tx.product.update({
-              where: { id: pid },
-              data:  { inStock: agg._sum.stock ?? 0 },
-            });
-          }),
-        );
-      }
-
-      // 3. Marcar órdenes como canceladas
       await tx.order.updateMany({
         where: { id: { in: expiredOrders.map((o) => o.id) } },
-        data:  { cancelledAt: new Date() },
+        data:  { cancelledAt: now },
       });
     });
 
-    // Invalidar caché de PDP para todos los productos con stock restaurado
+    // Invalidar caché de PDP para todos los productos con disponibilidad restaurada
     const affectedProductIds = new Set(expiredOrders.flatMap((o) => o.OrderItem.map((i) => i.productId)));
     if (affectedProductIds.size > 0) {
       const products = await prisma.product.findMany({
@@ -104,7 +95,7 @@ export async function runCancelUnpaidOrders(): Promise<{ ok: boolean; cancelledC
       products.forEach((p) => revalidateTag(`product:${p.slug}`));
     }
 
-    // 4. Enviar emails de recuperación de carrito abandonado (>3h, sin email enviado aún)
+    // Emails de recuperación de carrito abandonado (>3h, sin email enviado aún)
     await sendAbandonedCartEmails();
 
     return { ok: true, cancelledCount: expiredOrders.length };

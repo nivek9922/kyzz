@@ -1,6 +1,8 @@
 import { titleFont } from '@/config/fonts';
 import Link from 'next/link';
+import { IoLogoWhatsapp } from 'react-icons/io5';
 import { NewsletterForm } from './NewsletterForm';
+import { WHATSAPP_NUMBER, whatsappUrl } from '@/lib/whatsapp';
 
 export const Footer = () => {
   return (
@@ -16,6 +18,16 @@ export const Footer = () => {
           <p className="mt-4 text-sm text-kyzz-muted leading-relaxed max-w-xs">
             Básicos que te acompañan todos los días. Un beso a tu estilo propio.
           </p>
+          {WHATSAPP_NUMBER && (
+            <a
+              href={whatsappUrl('Hola KYZZ, quiero más información 🤍')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 text-xs tracking-widest uppercase text-kyzz-muted hover:text-[#1f9c50] transition-colors"
+            >
+              <IoLogoWhatsapp size={16} /> Escríbenos por WhatsApp
+            </a>
+          )}
         </div>
 
         {/* Links */}

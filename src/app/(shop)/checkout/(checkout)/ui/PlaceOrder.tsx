@@ -12,9 +12,12 @@ import { useShallow } from "zustand/react/shallow";
 import { gaBeginCheckout, gaPurchase } from "@/lib/gtag";
 import { CouponInput } from "./CouponInput";
 
+type PaymentChoice = 'prepaid' | 'cod';
+
 export const PlaceOrder = () => {
   const router = useRouter();
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [paymentMethod, setPaymentMethod]   = useState<PaymentChoice>('prepaid');
 
   const address = useAddressStore((state) => state.address);
   const { cart, clearCart, itemsInCart, subTotal, tax, shipping } = useCartStore(
@@ -66,7 +69,7 @@ export const PlaceOrder = () => {
       colorName:  product.colorName,
     }));
 
-    const resp = await placeOrder(productsToOrder, address, coupon?.code, guestEmail ?? undefined);
+    const resp = await placeOrder(productsToOrder, address, coupon?.code, guestEmail ?? undefined, paymentMethod);
 
     if (!resp.ok) {
       toast.error('No se pudo confirmar el pedido', { id: toastId, description: resp.message });
@@ -74,7 +77,10 @@ export const PlaceOrder = () => {
       return;
     }
 
-    toast.success('Pedido confirmado', { id: toastId });
+    toast.success(
+      paymentMethod === 'cod' ? 'Pedido recibido' : 'Pedido confirmado',
+      { id: toastId, description: paymentMethod === 'cod' ? 'Te contactaremos para confirmar tu pedido.' : undefined },
+    );
     gaPurchase({
       orderId: resp.order!.id,
       value:   total,
@@ -142,6 +148,41 @@ export const PlaceOrder = () => {
           Código de descuento
         </p>
         <CouponInput subtotal={subTotal} />
+      </div>
+
+      {/* Método de pago */}
+      <div className="border-t border-kyzz-secondary mt-5 pt-4">
+        <p className="text-[10px] tracking-[0.2em] uppercase text-kyzz-muted mb-3">
+          Método de pago
+        </p>
+        <div className="space-y-2">
+          {([
+            { value: 'prepaid', title: 'Pago en línea', desc: 'Tarjeta, PSE, Nequi, Bancolombia · Wompi' },
+            { value: 'cod',     title: 'Contraentrega',  desc: 'Paga al recibir tu pedido' },
+          ] as const).map((opt) => {
+            const active = paymentMethod === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPaymentMethod(opt.value)}
+                className={clsx(
+                  'w-full text-left border p-3 transition-colors flex items-start gap-3',
+                  active ? 'border-kyzz-dark bg-kyzz-tertiary' : 'border-kyzz-secondary hover:border-kyzz-muted',
+                )}
+              >
+                <span className={clsx(
+                  'mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 transition-colors',
+                  active ? 'border-kyzz-dark bg-kyzz-dark' : 'border-kyzz-secondary',
+                )} />
+                <span>
+                  <span className="block text-sm text-kyzz-dark">{opt.title}</span>
+                  <span className="block text-[11px] text-kyzz-muted mt-0.5">{opt.desc}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <p className="text-[10px] text-kyzz-muted mt-6 mb-4 leading-relaxed">

@@ -46,7 +46,17 @@ export default async function AdminOrderDetailPage(props: Props) {
                 ? 'text-blue-700 bg-blue-50 border-blue-200'
                 : 'text-kyzz-muted bg-kyzz-tertiary border-kyzz-secondary'
             }`}>
-              {order.paymentGateway === 'wompi' ? 'Wompi' : 'Manual'}
+              {order.paymentGateway === 'wompi' ? 'Wompi' : order.paymentGateway === 'cash' ? 'Efectivo' : 'Manual'}
+            </span>
+          )}
+          {order.paymentMethod === 'cod' && (
+            <span className="text-[10px] tracking-widest uppercase px-3 py-1 border text-orange-700 bg-orange-50 border-orange-200">
+              Contraentrega
+            </span>
+          )}
+          {order.channel !== 'web' && (
+            <span className="text-[10px] tracking-widest uppercase px-3 py-1 border text-kyzz-primary bg-kyzz-tertiary border-kyzz-secondary">
+              {order.channel}
             </span>
           )}
         </div>
@@ -224,6 +234,8 @@ export default async function AdminOrderDetailPage(props: Props) {
             currentNotes={order.shippingNotes ?? null}
             isPaid={order.isPaid}
             isCancelled={!!order.cancelledAt}
+            paymentMethod={order.paymentMethod}
+            codConfirmed={!!order.codConfirmedAt}
           />
 
           <OrderTimeline

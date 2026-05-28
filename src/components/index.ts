@@ -38,6 +38,7 @@ export * from './ui/pagination/Pagination'
 export * from './ui/sidebar/Sidebar';
 export * from './ui/title/Title';
 export * from './ui/top-menu/TopMenu';
+export * from './ui/whatsapp/WhatsappFloat';
 export * from './ui/admin/AdminSearchInput';
 export * from './ui/admin/CancelExpiredOrdersButton';
 export * from './ui/admin/DeleteProductButton';

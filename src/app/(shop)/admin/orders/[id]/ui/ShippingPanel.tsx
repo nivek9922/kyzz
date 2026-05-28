@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { ShippingStatus } from '@prisma/client';
 import { toast } from 'sonner';
-import { IoLockClosedOutline } from 'react-icons/io5';
-import { updateOrderShipping } from '@/actions';
+import { IoLockClosedOutline, IoCheckmarkCircleOutline } from 'react-icons/io5';
+import { updateOrderShipping, confirmCodOrder } from '@/actions';
 
 const REQUIRES_PAYMENT: ShippingStatus[] = ['processing', 'shipped', 'delivered'];
 
@@ -23,18 +23,39 @@ interface Props {
   currentNotes:    string | null;
   isPaid:          boolean;
   isCancelled:     boolean;
+  paymentMethod:   'prepaid' | 'cod';
+  codConfirmed:    boolean;
 }
 
 export const ShippingPanel = ({
   orderId, currentStatus, currentTracking, currentNotes, isPaid, isCancelled,
+  paymentMethod, codConfirmed,
 }: Props) => {
   const [status,   setStatus]   = useState<ShippingStatus>(currentStatus);
   const [tracking, setTracking] = useState(currentTracking ?? '');
   const [notes,    setNotes]    = useState(currentNotes ?? '');
   const [saving,   setSaving]   = useState(false);
+  const [confirming, setConfirming] = useState(false);
+
+  const isCod = paymentMethod === 'cod';
+  // COD avanza sin pago previo (se cobra al entregar); prepaid exige pago confirmado.
+  const canAdvance = isPaid || isCod;
+
+  const handleConfirmCod = async () => {
+    setConfirming(true);
+    const id = toast.loading('Confirmando pedido...');
+    const result = await confirmCodOrder(orderId);
+    if (result.ok) {
+      toast.success('Pedido confirmado', { id });
+      setStatus('processing');
+    } else {
+      toast.error(result.message ?? 'Error', { id });
+    }
+    setConfirming(false);
+  };
 
   const handleSave = async () => {
-    if (REQUIRES_PAYMENT.includes(status) && !isPaid) {
+    if (REQUIRES_PAYMENT.includes(status) && !canAdvance) {
       toast.error('El pedido debe estar pagado para avanzar a este estado.');
       return;
     }
@@ -67,8 +88,26 @@ export const ShippingPanel = ({
     <div className="kyzz-panel p-6 space-y-6">
       <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted">Control de envío</p>
 
-      {/* Aviso si no está pagado */}
-      {!isPaid && (
+      {/* COD: confirmación anti-fraude antes de despachar */}
+      {isCod && !codConfirmed && (
+        <div className="bg-kyzz-tertiary border border-kyzz-secondary px-3 py-3 space-y-2">
+          <p className="text-[11px] text-kyzz-dark leading-relaxed">
+            Pedido <strong>contraentrega</strong> sin confirmar. Confírmalo (tras validar por WhatsApp)
+            para detener la expiración de la reserva y prepararlo para envío.
+          </p>
+          <button
+            onClick={handleConfirmCod}
+            disabled={confirming}
+            className="inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase border border-kyzz-dark text-kyzz-dark px-3 py-1.5 hover:bg-kyzz-dark hover:text-white transition-colors disabled:opacity-50"
+          >
+            <IoCheckmarkCircleOutline size={14} />
+            {confirming ? 'Confirmando…' : 'Confirmar pedido'}
+          </button>
+        </div>
+      )}
+
+      {/* Aviso prepaid sin pagar */}
+      {!isCod && !isPaid && (
         <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 px-3 py-2.5">
           <IoLockClosedOutline className="text-amber-600 mt-0.5 shrink-0" size={14} />
           <p className="text-[11px] text-amber-700 leading-relaxed">
@@ -77,12 +116,19 @@ export const ShippingPanel = ({
         </div>
       )}
 
+      {/* Aviso COD: cobro al entregar */}
+      {isCod && (
+        <p className="text-[11px] text-kyzz-muted leading-relaxed">
+          Contraentrega: al marcar <strong>Entregado</strong> se registra el cobro en efectivo automáticamente.
+        </p>
+      )}
+
       {/* Botones de estado */}
       <div>
         <p className="text-[11px] tracking-widest uppercase text-kyzz-muted mb-3">Estado</p>
         <div className="flex flex-wrap gap-2">
           {STATUS_OPTIONS.map(opt => {
-            const locked = !isPaid && REQUIRES_PAYMENT.includes(opt.value);
+            const locked = !canAdvance && REQUIRES_PAYMENT.includes(opt.value);
             return (
               <button
                 key={opt.value}
@@ -113,7 +159,7 @@ export const ShippingPanel = ({
           placeholder="Ej: TCC-987654321"
           value={tracking}
           onChange={e => setTracking(e.target.value)}
-          disabled={!isPaid}
+          disabled={!canAdvance}
         />
       </div>
 

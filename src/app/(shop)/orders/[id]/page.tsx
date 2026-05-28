@@ -253,10 +253,14 @@ export default async function OrdersByIdPage(props: Props) {
             <div className="mt-6">
               {order?.cancelledAt ? (
                 <p className="text-[11px] tracking-widest uppercase text-kyzz-muted">
-                  Esta orden fue cancelada por falta de pago.
+                  {order.paymentMethod === 'cod'
+                    ? 'Esta orden fue cancelada.'
+                    : 'Esta orden fue cancelada por falta de pago.'}
                 </p>
               ) : order?.isPaid ? (
                 <OrderStatus isPaid={true} />
+              ) : order?.paymentMethod === 'cod' ? (
+                <CodInstructions confirmed={!!order.codConfirmedAt} />
               ) : (
                 <PaymentOptions
                   orderId={order!.id}
@@ -286,6 +290,23 @@ export default async function OrdersByIdPage(props: Props) {
         )}
 
       </div>
+    </div>
+  );
+}
+
+// ── Instrucciones de contraentrega ────────────────────────────────────────────
+function CodInstructions({ confirmed }: { confirmed: boolean }) {
+  return (
+    <div className="border border-kyzz-secondary p-4 space-y-2 text-center">
+      <p className="text-[10px] tracking-[0.25em] uppercase text-kyzz-muted">
+        Pago contraentrega
+      </p>
+      <p className="text-sm text-kyzz-dark font-medium">Pagas al recibir tu pedido.</p>
+      <p className="text-xs text-kyzz-muted leading-relaxed">
+        {confirmed
+          ? 'Tu pedido fue confirmado y está en preparación. Pagas en efectivo al mensajero al momento de la entrega.'
+          : 'Te contactaremos por WhatsApp para confirmar tu pedido antes de despacharlo.'}
+      </p>
     </div>
   );
 }

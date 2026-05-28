@@ -58,6 +58,21 @@ enum PaymentGateway {
   paypal
   wompi
   manual
+  cash
+}
+
+// Canal de venta — de dónde viene la orden (omnicanalidad)
+enum SalesChannel {
+  web
+  whatsapp
+  instagram
+  other
+}
+
+// Método de pago elegido — prepago online vs contraentrega
+enum PaymentMethod {
+  prepaid
+  cod
 }
 
 model Category {
@@ -174,6 +189,14 @@ model Order {
   paidAt       DateTime?
   cancelledAt  DateTime?
 
+  channel       SalesChannel  @default(web)
+  paymentMethod PaymentMethod @default(prepaid)
+
+  // COD: el equipo confirma el pedido antes de despachar (anti-fraude).
+  // Mientras no se confirme, la reserva de stock puede expirar y liberarse.
+  codConfirmedAt       DateTime?
+  reservationExpiresAt DateTime?
+
   shippingStatus ShippingStatus @default(pending)
   trackingCode   String?
   shippingNotes  String?
@@ -204,6 +227,8 @@ model Order {
   @@index([isPaid])
   @@index([paidAt])
   @@index([shippingStatus])
+  @@index([channel])
+  @@index([paymentMethod])
 }
 
 model OrderItem {
@@ -264,7 +289,8 @@ model ProductVariant {
   color   ProductColor? @relation(fields: [colorId], references: [id], onDelete: Cascade)
 
   size  Size
-  stock Int     @default(0)
+  stock    Int     @default(0) // unidades físicas en bodega
+  reserved Int     @default(0) // comprometidas por órdenes activas (available = stock - reserved)
   sku   String? @unique
 
   createdAt DateTime @default(now())

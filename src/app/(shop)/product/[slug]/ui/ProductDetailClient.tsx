@@ -2,8 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { IoStar, IoStarHalf, IoStarOutline } from 'react-icons/io5';
+import { IoStar, IoStarHalf, IoStarOutline, IoLogoWhatsapp } from 'react-icons/io5';
 import { StockLabel } from '@/components';
+import { WHATSAPP_NUMBER, whatsappUrl } from '@/lib/whatsapp';
 
 const SlideshowSkeleton = () => (
   <div className="w-full aspect-[3/4] bg-kyzz-secondary/30 animate-pulse" />
@@ -198,6 +199,20 @@ export const ProductDetailClient = ({ product, colors, variants, reviewSummary }
             colorName={selectedColor?.paletteColor.name}
             imageForCart={currentImages[0]}
           />
+
+          {WHATSAPP_NUMBER && (
+            <a
+              href={whatsappUrl(
+                `Hola KYZZ 🤍 Me interesa esta prenda: ${product.title}` +
+                (process.env.NEXT_PUBLIC_SITE_URL ? ` — ${process.env.NEXT_PUBLIC_SITE_URL}/product/${product.slug}` : ''),
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 w-full border border-[#25D366] text-[#1f9c50] py-2.5 text-sm hover:bg-[#25D366]/10 transition-colors"
+            >
+              <IoLogoWhatsapp size={18} /> Pregunta por esta prenda
+            </a>
+          )}
 
         </div>
 
