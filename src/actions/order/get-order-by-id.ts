@@ -15,6 +15,7 @@ export const getOrderById = async( id: string ) => {
       include: {
         OrderAddress:  true,
         returnRequest: true,
+        shipment:      true,
         user:         { select: { email: true, name: true } },
         OrderItem: {
           select: {

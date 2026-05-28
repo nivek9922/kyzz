@@ -121,6 +121,7 @@ export const placeOrder = async (
           subTotal,
           tax,
           total,
+          shippingCost:   shipping,
           paymentMethod,
           reservationExpiresAt,
           couponCode:     appliedCode     ?? null,

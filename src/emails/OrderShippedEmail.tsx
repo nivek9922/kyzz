@@ -7,9 +7,11 @@ interface Props {
   orderId:      string;
   firstName:    string;
   trackingCode?: string;
+  trackingUrl?:  string;
+  carrierName?:  string;
 }
 
-export const OrderShippedEmail = ({ orderId, firstName, trackingCode }: Props) => {
+export const OrderShippedEmail = ({ orderId, firstName, trackingCode, trackingUrl, carrierName }: Props) => {
   const shortId = orderId.split('-').at(-1)?.toUpperCase() ?? '';
 
   return (
@@ -43,11 +45,19 @@ export const OrderShippedEmail = ({ orderId, firstName, trackingCode }: Props) =
               <Hr style={{ borderColor: '#E3D5CA' }} />
               <Section style={{ paddingTop: '24px', paddingBottom: '24px', textAlign: 'center' }}>
                 <Text style={{ fontSize: '10px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#A89080', margin: '0 0 8px' }}>
-                  Código de rastreo
+                  Código de rastreo{carrierName ? ` · ${carrierName}` : ''}
                 </Text>
-                <Text style={{ fontSize: '20px', fontFamily: 'monospace', color: '#3D2B1F', fontWeight: 'bold', margin: 0 }}>
+                <Text style={{ fontSize: '20px', fontFamily: 'monospace', color: '#3D2B1F', fontWeight: 'bold', margin: '0 0 16px' }}>
                   {trackingCode}
                 </Text>
+                {trackingUrl && (
+                  <a
+                    href={trackingUrl}
+                    style={{ display: 'inline-block', backgroundColor: '#3D2B1F', color: '#FFFFFF', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', textDecoration: 'none', padding: '12px 28px' }}
+                  >
+                    Rastrear envío
+                  </a>
+                )}
               </Section>
             </>
           )}

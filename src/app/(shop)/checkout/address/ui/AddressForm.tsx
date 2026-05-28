@@ -9,6 +9,7 @@ import { useAddressStore, useCartStore, useGuestStore } from '@/store';
 import { deleteUserAddress, setUserAddress } from '@/actions';
 import { captureAbandonedCart } from '@/actions/order/capture-abandoned-cart';
 import { gaAddShippingInfo } from '@/lib/gtag';
+import { COLOMBIA_DEPARTAMENTOS } from '@/config/colombia';
 import { useShallow } from 'zustand/react/shallow';
 
 type FormInputs = {
@@ -19,6 +20,7 @@ type FormInputs = {
   address2?: string;
   postalCode: string;
   city: string;
+  state: string;
   country: string;
   phone: string;
   rememberAddress: boolean;
@@ -131,6 +133,16 @@ export const AddressForm = ({ countries, userStoredAddress = {}, isGuest = false
       <div className="flex flex-col gap-1">
         <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Ciudad</label>
         <input type="text" className="kyzz-input" {...register('city', { required: true })} />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-[11px] tracking-[0.18em] uppercase text-kyzz-muted">Departamento</label>
+        <select className="kyzz-input cursor-pointer" {...register('state', { required: true })}>
+          <option value="">Seleccionar departamento</option>
+          {COLOMBIA_DEPARTAMENTOS.map((dep) => (
+            <option key={dep} value={dep}>{dep}</option>
+          ))}
+        </select>
       </div>
 
       <div className="flex flex-col gap-1">

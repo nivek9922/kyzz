@@ -5,6 +5,7 @@ export interface Address {
   address2?: string;
   postalCode: string;
   city: string;
+  state?: string;   // departamento (Colombia)
   country: string;
   phone: string;
 }

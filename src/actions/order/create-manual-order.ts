@@ -101,6 +101,7 @@ export const createManualOrder = async (input: ManualOrderInput) => {
           subTotal,
           tax,
           total,
+          shippingCost: shipping,
           ...(markPaid
             ? {
                 isPaid:         true,

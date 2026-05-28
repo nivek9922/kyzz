@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { render } from '@react-email/components';
 import { resend, EMAIL_FROM } from '@/lib/resend';
 import { OrderShippedEmail } from '@/emails/OrderShippedEmail';
+import { carrierLabel, carrierTrackingUrl } from '@/lib/shipping/carriers';
 import { logger } from '@/lib/logger';
 
 interface UpdateShippingInput {
@@ -81,15 +82,21 @@ export const updateOrderShipping = async ({
           include: {
             user:         { select: { email: true, name: true } },
             OrderAddress: { select: { firstName: true } },
+            shipment:     { select: { carrier: true, trackingCode: true } },
           },
         });
         const recipientEmail = order?.user?.email ?? order?.guestEmail;
         const recipientName  = order?.user?.name?.split(' ')[0] ?? order?.OrderAddress?.firstName ?? 'Cliente';
+        const carrier        = order?.shipment?.carrier ?? null;
+        const effectiveCode  = trackingCode || order?.shipment?.trackingCode || order?.trackingCode || undefined;
+        const trackUrl       = carrierTrackingUrl(carrier, effectiveCode);
         if (recipientEmail) {
           const html = await render(OrderShippedEmail({
             orderId,
             firstName:    recipientName,
-            trackingCode: trackingCode || undefined,
+            trackingCode: effectiveCode,
+            trackingUrl:  trackUrl ?? undefined,
+            carrierName:  carrier && carrier !== 'manual' ? carrierLabel(carrier) : undefined,
           }));
           await resend.emails.send({
             from: EMAIL_FROM,

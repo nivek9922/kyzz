@@ -13,6 +13,7 @@ import {
   type OrderableVariant,
 } from '@/actions';
 import { currencyFormat } from '@/utils';
+import { COLOMBIA_DEPARTAMENTOS } from '@/config/colombia';
 
 // "web" excluido: los pedidos manuales siempre se cierran en un canal externo.
 // El checkout web crea sus propias órdenes con channel='web' automáticamente.
@@ -34,7 +35,7 @@ interface Props {
 
 const emptyAddress = {
   firstName: '', lastName: '', address: '', address2: '',
-  postalCode: '', city: '', country: '', phone: '',
+  postalCode: '', city: '', state: '', country: '', phone: '',
 };
 
 export const ManualOrderForm = ({ countries }: Props) => {
@@ -252,8 +253,14 @@ export const ManualOrderForm = ({ countries }: Props) => {
         </div>
         <input className={inputCls} placeholder="Dirección *" value={address.address} onChange={(e) => setAddr('address', e.target.value)} />
         <input className={inputCls} placeholder="Apto / referencia" value={address.address2} onChange={(e) => setAddr('address2', e.target.value)} />
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <input className={inputCls} placeholder="Ciudad *" value={address.city} onChange={(e) => setAddr('city', e.target.value)} />
+          <select className={inputCls} value={address.state} onChange={(e) => setAddr('state', e.target.value)}>
+            <option value="">Departamento</option>
+            {COLOMBIA_DEPARTAMENTOS.map((dep) => <option key={dep} value={dep}>{dep}</option>)}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
           <input className={inputCls} placeholder="Código postal" value={address.postalCode} onChange={(e) => setAddr('postalCode', e.target.value)} />
           <select className={inputCls} value={address.country} onChange={(e) => setAddr('country', e.target.value)}>
             <option value="">País *</option>

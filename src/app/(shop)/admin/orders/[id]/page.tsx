@@ -6,6 +6,7 @@ import { currencyFormat } from '@/utils';
 import { ProductImage } from '@/components';
 import { titleFont } from '@/config/fonts';
 import { ShippingPanel } from './ui/ShippingPanel';
+import { ShipmentPanel } from './ui/ShipmentPanel';
 import { OrderTimeline } from './ui/OrderTimeline';
 import { AdminReturnButton } from './ui/AdminReturnButton';
 
@@ -107,7 +108,9 @@ export default async function AdminOrderDetailPage(props: Props) {
               <div className="sm:col-span-2">
                 <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Dirección de entrega</p>
                 <p className="text-kyzz-dark">{address.address}{address.address2 ? `, ${address.address2}` : ''}</p>
-                <p className="text-kyzz-muted">{address.postalCode} {address.city} · {address.countryId}</p>
+                <p className="text-kyzz-muted">
+                  {address.postalCode} {address.city}{address.state ? `, ${address.state}` : ''} · {address.countryId}
+                </p>
               </div>
             </div>
 
@@ -242,6 +245,15 @@ export default async function AdminOrderDetailPage(props: Props) {
             codConfirmed={!!order.codConfirmedAt}
             channel={order.channel}
           />
+
+          {!order.cancelledAt && (
+            <ShipmentPanel
+              orderId={id}
+              currentCarrier={order.shipment?.carrier ?? null}
+              currentTracking={order.shipment?.trackingCode ?? order.trackingCode ?? null}
+              currentCost={order.shipment?.cost ?? order.shippingCost ?? null}
+            />
+          )}
 
           <OrderTimeline
             createdAt={order.createdAt}

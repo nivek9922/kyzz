@@ -47,6 +47,32 @@ enum ShippingStatus {
   returned
 }
 
+// Transportadora del envío. `manual` = sin integración (admin pega la guía).
+enum Carrier {
+  heka
+  mipaquete
+  interrapidisimo
+  servientrega
+  coordinadora
+  tcc
+  mensajeros_urbanos
+  noventa_y_nueve   // 99minutos
+  manual
+}
+
+// Estado del envío a nivel transportadora (más granular que ShippingStatus).
+// ShippingStatus (cara al cliente) se deriva de aquí.
+enum ShipmentStatus {
+  created           // guía generada
+  picked_up         // recogida por la transportadora
+  in_transit
+  out_for_delivery
+  delivered
+  failed_attempt    // novedad / intento fallido
+  returned          // devuelta a origen
+  cancelled
+}
+
 enum ReturnStatus {
   PENDING
   APPROVED
@@ -174,6 +200,7 @@ model UserAddress {
   postalCode String
   phone      String
   city       String
+  state      String?  // departamento (requerido por transportadoras CO)
 
   // Relaciones
   country   Country @relation(fields: [countryId], references: [id])
@@ -203,8 +230,9 @@ model Order {
   reservationExpiresAt DateTime?
 
   shippingStatus ShippingStatus @default(pending)
-  trackingCode   String?
+  trackingCode   String?         // denormalizado desde Shipment para compatibilidad
   shippingNotes  String?
+  shippingCost   Float?          // costo real del flete persistido (antes solo constante)
   shippedAt      DateTime?
   deliveredAt    DateTime?
 
@@ -218,6 +246,7 @@ model Order {
 
   OrderItem    OrderItem[]
   OrderAddress OrderAddress?
+  shipment     Shipment?
 
   transactionId   String?
   paymentGateway  PaymentGateway?
@@ -249,6 +278,52 @@ model WhatsAppSession {
 
   @@index([phone])
   @@index([expiresAt])
+}
+
+// Envío de una orden. 1:1 con Order. Agnóstico de transportadora: el patrón
+// adapter (Fase 2) llena providerRef/labelUrl vía API; en Fase 1 el admin pega
+// la guía manualmente. ShippingStatus de la orden se deriva de `status`.
+model Shipment {
+  id                String          @id @default(uuid())
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId           String          @unique
+  carrier           Carrier         @default(manual)
+  providerRef       String?         // número de guía de la transportadora
+  trackingCode      String?
+  labelUrl          String?         // PDF de la guía
+  status            ShipmentStatus  @default(created)
+  cost              Float?          // costo del flete (COP)
+  codAmount         Float?          // monto a recaudar (si COD)
+  codCollected      Boolean         @default(false)
+  codSettledAt      DateTime?       // cuándo el agregador consignó el recaudo
+  estimatedDelivery DateTime?
+  pickupAt          DateTime?
+  rawPayload        Json?           // respuesta cruda del proveedor (auditoría)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  trackingEvents    TrackingEvent[]
+
+  @@index([carrier])
+  @@index([status])
+  @@index([providerRef])
+}
+
+// Evento de tracking de un envío. En Fase 2 lo alimentan los webhooks del
+// agregador; en Fase 1 puede usarse para registrar hitos manuales.
+model TrackingEvent {
+  id          String         @id @default(uuid())
+  shipment    Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  shipmentId  String
+  status      ShipmentStatus
+  description String
+  location    String?
+  occurredAt  DateTime
+  raw         Json?
+  createdAt   DateTime       @default(now())
+
+  @@index([shipmentId])
+  @@index([occurredAt])
 }
 
 model OrderItem {
@@ -394,6 +469,7 @@ model OrderAddress {
   address2   String?
   postalCode String
   city       String
+  state      String?  // departamento (requerido por transportadoras CO)
   phone      String
 
   // Relaciones

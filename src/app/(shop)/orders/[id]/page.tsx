@@ -9,6 +9,7 @@ import { titleFont } from "@/config/fonts";
 import { GuestOrderPrompt } from "./ui/GuestOrderPrompt";
 import { WompiReturnHandler } from "./ui/WompiReturnHandler";
 import { ReturnRequestForm } from "./ui/ReturnRequestForm";
+import { carrierLabel, carrierTrackingUrl } from "@/lib/shipping/carriers";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -85,12 +86,28 @@ export default async function OrdersByIdPage(props: Props) {
           </div>
 
           {/* Código de rastreo */}
-          {order!.trackingCode && (
-            <div className="mt-5 p-4 bg-kyzz-tertiary border border-kyzz-secondary text-center">
-              <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Código de rastreo</p>
-              <p className="text-sm font-mono font-medium text-kyzz-dark">{order!.trackingCode}</p>
-            </div>
-          )}
+          {order!.trackingCode && (() => {
+            const carrier  = order!.shipment?.carrier ?? null;
+            const trackUrl = carrierTrackingUrl(carrier, order!.trackingCode);
+            return (
+              <div className="mt-5 p-4 bg-kyzz-tertiary border border-kyzz-secondary text-center">
+                <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">
+                  Código de rastreo{carrier && carrier !== 'manual' ? ` · ${carrierLabel(carrier)}` : ''}
+                </p>
+                <p className="text-sm font-mono font-medium text-kyzz-dark">{order!.trackingCode}</p>
+                {trackUrl && (
+                  <a
+                    href={trackUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-2 text-[10px] tracking-widest uppercase text-kyzz-primary hover:text-kyzz-dark transition-colors underline underline-offset-4"
+                  >
+                    Rastrear envío →
+                  </a>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -190,7 +207,7 @@ export default async function OrdersByIdPage(props: Props) {
                 <p className="text-kyzz-muted">{address!.address2}</p>
               )}
               <p className="text-kyzz-muted">
-                {address!.postalCode} {address!.city}
+                {address!.postalCode} {address!.city}{address!.state ? `, ${address!.state}` : ''}
               </p>
               <p className="text-kyzz-muted">{address!.countryId}</p>
               <p className="text-kyzz-muted pt-1">{address!.phone}</p>

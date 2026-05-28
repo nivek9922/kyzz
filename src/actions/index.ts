@@ -83,6 +83,9 @@ export { subscribeNewsletter }            from './site/subscribe-newsletter';
 export { sendNewsletter }                 from './site/send-newsletter';
 export type { NewsletterProduct }         from './site/send-newsletter';
 
+// ─── Shipping ───────────────────────────────────────────────
+export { upsertShipment } from './shipping/upsert-shipment';
+
 // ─── Returns ────────────────────────────────────────────────
 export { createReturnRequest,
          createReturnRequestAdmin } from './return/create-return-request';
