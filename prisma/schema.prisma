@@ -232,6 +232,20 @@ model Order {
   @@index([paymentMethod])
 }
 
+// Sesión de conversación de WhatsApp. Mantiene el paso actual y contexto entre
+// mensajes. Expira tras 30 min de inactividad; el motor de flujos la reinicia.
+model WhatsAppSession {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  step      String   @default("idle")
+  context   Json?
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+
+  @@index([phone])
+  @@index([expiresAt])
+}
+
 model OrderItem {
   id        String  @id @default(uuid())
   quantity  Int

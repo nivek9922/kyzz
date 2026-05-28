@@ -6,7 +6,9 @@ import clsx from "clsx";
 import { toast } from 'sonner';
 import { titleFont } from "@/config/fonts";
 import { placeOrder } from "@/actions";
+import { captureAbandonedCart } from "@/actions/order/capture-abandoned-cart";
 import { useAddressStore, useCartStore, useCouponStore, useGuestStore } from "@/store";
+import { useSession } from 'next-auth/react';
 import { currencyFormat } from "@/utils";
 import { useShallow } from "zustand/react/shallow";
 import { gaBeginCheckout, gaPurchase } from "@/lib/gtag";
@@ -19,6 +21,7 @@ export const PlaceOrder = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [paymentMethod, setPaymentMethod]   = useState<PaymentChoice>('prepaid');
 
+  const { data: session } = useSession();
   const address = useAddressStore((state) => state.address);
   const { cart, clearCart, itemsInCart, subTotal, tax, shipping } = useCartStore(
     useShallow((s) => {
@@ -37,6 +40,26 @@ export const PlaceOrder = () => {
 
   const couponDiscount = coupon?.discount ?? 0;
   const total = subTotal + shipping - couponDiscount;
+
+  // Captura el carrito para recuperación por email si el usuario abandona sin comprar.
+  // El cron de las 2am envía el email de recuperación después de 3h de inactividad.
+  const effectiveEmail = session?.user?.email ?? guestEmail;
+  useEffect(() => {
+    if (!effectiveEmail || cart.length === 0) return;
+    captureAbandonedCart(effectiveEmail, cart.map((p) => ({
+      id:        p.id,
+      slug:      p.slug,
+      title:     p.title,
+      price:     p.price,
+      quantity:  p.quantity,
+      size:      p.size,
+      image:     p.image,
+      colorName: p.colorName,
+      variantId: p.variantId,
+    })));
+  // Solo necesitamos disparar esto una vez al entrar al checkout.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveEmail]);
 
   useEffect(() => {
     if (cart.length === 0) return;

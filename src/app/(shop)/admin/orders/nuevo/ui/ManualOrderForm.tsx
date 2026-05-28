@@ -14,7 +14,9 @@ import {
 } from '@/actions';
 import { currencyFormat } from '@/utils';
 
-type Channel = 'whatsapp' | 'instagram' | 'web' | 'other';
+// "web" excluido: los pedidos manuales siempre se cierran en un canal externo.
+// El checkout web crea sus propias órdenes con channel='web' automáticamente.
+type Channel = 'whatsapp' | 'instagram' | 'other';
 type Method  = 'prepaid' | 'cod';
 
 interface Line {
@@ -266,12 +268,14 @@ export const ManualOrderForm = ({ countries }: Props) => {
 
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
-            <span className="block text-[11px] text-kyzz-muted mb-1">Canal de venta</span>
+            <span className="block text-[11px] text-kyzz-muted mb-1">
+              Canal de cierre
+              <span className="ml-1 text-kyzz-muted/60 normal-case tracking-normal font-normal"> — dónde se cerró la venta</span>
+            </span>
             <select className={inputCls} value={channel} onChange={(e) => setChannel(e.target.value as Channel)}>
               <option value="whatsapp">WhatsApp</option>
-              <option value="instagram">Instagram</option>
-              <option value="web">Web</option>
-              <option value="other">Otro</option>
+              <option value="instagram">Instagram / TikTok</option>
+              <option value="other">Otro (llamada, presencial…)</option>
             </select>
           </label>
           <label className="block">
