@@ -97,6 +97,29 @@ export async function commitStock(tx: Prisma.TransactionClient, items: StockLine
 }
 
 /**
+ * Restaura stock físico al completar una devolución: el producto vuelve a bodega.
+ * `stock += qty` — distinto de releaseStock, que solo libera reservas.
+ * La reserved no se toca porque ya fue commiteada al despachar.
+ */
+export async function restoreStock(tx: Prisma.TransactionClient, items: StockLineItem[]) {
+  const byVariant = aggregateByVariant(items);
+  if (byVariant.size === 0) return;
+
+  const variants = await tx.productVariant.findMany({
+    where:  { id: { in: Array.from(byVariant.keys()) } },
+    select: { id: true, productId: true },
+  });
+
+  await Promise.all(
+    Array.from(byVariant.entries()).map(([variantId, qty]) =>
+      tx.productVariant.update({ where: { id: variantId }, data: { stock: { increment: qty } } }),
+    ),
+  );
+
+  await syncProductInStock(tx, variants.map((v) => v.productId));
+}
+
+/**
  * Libera la reserva (cancelación / expiración / rechazo): `reserved -= qty`.
  * El stock físico no se toca — la mercancía nunca salió de bodega.
  */

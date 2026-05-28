@@ -83,6 +83,12 @@ export { subscribeNewsletter }            from './site/subscribe-newsletter';
 export { sendNewsletter }                 from './site/send-newsletter';
 export type { NewsletterProduct }         from './site/send-newsletter';
 
+// ─── Returns ────────────────────────────────────────────────
+export { createReturnRequest,
+         createReturnRequestAdmin } from './return/create-return-request';
+export { updateReturnStatus,
+         getReturnRequests }        from './return/update-return-status';
+
 // ─── User ───────────────────────────────────────────────────
 export { changeUserRole }      from './user/change-user-role';
 export { deleteUser }          from './user/delete-user';

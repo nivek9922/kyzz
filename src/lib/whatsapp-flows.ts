@@ -62,10 +62,6 @@ const NOT_FOUND_ORDER = `No encontré esa orden en nuestro sistema.
 
 Verifica el número e inténtalo de nuevo, o escribe *MENÚ* para volver al inicio.`;
 
-// ── Tipos ────────────────────────────────────────────────────────────────────
-
-type SessionContext = Record<string, string>;
-
 // ── Punto de entrada ────────────────────────────────────────────────────────
 
 export async function handleIncomingMessage(
@@ -236,14 +232,10 @@ async function getOrCreateSession(phone: string) {
   });
 }
 
-async function setStep(phone: string, step: string, context?: SessionContext) {
+async function setStep(phone: string, step: string) {
   await prisma.whatsAppSession.update({
     where: { phone },
-    data: {
-      step,
-      context:   context ?? undefined,
-      expiresAt: new Date(Date.now() + SESSION_TTL_MS),
-    },
+    data:  { step, expiresAt: new Date(Date.now() + SESSION_TTL_MS) },
   });
 }
 
