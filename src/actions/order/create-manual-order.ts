@@ -5,6 +5,10 @@ import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
 import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_COST, COD_RESERVATION_HOURS } from '@/config/constants';
 import { reserveStock } from '@/lib/stock-ops';
+import { render } from '@react-email/components';
+import { resend, EMAIL_FROM } from '@/lib/resend';
+import { OrderConfirmationEmail } from '@/emails/OrderConfirmationEmail';
+import { logger } from '@/lib/logger';
 import type { Address } from '@/interfaces';
 import type { SalesChannel, PaymentMethod, Prisma } from '@prisma/client';
 
@@ -48,7 +52,7 @@ export const createManualOrder = async (input: ManualOrderInput) => {
       select: {
         id:      true,
         size:    true,
-        product: { select: { id: true, price: true } },
+        product: { select: { id: true, price: true, title: true } },
         color:   { select: { paletteColor: { select: { name: true } } } },
       },
     });
@@ -63,6 +67,7 @@ export const createManualOrder = async (input: ManualOrderInput) => {
         size:      v.size,
         colorName: v.color?.paletteColor.name ?? null,
         price:     v.product.price,
+        title:     v.product.title,
       };
     });
 
@@ -126,6 +131,34 @@ export const createManualOrder = async (input: ManualOrderInput) => {
     });
 
     revalidatePath('/admin/orders');
+
+    // Email de confirmación al cliente si se proporcionó un email
+    if (email && process.env.RESEND_API_KEY) {
+      try {
+        const html = await render(OrderConfirmationEmail({
+          orderId:   created.id,
+          firstName: address.firstName,
+          items:     lines.map((l) => ({ title: l.title, size: l.size, quantity: l.quantity, price: l.price })),
+          subtotal:  subTotal,
+          tax,
+          total,
+          address:   address.address,
+          city:      address.city,
+        }));
+        const isPaidNow = markPaid;
+        await resend.emails.send({
+          from:    EMAIL_FROM,
+          to:      email,
+          subject: isPaidNow
+            ? `KYZZ · Pedido confirmado #${created.id.split('-').at(-1)?.toUpperCase()}`
+            : `KYZZ · Pedido recibido #${created.id.split('-').at(-1)?.toUpperCase()}`,
+          html,
+        });
+      } catch (emailErr) {
+        logger.error({ orderId: created.id, error: String(emailErr) }, 'Manual order: error enviando email');
+      }
+    }
+
     return { ok: true, orderId: created.id };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : 'Error al crear el pedido' };

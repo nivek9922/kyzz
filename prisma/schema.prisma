@@ -214,10 +214,11 @@ model Order {
   OrderItem    OrderItem[]
   OrderAddress OrderAddress?
 
-  transactionId  String?
-  paymentGateway PaymentGateway?
-  couponCode     String?
-  couponDiscount Float   @default(0)
+  transactionId   String?
+  paymentGateway  PaymentGateway?
+  paymentProofUrl String?
+  couponCode      String?
+  couponDiscount  Float   @default(0)
 
   redemption    CouponRedemption?
   returnRequest ReturnRequest?

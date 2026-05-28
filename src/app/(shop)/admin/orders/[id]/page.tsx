@@ -236,6 +236,7 @@ export default async function AdminOrderDetailPage(props: Props) {
             isCancelled={!!order.cancelledAt}
             paymentMethod={order.paymentMethod}
             codConfirmed={!!order.codConfirmedAt}
+            channel={order.channel}
           />
 
           <OrderTimeline
@@ -244,6 +245,7 @@ export default async function AdminOrderDetailPage(props: Props) {
             shippedAt={order.shippedAt}
             deliveredAt={order.deliveredAt}
             cancelledAt={order.cancelledAt}
+            paymentMethod={order.paymentMethod}
           />
 
           {/* Panel de transacción */}
@@ -265,12 +267,31 @@ export default async function AdminOrderDetailPage(props: Props) {
                       : '—'}
                   </span>
                 </div>
-                {order.transactionId && (
+                {order.transactionId && !order.transactionId.startsWith('MANUAL-') && (
                   <div className="flex flex-col gap-1 pt-1 border-t border-kyzz-secondary">
                     <span className="text-kyzz-muted">Referencia</span>
                     <span className="text-kyzz-dark font-mono text-[11px] break-all">
                       {order.transactionId}
                     </span>
+                  </div>
+                )}
+                {order.paymentProofUrl && (
+                  <div className="pt-2 border-t border-kyzz-secondary">
+                    <p className="text-kyzz-muted mb-2">Comprobante</p>
+                    <a
+                      href={order.paymentProofUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={order.paymentProofUrl}
+                        alt="Comprobante de pago"
+                        className="w-full max-w-[200px] object-cover border border-kyzz-secondary hover:opacity-80 transition-opacity"
+                      />
+                      <p className="text-[10px] text-kyzz-muted mt-1">Ver en tamaño completo ↗</p>
+                    </a>
                   </div>
                 )}
               </div>

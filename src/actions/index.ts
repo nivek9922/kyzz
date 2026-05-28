@@ -29,6 +29,7 @@ export { getOrderById }              from './order/get-order-by-id';
 export { getPaginatedOrders }        from './order/get-paginated-orders';
 export { getOrdersByUser }           from './order/get-orders-by-user';
 export { markOrderAsPaid }           from './order/mark-order-as-paid';
+export { uploadProofImage }          from './order/upload-proof-image';
 export { updateOrderShipping,
          confirmCodOrder }           from './order/update-order-shipping';
 export { cancelUnpaidOrders,

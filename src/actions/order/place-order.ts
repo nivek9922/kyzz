@@ -4,6 +4,10 @@ import { auth } from "@/auth";
 import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_COST, COD_RESERVATION_HOURS } from "@/config/constants";
 import { notifyLowStock } from "@/lib/notify-low-stock";
 import { reserveStock } from "@/lib/stock-ops";
+import { render } from "@react-email/components";
+import { resend, EMAIL_FROM } from "@/lib/resend";
+import { OrderConfirmationEmail } from "@/emails/OrderConfirmationEmail";
+import { logger } from "@/lib/logger";
 import type { Address, Size } from "@/interfaces";
 import type { Prisma, PaymentMethod } from "@prisma/client";
 
@@ -170,6 +174,33 @@ export const placeOrder = async (
 
     // Alerta de stock bajo al admin (no afecta el resultado de la orden)
     await notifyLowStock(previousStock);
+
+    // Email de confirmación para COD. El prepaid lo envía el webhook de Wompi tras el pago.
+    if (paymentMethod === 'cod' && effectiveEmail && process.env.RESEND_API_KEY) {
+      try {
+        const html = await render(OrderConfirmationEmail({
+          orderId:   prismaTx.order.id,
+          firstName: address.firstName,
+          items:     productIds.map((p) => {
+            const prod = products.find((pr) => pr.id === p.productId);
+            return { title: prod?.title ?? 'Producto', size: p.size, quantity: p.quantity, price: prod?.price ?? 0 };
+          }),
+          subtotal: prismaTx.order.subTotal,
+          tax:      prismaTx.order.tax,
+          total:    prismaTx.order.total,
+          address:  address.address,
+          city:     address.city,
+        }));
+        await resend.emails.send({
+          from:    EMAIL_FROM,
+          to:      effectiveEmail,
+          subject: `KYZZ · Pedido recibido #${prismaTx.order.id.split('-').at(-1)?.toUpperCase()}`,
+          html,
+        });
+      } catch (emailErr) {
+        logger.error({ orderId: prismaTx.order.id, error: String(emailErr) }, 'COD: error enviando email de confirmación');
+      }
+    }
 
     return { ok: true, order: prismaTx.order };
 

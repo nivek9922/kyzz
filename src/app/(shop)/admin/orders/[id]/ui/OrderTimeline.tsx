@@ -1,30 +1,35 @@
 interface Props {
-  createdAt:   Date;
-  paidAt:      Date | null;
-  shippedAt:   Date | null;
-  deliveredAt: Date | null;
-  cancelledAt: Date | null;
+  createdAt:     Date;
+  paidAt:        Date | null;
+  shippedAt:     Date | null;
+  deliveredAt:   Date | null;
+  cancelledAt:   Date | null;
+  paymentMethod: 'prepaid' | 'cod';
 }
 
 const fmt = (d: Date) =>
   new Date(d).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' });
 
-/**
- * Timeline de la orden derivado de los timestamps existentes.
- * Si la orden fue cancelada, muestra ese desenlace en lugar de envío/entrega.
- */
-export const OrderTimeline = ({ createdAt, paidAt, shippedAt, deliveredAt, cancelledAt }: Props) => {
+export const OrderTimeline = ({ createdAt, paidAt, shippedAt, deliveredAt, cancelledAt, paymentMethod }: Props) => {
+  const isCod = paymentMethod === 'cod';
+
   const steps: { label: string; at: Date | null; danger?: boolean }[] = cancelledAt
     ? [
         { label: 'Pedido creado', at: createdAt },
         { label: 'Cancelado',     at: cancelledAt, danger: true },
       ]
-    : [
-        { label: 'Pedido creado',   at: createdAt },
-        { label: 'Pago confirmado', at: paidAt },
-        { label: 'Enviado',         at: shippedAt },
-        { label: 'Entregado',       at: deliveredAt },
-      ];
+    : isCod
+      ? [
+          { label: 'Pedido creado',          at: createdAt },
+          { label: 'Enviado',                at: shippedAt },
+          { label: 'Entregado · Cobrado',    at: deliveredAt },
+        ]
+      : [
+          { label: 'Pedido creado',   at: createdAt },
+          { label: 'Pago confirmado', at: paidAt },
+          { label: 'Enviado',         at: shippedAt },
+          { label: 'Entregado',       at: deliveredAt },
+        ];
 
   return (
     <div className="kyzz-panel p-6 mt-6">
