@@ -24,14 +24,14 @@ export async function convertProductToNoColor(productId: string) {
     // La BD hace cascade: ProductColorImage y ProductVariant con colorId son eliminados
     await prisma.productColor.deleteMany({ where: { productId } });
 
-    // Sincronizar inStock desde variantes sin color restantes
+    // Sincronizar inStock = disponible (stock - reserved) desde variantes sin color restantes
     const agg = await prisma.productVariant.aggregate({
       where:  { productId, colorId: null },
-      _sum:   { stock: true },
+      _sum:   { stock: true, reserved: true },
     });
     await prisma.product.update({
       where: { id: productId },
-      data:  { inStock: agg._sum.stock ?? 0 },
+      data:  { inStock: (agg._sum.stock ?? 0) - (agg._sum.reserved ?? 0) },
     });
 
     revalidatePath(`/admin/product/${product.slug}`);

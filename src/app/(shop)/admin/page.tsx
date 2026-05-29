@@ -128,6 +128,27 @@ async function getUnpaidOrders() {
   });
 }
 
+// Ventas por canal (omnicanalidad) + salud de la operación contraentrega
+async function getChannelStats() {
+  const [byChannel, codTotal, codConfirmed, codDelivered, codCancelled] = await Promise.all([
+    prisma.order.groupBy({
+      by:     ['channel'],
+      where:  { isPaid: true },
+      _sum:   { total: true },
+      _count: true,
+    }),
+    prisma.order.count({ where: { paymentMethod: 'cod' } }),
+    prisma.order.count({ where: { paymentMethod: 'cod', codConfirmedAt: { not: null } } }),
+    prisma.order.count({ where: { paymentMethod: 'cod', shippingStatus: 'delivered' } }),
+    prisma.order.count({ where: { paymentMethod: 'cod', cancelledAt: { not: null } } }),
+  ]);
+  return { byChannel, codTotal, codConfirmed, codDelivered, codCancelled };
+}
+
+const CHANNEL_LABEL: Record<string, string> = {
+  web: 'Web', whatsapp: 'WhatsApp', instagram: 'Instagram', other: 'Otro',
+};
+
 const QUICK_LINKS = [
   { label: 'Productos',      desc: 'Ver y editar catálogo',      href: '/admin/products',     Icon: IoStorefrontOutline },
   { label: 'Pedidos',        desc: 'Gestionar órdenes',          href: '/admin/orders',        Icon: IoReceiptOutline },
@@ -147,7 +168,7 @@ function orderAge(createdAt: Date): string {
 }
 
 export default async function AdminPage() {
-  const [session, stats, revenue, reorderProducts, bestSellers, trend, unpaidOrders] = await Promise.all([
+  const [session, stats, revenue, reorderProducts, bestSellers, trend, unpaidOrders, channelStats] = await Promise.all([
     auth(),
     getStats(),
     getRevenueStats(),
@@ -155,7 +176,13 @@ export default async function AdminPage() {
     getBestSellers(),
     getDailyTrend(),
     getUnpaidOrders(),
+    getChannelStats(),
   ]);
+
+  const channelRevenueTotal = channelStats.byChannel.reduce((s, c) => s + (c._sum.total ?? 0), 0);
+  const codRejectionRate = channelStats.codTotal > 0
+    ? (channelStats.codCancelled / channelStats.codTotal) * 100
+    : 0;
 
   const maxTrend     = Math.max(...trend.map((t) => t.revenue), 1);
   const maxUnits     = Math.max(...bestSellers.map((b) => b.units), 1);
@@ -221,6 +248,70 @@ export default async function AdminPage() {
             <p className={`${titleFont.className} text-3xl text-kyzz-dark`}>{value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Ventas por canal + salud contraentrega */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <div className="kyzz-panel p-6">
+          <h2 className="text-[11px] tracking-[0.2em] uppercase text-kyzz-muted mb-5">
+            Ingresos por canal
+          </h2>
+          {channelRevenueTotal === 0 ? (
+            <p className="text-sm text-kyzz-muted py-4">Sin ventas pagadas aún.</p>
+          ) : (
+            <div className="space-y-3">
+              {channelStats.byChannel
+                .slice()
+                .sort((a, b) => (b._sum.total ?? 0) - (a._sum.total ?? 0))
+                .map((c) => {
+                  const value = c._sum.total ?? 0;
+                  const pct   = (value / channelRevenueTotal) * 100;
+                  return (
+                    <div key={c.channel}>
+                      <div className="flex justify-between text-[12px] mb-1">
+                        <span className="text-kyzz-dark">{CHANNEL_LABEL[c.channel] ?? c.channel}</span>
+                        <span className="text-kyzz-muted">{currencyFormat(value)} · {c._count} ped.</span>
+                      </div>
+                      <div className="h-1.5 bg-kyzz-tertiary rounded-full overflow-hidden">
+                        <div className="h-full bg-kyzz-primary rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+
+        <div className="kyzz-panel p-6">
+          <h2 className="text-[11px] tracking-[0.2em] uppercase text-kyzz-muted mb-5">
+            Contraentrega
+          </h2>
+          {channelStats.codTotal === 0 ? (
+            <p className="text-sm text-kyzz-muted py-4">Sin pedidos contraentrega aún.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: 'Total COD',    value: channelStats.codTotal },
+                { label: 'Confirmados',  value: channelStats.codConfirmed },
+                { label: 'Entregados',   value: channelStats.codDelivered },
+                { label: 'Cancelados',   value: channelStats.codCancelled },
+              ].map(({ label, value }) => (
+                <div key={label}>
+                  <p className="text-[11px] tracking-wide uppercase text-kyzz-muted">{label}</p>
+                  <p className={`${titleFont.className} text-2xl text-kyzz-dark`}>{value}</p>
+                </div>
+              ))}
+              <div className="col-span-2 pt-2 border-t border-kyzz-secondary">
+                <p className="text-[11px] tracking-wide text-kyzz-muted">
+                  Tasa de cancelación COD:{' '}
+                  <span className={codRejectionRate > 20 ? 'text-red-500' : 'text-kyzz-dark'}>
+                    {codRejectionRate.toFixed(1)}%
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tendencia de ventas (14 días) */}

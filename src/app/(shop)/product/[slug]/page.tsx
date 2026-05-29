@@ -73,10 +73,11 @@ export default async function ProductBySlugPage(props: Props) {
   }));
 
   const variantList = variants.map((v) => ({
-    id:      v.id,
-    colorId: v.colorId,
-    size:    v.size,
-    stock:   v.stock,
+    id:       v.id,
+    colorId:  v.colorId,
+    size:     v.size,
+    stock:    v.stock,
+    reserved: v.reserved,
   }));
 
   return (

@@ -1,10 +1,16 @@
 "use server";
 import prisma from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 import { auth } from "@/auth";
-import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from "@/config/constants";
+import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_COST, COD_RESERVATION_HOURS } from "@/config/constants";
 import { notifyLowStock } from "@/lib/notify-low-stock";
+import { reserveStock } from "@/lib/stock-ops";
+import { render } from "@react-email/components";
+import { resend, EMAIL_FROM } from "@/lib/resend";
+import { OrderConfirmationEmail } from "@/emails/OrderConfirmationEmail";
+import { logger } from "@/lib/logger";
 import type { Address, Size } from "@/interfaces";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, PaymentMethod } from "@prisma/client";
 
 interface ProductToOrder {
   productId:  string;
@@ -15,10 +21,11 @@ interface ProductToOrder {
 }
 
 export const placeOrder = async (
-  productIds:  ProductToOrder[],
-  address:     Address,
-  couponCode?: string,
-  guestEmail?: string,
+  productIds:    ProductToOrder[],
+  address:       Address,
+  couponCode?:   string,
+  guestEmail?:   string,
+  paymentMethod: PaymentMethod = 'prepaid',
 ) => {
   const session        = await auth();
   const userId         = session?.user?.id;
@@ -58,43 +65,11 @@ export const placeOrder = async (
   try {
     const prismaTx = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 
-      // 1. Validar y decrementar stock
-      const variantIds = productIds.map((p) => p.variantId);
-      const variants   = await tx.productVariant.findMany({ where: { id: { in: variantIds } } });
+      // 1. Reservar stock (valida disponible = stock - reserved y aumenta reserved).
+      //    No descuenta stock físico: eso ocurre al despachar (commitStock).
+      await reserveStock(tx, productIds.map((p) => ({ variantId: p.variantId, quantity: p.quantity })));
 
-      for (const item of productIds) {
-        const variant = variants.find((v) => v.id === item.variantId);
-        if (!variant) throw new Error(`Variante ${item.variantId} no encontrada`);
-        const totalQty = productIds
-          .filter((p) => p.variantId === item.variantId)
-          .reduce((acc, p) => acc + p.quantity, 0);
-        if (variant.stock < totalQty) {
-          throw new Error(`Sin stock suficiente para ${item.size}${item.colorName ? ` · ${item.colorName}` : ''}`);
-        }
-      }
-
-      const uniqueDecrement = new Map<string, number>();
-      for (const item of productIds) {
-        uniqueDecrement.set(item.variantId, (uniqueDecrement.get(item.variantId) ?? 0) + item.quantity);
-      }
-
-      await Promise.all(
-        Array.from(uniqueDecrement.entries()).map(([variantId, qty]) =>
-          tx.productVariant.update({ where: { id: variantId }, data: { stock: { decrement: qty } } })
-        )
-      );
-
-      // 2. Sincronizar Product.inStock
-      const affectedProductIds = Array.from(new Set(productIds.map((p) => p.productId)));
-      for (const pid of affectedProductIds) {
-        const agg = await tx.productVariant.aggregate({
-          where: { productId: pid },
-          _sum:  { stock: true },
-        });
-        await tx.product.update({ where: { id: pid }, data: { inStock: agg._sum.stock ?? 0 } });
-      }
-
-      // 3. Validar cupón dentro de la transacción (nunca confiar en el cliente)
+      // 2. Validar cupón dentro de la transacción (nunca confiar en el cliente)
       let couponDiscount = 0;
       let appliedCode:       string | undefined;
       let appliedCouponId:   string | undefined;
@@ -132,7 +107,13 @@ export const placeOrder = async (
 
       const total = subTotal + shipping - couponDiscount;
 
-      // 4. Crear orden
+      // COD: la reserva expira si el equipo no confirma el pedido a tiempo.
+      // Prepaid: la cancelación la maneja el cron de 24h por createdAt.
+      const reservationExpiresAt = paymentMethod === 'cod'
+        ? new Date(Date.now() + COD_RESERVATION_HOURS * 60 * 60 * 1000)
+        : null;
+
+      // 3. Crear orden
       const order = await tx.order.create({
         data: {
           userId:         userId ?? null,
@@ -141,6 +122,9 @@ export const placeOrder = async (
           subTotal,
           tax,
           total,
+          shippingCost:   shipping,
+          paymentMethod,
+          reservationExpiresAt,
           couponCode:     appliedCode     ?? null,
           couponDiscount: couponDiscount,
           OrderItem: {
@@ -190,8 +174,41 @@ export const placeOrder = async (
       return { order, orderAddress };
     });
 
+    // Invalidar cache ISR de los productos afectados para que la PDP
+    // muestre las tallas agotadas inmediatamente sin esperar 1h.
+    for (const product of products) {
+      revalidateTag(`product:${product.slug}`);
+    }
+
     // Alerta de stock bajo al admin (no afecta el resultado de la orden)
     await notifyLowStock(previousStock);
+
+    // Email de confirmación para COD. El prepaid lo envía el webhook de Wompi tras el pago.
+    if (paymentMethod === 'cod' && effectiveEmail && process.env.RESEND_API_KEY) {
+      try {
+        const html = await render(OrderConfirmationEmail({
+          orderId:   prismaTx.order.id,
+          firstName: address.firstName,
+          items:     productIds.map((p) => {
+            const prod = products.find((pr) => pr.id === p.productId);
+            return { title: prod?.title ?? 'Producto', size: p.size, quantity: p.quantity, price: prod?.price ?? 0 };
+          }),
+          subtotal: prismaTx.order.subTotal,
+          tax:      prismaTx.order.tax,
+          total:    prismaTx.order.total,
+          address:  address.address,
+          city:     address.city,
+        }));
+        await resend.emails.send({
+          from:    EMAIL_FROM,
+          to:      effectiveEmail,
+          subject: `KYZZ · Pedido recibido #${prismaTx.order.id.split('-').at(-1)?.toUpperCase()}`,
+          html,
+        });
+      } catch (emailErr) {
+        logger.error({ orderId: prismaTx.order.id, error: String(emailErr) }, 'COD: error enviando email de confirmación');
+      }
+    }
 
     return { ok: true, order: prismaTx.order };
 

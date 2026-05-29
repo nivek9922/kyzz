@@ -22,11 +22,16 @@ export { getCountries } from './country/get-countries';
 
 // ─── Order ──────────────────────────────────────────────────
 export { placeOrder }                from './order/place-order';
+export { createManualOrder,
+         getOrderableVariants }      from './order/create-manual-order';
+export type { OrderableVariant }     from './order/create-manual-order';
 export { getOrderById }              from './order/get-order-by-id';
 export { getPaginatedOrders }        from './order/get-paginated-orders';
 export { getOrdersByUser }           from './order/get-orders-by-user';
 export { markOrderAsPaid }           from './order/mark-order-as-paid';
-export { updateOrderShipping }       from './order/update-order-shipping';
+export { uploadProofImage }          from './order/upload-proof-image';
+export { updateOrderShipping,
+         confirmCodOrder }           from './order/update-order-shipping';
 export { cancelUnpaidOrders,
          getCancellableOrdersCount } from './order/cancel-unpaid-orders';
 
@@ -77,6 +82,15 @@ export { saveHeroVideo }                  from './site/save-hero-video';
 export { subscribeNewsletter }            from './site/subscribe-newsletter';
 export { sendNewsletter }                 from './site/send-newsletter';
 export type { NewsletterProduct }         from './site/send-newsletter';
+
+// ─── Shipping (modo manual: el admin registra la guía a mano) ──
+export { upsertShipment } from './shipping/upsert-shipment';
+
+// ─── Returns ────────────────────────────────────────────────
+export { createReturnRequest,
+         createReturnRequestAdmin } from './return/create-return-request';
+export { updateReturnStatus,
+         getReturnRequests }        from './return/update-return-status';
 
 // ─── User ───────────────────────────────────────────────────
 export { changeUserRole }      from './user/change-user-role';

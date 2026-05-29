@@ -2,8 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { IoStar, IoStarHalf, IoStarOutline } from 'react-icons/io5';
+import { IoStar, IoStarHalf, IoStarOutline, IoLogoWhatsapp } from 'react-icons/io5';
 import { StockLabel } from '@/components';
+import { WHATSAPP_NUMBER, whatsappUrl } from '@/lib/whatsapp';
 
 const SlideshowSkeleton = () => (
   <div className="w-full aspect-[3/4] bg-kyzz-secondary/30 animate-pulse" />
@@ -31,10 +32,11 @@ export interface ColorVariantData {
 }
 
 export interface VariantData {
-  id:      string;
-  colorId: string | null;
-  size:    Size;
-  stock:   number;
+  id:       string;
+  colorId:  string | null;
+  size:     Size;
+  stock:    number;
+  reserved: number;
 }
 
 interface Props {
@@ -48,10 +50,10 @@ export const ProductDetailClient = ({ product, colors, variants, reviewSummary }
 
   const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
 
-  // ── Seleccionar primer color disponible (con al menos una variante con stock > 0 si es posible) ──
+  // ── Seleccionar primer color disponible (disponible = stock - reserved) ──
   const initialColorId = useMemo(() => {
     if (colors.length === 0) return null;
-    const withStock = colors.find((c) => variants.some((v) => v.colorId === c.id && v.stock > 0));
+    const withStock = colors.find((c) => variants.some((v) => v.colorId === c.id && (v.stock - v.reserved) > 0));
     return (withStock ?? colors[0]).id;
   }, [colors, variants]);
 
@@ -94,16 +96,16 @@ export const ProductDetailClient = ({ product, colors, variants, reviewSummary }
     return Array.from(set);
   }, [visibleVariants]);
 
-  // ── Map talla → stock (para PDP marcar agotados) ──
+  // ── Map talla → disponible real (stock - reserved) para marcar agotados en PDP ──
   const stockBySize = useMemo(() => {
     const map: Partial<Record<Size, number>> = {};
-    for (const v of visibleVariants) map[v.size] = v.stock;
+    for (const v of visibleVariants) map[v.size] = v.stock - v.reserved;
     return map;
   }, [visibleVariants]);
 
-  // ── ¿Tiene algún color stock? para deshabilitar swatches agotados ──
+  // ── ¿Tiene algún color disponible? (disponible = stock - reserved) ──
   const isColorOutOfStock = (colorId: string) =>
-    variants.filter((v) => v.colorId === colorId).every((v) => v.stock <= 0);
+    variants.filter((v) => v.colorId === colorId).every((v) => (v.stock - v.reserved) <= 0);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
@@ -198,6 +200,20 @@ export const ProductDetailClient = ({ product, colors, variants, reviewSummary }
             colorName={selectedColor?.paletteColor.name}
             imageForCart={currentImages[0]}
           />
+
+          {WHATSAPP_NUMBER && (
+            <a
+              href={whatsappUrl(
+                `Hola KYZZ 🤍 Me interesa esta prenda: ${product.title}` +
+                (process.env.NEXT_PUBLIC_SITE_URL ? ` — ${process.env.NEXT_PUBLIC_SITE_URL}/product/${product.slug}` : ''),
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 w-full border border-[#25D366] text-[#1f9c50] py-2.5 text-sm hover:bg-[#25D366]/10 transition-colors"
+            >
+              <IoLogoWhatsapp size={18} /> Pregunta por esta prenda
+            </a>
+          )}
 
         </div>
 

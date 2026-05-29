@@ -4,10 +4,9 @@ import { ShippingStatus } from '@prisma/client';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { render } from '@react-email/components';
-import { resend, EMAIL_FROM } from '@/lib/resend';
-import { OrderShippedEmail } from '@/emails/OrderShippedEmail';
-import { logger } from '@/lib/logger';
+import { applyShippingTransition } from '@/lib/shipping/apply-shipping-status';
+import { sendTemplate } from '@/lib/whatsapp-api';
+import { toE164Colombia } from '@/lib/phone';
 
 interface UpdateShippingInput {
   orderId:        string;
@@ -16,6 +15,10 @@ interface UpdateShippingInput {
   shippingNotes?: string;
 }
 
+/**
+ * Cambio manual del estado de envío por el admin. Delega en el núcleo
+ * compartido (applyShippingTransition), que también usa el webhook de tracking.
+ */
 export const updateOrderShipping = async ({
   orderId,
   shippingStatus,
@@ -25,62 +28,54 @@ export const updateOrderShipping = async ({
   const session = await auth();
   if (session?.user.role !== 'admin') return { ok: false, message: 'No autorizado' };
 
-  const REQUIRES_PAYMENT: ShippingStatus[] = ['processing', 'shipped', 'delivered'];
+  return applyShippingTransition(orderId, shippingStatus, {
+    trackingCode,
+    shippingNotes,
+    enforcePaymentGate: true, // acción manual del admin: respeta el gate de pago
+  });
+};
 
-  if (REQUIRES_PAYMENT.includes(shippingStatus)) {
-    const order = await prisma.order.findUnique({ where: { id: orderId }, select: { isPaid: true } });
-    if (!order?.isPaid) {
-      return { ok: false, message: 'El pedido debe estar pagado para avanzar a este estado.' };
-    }
-  }
+/**
+ * Confirma un pedido contraentrega (anti-fraude). Detiene la expiración de la
+ * reserva y lo pasa a "procesando". Solo admin.
+ */
+export const confirmCodOrder = async (orderId: string) => {
+  const session = await auth();
+  if (session?.user.role !== 'admin') return { ok: false, message: 'No autorizado' };
+
+  const order = await prisma.order.findUnique({
+    where:  { id: orderId },
+    select: { paymentMethod: true, cancelledAt: true },
+  });
+  if (!order) return { ok: false, message: 'Orden no encontrada' };
+  if (order.paymentMethod !== 'cod') return { ok: false, message: 'Solo aplica a pedidos contraentrega.' };
+  if (order.cancelledAt) return { ok: false, message: 'La orden está cancelada.' };
 
   try {
-    await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        shippingStatus,
-        trackingCode:  trackingCode  ?? undefined,
-        shippingNotes: shippingNotes ?? undefined,
-        ...(shippingStatus === 'shipped'   ? { shippedAt:   new Date() } : {}),
-        ...(shippingStatus === 'delivered' ? { deliveredAt: new Date() } : {}),
-      },
+    const updated = await prisma.order.update({
+      where:  { id: orderId },
+      data:   { codConfirmedAt: new Date(), reservationExpiresAt: null, shippingStatus: 'processing' },
+      select: { OrderAddress: { select: { phone: true } } },
     });
-
-    // Email de "en camino" si el estado es shipped
-    if (shippingStatus === 'shipped' && process.env.RESEND_API_KEY) {
-      try {
-        const order = await prisma.order.findUnique({
-          where: { id: orderId },
-          include: {
-            user:         { select: { email: true, name: true } },
-            OrderAddress: { select: { firstName: true } },
-          },
-        });
-        const recipientEmail = order?.user?.email ?? order?.guestEmail;
-        const recipientName  = order?.user?.name?.split(' ')[0] ?? order?.OrderAddress?.firstName ?? 'Cliente';
-        if (recipientEmail) {
-          const html = await render(OrderShippedEmail({
-            orderId,
-            firstName:    recipientName,
-            trackingCode: trackingCode || undefined,
-          }));
-          await resend.emails.send({
-            from: EMAIL_FROM,
-            to:   recipientEmail,
-            subject: `KYZZ · Tu pedido #${orderId.split('-').at(-1)?.toUpperCase()} está en camino`,
-            html,
-          });
-        }
-      } catch (emailErr) {
-        logger.error({ orderId, error: String(emailErr) }, 'Error enviando email de envío');
-      }
-    }
 
     revalidatePath(`/admin/orders/${orderId}`);
     revalidatePath('/admin/orders');
     revalidatePath(`/orders/${orderId}`);
+
+    // WhatsApp: notificar al cliente que el pedido fue confirmado y está siendo preparado.
+    const tpl = process.env.WHATSAPP_TEMPLATE_PROCESSING;
+    if (tpl) {
+      try {
+        const waPhone = toE164Colombia(updated.OrderAddress?.phone ?? '');
+        if (waPhone) {
+          const shortId = orderId.split('-').at(-1)?.toUpperCase() ?? orderId;
+          await sendTemplate(waPhone, tpl, [shortId]);
+        }
+      } catch { /* no bloquear el flujo */ }
+    }
+
     return { ok: true };
   } catch {
-    return { ok: false, message: 'Error al actualizar el estado de envío' };
+    return { ok: false, message: 'Error al confirmar el pedido' };
   }
 };
