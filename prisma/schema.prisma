@@ -47,6 +47,32 @@ enum ShippingStatus {
   returned
 }
 
+// Transportadora del envío. `manual` = sin integración (admin pega la guía).
+enum Carrier {
+  envia               // agregador Envia.com (Coordinadora, Servientrega, etc.)
+  interrapidisimo
+  servientrega
+  coordinadora
+  tcc
+  mensajeros_urbanos
+  noventa_y_nueve   // 99minutos
+  manual
+}
+
+// [INTEGRACIÓN FUTURA] Estado granular del envío a nivel transportadora.
+// Hoy NO se usa (el modo manual usa Order.shippingStatus). Queda listo para
+// cuando se integre una API de transportadora con webhooks de tracking.
+enum ShipmentStatus {
+  created           // guía generada
+  picked_up         // recogida por la transportadora
+  in_transit
+  out_for_delivery
+  delivered
+  failed_attempt    // novedad / intento fallido
+  returned          // devuelta a origen
+  cancelled
+}
+
 enum ReturnStatus {
   PENDING
   APPROVED
@@ -54,10 +80,30 @@ enum ReturnStatus {
   COMPLETED
 }
 
+enum ReturnType {
+  EXCHANGE  // Cambio por talla correcta u otro producto
+  REFUND    // Reembolso de dinero al cliente
+}
+
 enum PaymentGateway {
   paypal
   wompi
   manual
+  cash
+}
+
+// Canal de venta — de dónde viene la orden (omnicanalidad)
+enum SalesChannel {
+  web
+  whatsapp
+  instagram
+  other
+}
+
+// Método de pago elegido — prepago online vs contraentrega
+enum PaymentMethod {
+  prepaid
+  cod
 }
 
 model Category {
@@ -154,6 +200,7 @@ model UserAddress {
   postalCode String
   phone      String
   city       String
+  state      String?  // departamento (requerido por transportadoras CO)
 
   // Relaciones
   country   Country @relation(fields: [countryId], references: [id])
@@ -174,9 +221,18 @@ model Order {
   paidAt       DateTime?
   cancelledAt  DateTime?
 
+  channel       SalesChannel  @default(web)
+  paymentMethod PaymentMethod @default(prepaid)
+
+  // COD: el equipo confirma el pedido antes de despachar (anti-fraude).
+  // Mientras no se confirme, la reserva de stock puede expirar y liberarse.
+  codConfirmedAt       DateTime?
+  reservationExpiresAt DateTime?
+
   shippingStatus ShippingStatus @default(pending)
-  trackingCode   String?
+  trackingCode   String?         // denormalizado desde Shipment para compatibilidad
   shippingNotes  String?
+  shippingCost   Float?          // costo real del flete persistido (antes solo constante)
   shippedAt      DateTime?
   deliveredAt    DateTime?
 
@@ -190,11 +246,13 @@ model Order {
 
   OrderItem    OrderItem[]
   OrderAddress OrderAddress?
+  shipment     Shipment?
 
-  transactionId  String?
-  paymentGateway PaymentGateway?
-  couponCode     String?
-  couponDiscount Float   @default(0)
+  transactionId   String?
+  paymentGateway  PaymentGateway?
+  paymentProofUrl String?
+  couponCode      String?
+  couponDiscount  Float   @default(0)
 
   redemption    CouponRedemption?
   returnRequest ReturnRequest?
@@ -204,6 +262,77 @@ model Order {
   @@index([isPaid])
   @@index([paidAt])
   @@index([shippingStatus])
+  @@index([channel])
+  @@index([paymentMethod])
+}
+
+// Sesión de conversación de WhatsApp. Mantiene el paso actual y contexto entre
+// mensajes. Expira tras 30 min de inactividad; el motor de flujos la reinicia.
+model WhatsAppSession {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  step      String   @default("idle")
+  context   Json?
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+
+  @@index([phone])
+  @@index([expiresAt])
+}
+
+// Envío de una orden. 1:1 con Order. Agnóstico de transportadora: el patrón
+// adapter (Fase 2) llena providerRef/labelUrl vía API; en Fase 1 el admin pega
+// la guía manualmente. ShippingStatus de la orden se deriva de `status`.
+// Guía de envío de una orden.
+// MODO MANUAL (actual): solo se usan carrier, trackingCode y cost — el admin
+// genera la guía en su transportadora y la registra a mano.
+// El resto de campos son [INTEGRACIÓN FUTURA]: los llenará una API/webhook el
+// día que se integre una transportadora. Hoy quedan vacíos.
+model Shipment {
+  id                String          @id @default(uuid())
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId           String          @unique
+  carrier           Carrier         @default(manual)  // [manual]
+  trackingCode      String?                            // [manual] número de guía
+  cost              Float?                             // [manual] costo del flete (COP)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // ── [INTEGRACIÓN FUTURA] campos que llenará la API de la transportadora ──
+  providerRef       String?         // número de guía que devuelve el proveedor
+  labelUrl          String?         // PDF de la guía
+  status            ShipmentStatus  @default(created)
+  codAmount         Float?          // monto a recaudar (si COD)
+  codCollected      Boolean         @default(false)
+  codSettledAt      DateTime?       // cuándo el agregador consignó el recaudo
+  estimatedDelivery DateTime?
+  pickupAt          DateTime?
+  rawPayload        Json?           // respuesta cruda del proveedor (auditoría)
+
+  trackingEvents    TrackingEvent[]
+
+  @@index([carrier])
+  @@index([status])
+  @@index([providerRef])
+}
+
+// Evento de tracking de un envío. En Fase 2 lo alimentan los webhooks del
+// agregador; en Fase 1 puede usarse para registrar hitos manuales.
+// [INTEGRACIÓN FUTURA] Bitácora de eventos de tracking que enviará el webhook
+// de la transportadora. Hoy NO se llena (el modo manual no genera eventos).
+model TrackingEvent {
+  id          String         @id @default(uuid())
+  shipment    Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  shipmentId  String
+  status      ShipmentStatus
+  description String
+  location    String?
+  occurredAt  DateTime
+  raw         Json?
+  createdAt   DateTime       @default(now())
+
+  @@index([shipmentId])
+  @@index([occurredAt])
 }
 
 model OrderItem {
@@ -264,7 +393,8 @@ model ProductVariant {
   color   ProductColor? @relation(fields: [colorId], references: [id], onDelete: Cascade)
 
   size  Size
-  stock Int     @default(0)
+  stock    Int     @default(0) // unidades físicas en bodega
+  reserved Int     @default(0) // comprometidas por órdenes activas (available = stock - reserved)
   sku   String? @unique
 
   createdAt DateTime @default(now())
@@ -348,6 +478,7 @@ model OrderAddress {
   address2   String?
   postalCode String
   city       String
+  state      String?  // departamento (requerido por transportadoras CO)
   phone      String
 
   // Relaciones
@@ -394,10 +525,17 @@ model ReturnRequest {
   reason          String
   details         String?      @db.VarChar(1000)
   status          ReturnStatus @default(PENDING)
-  adminNotes      String?      // solo visible para el admin, nunca se envía al cliente
-  customerMessage String?      // se incluye en el email al cliente al cambiar estado
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  adminNotes      String?      // solo visible para admin, nunca al cliente
+  customerMessage String?      // se envía en el email al cliente
+
+  // Resolución acordada (se define al APPROVED o COMPLETED)
+  returnType    ReturnType?  // EXCHANGE = cambio, REFUND = reembolso
+  refundAmount  Float?       // Monto a devolver (solo para REFUND)
+  refundMethod  String?      // Ej: "Nequi 3001234567", "Bancolombia TXN-xxx", "Efectivo"
+  proofImageUrl String?      // Foto del defecto/daño (sube el admin)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId String @unique

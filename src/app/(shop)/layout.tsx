@@ -1,4 +1,4 @@
-import { Footer, Sidebar, TopMenu } from '@/components';
+import { Footer, Sidebar, TopMenu, WhatsappFloat } from '@/components';
 import { getCategories, getFeaturedCount } from '@/actions';
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +16,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         {children}
       </div>
       <Footer />
+      <WhatsappFloat />
     </main>
   );
 }

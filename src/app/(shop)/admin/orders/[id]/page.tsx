@@ -5,13 +5,17 @@ import { getCustomerStats } from '@/actions/order/get-customer-stats';
 import { currencyFormat } from '@/utils';
 import { ProductImage } from '@/components';
 import { titleFont } from '@/config/fonts';
-import { ShippingPanel } from './ui/ShippingPanel';
+import { ShippingManager } from './ui/ShippingManager';
 import { OrderTimeline } from './ui/OrderTimeline';
+import { AdminReturnButton } from './ui/AdminReturnButton';
 
 interface Props { params: Promise<{ id: string }> }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pendiente', processing: 'Procesando', shipped: 'Enviado', delivered: 'Entregado', returned: 'Devuelto',
+const RETURN_STATUS_LABEL: Record<string, string> = {
+  PENDING:   'En revisión',
+  APPROVED:  'Aprobada',
+  REJECTED:  'Rechazada',
+  COMPLETED: 'Completada',
 };
 
 export default async function AdminOrderDetailPage(props: Props) {
@@ -46,7 +50,17 @@ export default async function AdminOrderDetailPage(props: Props) {
                 ? 'text-blue-700 bg-blue-50 border-blue-200'
                 : 'text-kyzz-muted bg-kyzz-tertiary border-kyzz-secondary'
             }`}>
-              {order.paymentGateway === 'wompi' ? 'Wompi' : 'Manual'}
+              {order.paymentGateway === 'wompi' ? 'Wompi' : order.paymentGateway === 'cash' ? 'Efectivo' : 'Manual'}
+            </span>
+          )}
+          {order.paymentMethod === 'cod' && (
+            <span className="text-[10px] tracking-widest uppercase px-3 py-1 border text-orange-700 bg-orange-50 border-orange-200">
+              Contraentrega
+            </span>
+          )}
+          {order.channel !== 'web' && (
+            <span className="text-[10px] tracking-widest uppercase px-3 py-1 border text-kyzz-primary bg-kyzz-tertiary border-kyzz-secondary">
+              {order.channel}
             </span>
           )}
         </div>
@@ -93,7 +107,9 @@ export default async function AdminOrderDetailPage(props: Props) {
               <div className="sm:col-span-2">
                 <p className="text-[10px] tracking-widest uppercase text-kyzz-muted mb-1">Dirección de entrega</p>
                 <p className="text-kyzz-dark">{address.address}{address.address2 ? `, ${address.address2}` : ''}</p>
-                <p className="text-kyzz-muted">{address.postalCode} {address.city} · {address.countryId}</p>
+                <p className="text-kyzz-muted">
+                  {address.postalCode} {address.city}{address.state ? `, ${address.state}` : ''} · {address.countryId}
+                </p>
               </div>
             </div>
 
@@ -215,15 +231,22 @@ export default async function AdminOrderDetailPage(props: Props) {
           </div>
         </div>
 
-        {/* Derecha: panel de envío */}
-        <div>
-          <ShippingPanel
+        {/* Derecha: gestión de envío */}
+        <div className="space-y-6">
+
+          {/* Panel unificado de envío (modo manual) */}
+          <ShippingManager
             orderId={id}
-            currentStatus={order.shippingStatus}
-            currentTracking={order.trackingCode ?? null}
-            currentNotes={order.shippingNotes ?? null}
+            channel={order.channel}
+            paymentMethod={order.paymentMethod}
             isPaid={order.isPaid}
             isCancelled={!!order.cancelledAt}
+            codConfirmed={!!order.codConfirmedAt}
+            shippingStatus={order.shippingStatus}
+            currentCarrier={order.shipment?.carrier ?? null}
+            currentTracking={order.shipment?.trackingCode ?? order.trackingCode ?? null}
+            currentCost={order.shipment?.cost ?? order.shippingCost ?? null}
+            currentNotes={order.shippingNotes ?? null}
           />
 
           <OrderTimeline
@@ -232,7 +255,40 @@ export default async function AdminOrderDetailPage(props: Props) {
             shippedAt={order.shippedAt}
             deliveredAt={order.deliveredAt}
             cancelledAt={order.cancelledAt}
+            paymentMethod={order.paymentMethod}
           />
+
+          {/* Registrar devolución manual (pedidos manuales o clientes sin cuenta) */}
+          {order.shippingStatus === 'delivered' && !order.returnRequest && (
+            <div className="kyzz-panel p-6 mt-6">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted mb-3">Devolución</p>
+              <AdminReturnButton orderId={id} />
+            </div>
+          )}
+
+          {/* Si ya hay devolución, mostrar su estado */}
+          {order.returnRequest && (
+            <div className="kyzz-panel p-6 mt-6 space-y-2">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-kyzz-muted">Devolución</p>
+              <div className="flex items-center gap-2">
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  order.returnRequest.status === 'PENDING'   ? 'bg-amber-400' :
+                  order.returnRequest.status === 'APPROVED'  ? 'bg-emerald-500' :
+                  order.returnRequest.status === 'REJECTED'  ? 'bg-red-400' : 'bg-kyzz-primary'
+                }`} />
+                <span className="text-sm text-kyzz-dark">
+                  {RETURN_STATUS_LABEL[order.returnRequest.status]}
+                </span>
+              </div>
+              <p className="text-xs text-kyzz-muted">{order.returnRequest.reason}</p>
+              {order.returnRequest.returnType && (
+                <p className="text-[11px] tracking-widest uppercase text-kyzz-muted">
+                  {order.returnRequest.returnType === 'EXCHANGE' ? '↔ Cambio' : '$ Reembolso'}
+                  {order.returnRequest.refundAmount ? ` · ${currencyFormat(order.returnRequest.refundAmount)}` : ''}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Panel de transacción */}
           {order.isPaid && (
@@ -253,12 +309,31 @@ export default async function AdminOrderDetailPage(props: Props) {
                       : '—'}
                   </span>
                 </div>
-                {order.transactionId && (
+                {order.transactionId && !order.transactionId.startsWith('MANUAL-') && (
                   <div className="flex flex-col gap-1 pt-1 border-t border-kyzz-secondary">
                     <span className="text-kyzz-muted">Referencia</span>
                     <span className="text-kyzz-dark font-mono text-[11px] break-all">
                       {order.transactionId}
                     </span>
+                  </div>
+                )}
+                {order.paymentProofUrl && (
+                  <div className="pt-2 border-t border-kyzz-secondary">
+                    <p className="text-kyzz-muted mb-2">Comprobante</p>
+                    <a
+                      href={order.paymentProofUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={order.paymentProofUrl}
+                        alt="Comprobante de pago"
+                        className="w-full max-w-[200px] object-cover border border-kyzz-secondary hover:opacity-80 transition-opacity"
+                      />
+                      <p className="text-[10px] text-kyzz-muted mt-1">Ver en tamaño completo ↗</p>
+                    </a>
                   </div>
                 )}
               </div>

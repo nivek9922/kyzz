@@ -15,12 +15,14 @@ import {
   IoColorPaletteOutline,
   IoTicketOutline,
   IoReturnUpBackOutline,
+  IoLogoWhatsapp,
 } from 'react-icons/io5';
 
 const NAV = [
   { label: 'Dashboard',       href: '/admin',                  icon: IoGridOutline },
   { label: 'Productos',       href: '/admin/products',         icon: IoStorefrontOutline },
   { label: 'Pedidos',         href: '/admin/orders',           icon: IoReceiptOutline },
+  { label: 'Pedido WhatsApp', href: '/admin/orders/nuevo',     icon: IoLogoWhatsapp },
   { label: 'Usuarios',        href: '/admin/users',            icon: IoPeopleOutline },
   { label: 'Categorías',      href: '/admin/categorias',       icon: IoListOutline },
   { label: 'Colores',         href: '/admin/colores',          icon: IoColorPaletteOutline },

@@ -7,6 +7,7 @@ const { auth } = NextAuth(authConfig);
 const WOMPI_DOMAINS      = 'https://checkout.wompi.co https://sandbox.wompi.co https://production.wompi.co';
 const GA_DOMAINS         = 'https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com';
 const CLOUDINARY_DOMAINS = 'https://api.cloudinary.com https://res.cloudinary.com';
+const META_DOMAINS       = 'https://graph.facebook.com';
 
 // CSP estricto (nonce) para la mayoría de páginas
 function buildStrictCsp(nonce: string): string {
@@ -16,7 +17,7 @@ function buildStrictCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://checkout.wompi.co",
     "font-src 'self' https://fonts.gstatic.com",
     `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com ${GA_DOMAINS} https://checkout.wompi.co`,
-    `connect-src 'self' ${GA_DOMAINS} ${WOMPI_DOMAINS} ${CLOUDINARY_DOMAINS}`,
+    `connect-src 'self' ${GA_DOMAINS} ${WOMPI_DOMAINS} ${CLOUDINARY_DOMAINS} ${META_DOMAINS}`,
     `media-src 'self' ${CLOUDINARY_DOMAINS}`,
     `frame-src https://checkout.wompi.co`,
     "object-src 'none'",
@@ -35,7 +36,7 @@ function buildPaymentCsp(): string {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://checkout.wompi.co",
     "font-src 'self' https://fonts.gstatic.com https://checkout.wompi.co",
     `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com ${GA_DOMAINS} https://checkout.wompi.co`,
-    `connect-src 'self' ${GA_DOMAINS} ${WOMPI_DOMAINS} ${CLOUDINARY_DOMAINS}`,
+    `connect-src 'self' ${GA_DOMAINS} ${WOMPI_DOMAINS} ${CLOUDINARY_DOMAINS} ${META_DOMAINS}`,
     `media-src 'self' ${CLOUDINARY_DOMAINS}`,
     `frame-src https://checkout.wompi.co`,
     "object-src 'none'",

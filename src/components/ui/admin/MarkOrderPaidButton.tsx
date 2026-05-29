@@ -18,7 +18,7 @@ export const MarkOrderPaidButton = ({ orderId }: Props) => {
         onClick: async () => {
           const { ok, message } = await markOrderAsPaid(orderId);
           if (ok) {
-            toast.success('Pedido marcado como pagado');
+            toast.success('Pago registrado — pedido en preparación');
           } else {
             toast.error(message ?? 'Error al actualizar el pedido');
           }

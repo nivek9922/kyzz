@@ -7,3 +7,8 @@ export const VALID_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const;
 
 export const LOW_STOCK_THRESHOLD = 5;  // unidades — stock crítico; se alerta al admin
 export const REORDER_POINT       = 10; // unidades — punto de reorden; conviene reabastecer
+
+// Contraentrega: horas que se mantiene la reserva de stock de un pedido COD sin
+// confirmar antes de liberarla automáticamente. Una vez el equipo confirma el
+// pedido (codConfirmedAt), la reserva deja de expirar.
+export const COD_RESERVATION_HOURS = 48;
