@@ -10,26 +10,37 @@ import { getPaginatedOrders, getCancellableOrdersCount } from "@/actions";
 import { CancelExpiredOrdersButton, AdminSearchInput, Pagination } from "@/components";
 import { titleFont } from "@/config/fonts";
 import { currencyFormat } from "@/utils";
+import { OrderFilters } from "./ui/OrderFilters";
+import { SourceBadge }  from "./ui/SourceBadge";
 
 const SHIPPING_BADGE: Record<string, { label: string; color: string }> = {
   pending:    { label: 'Pendiente',  color: 'text-kyzz-muted bg-kyzz-tertiary border-kyzz-secondary' },
-  processing: { label: 'Procesando', color: 'text-blue-700 bg-blue-50 border-blue-200' },
+  processing: { label: 'Preparando', color: 'text-blue-700 bg-blue-50 border-blue-200' },
   shipped:    { label: 'Enviado',    color: 'text-amber-700 bg-amber-50 border-amber-200' },
-  delivered:  { label: 'Entregado', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+  delivered:  { label: 'Entregado',  color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
   returned:   { label: 'Devuelto',   color: 'text-red-600 bg-red-50 border-red-200' },
 };
 
 interface Props {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{
+    q?:       string;
+    page?:    string;
+    status?:  string;
+    channel?: string;
+    paid?:    string;
+  }>;
 }
 
 export default async function AdminOrdersPage(props: Props) {
   const searchParams = await props.searchParams;
-  const query = searchParams.q ?? '';
-  const page  = Number(searchParams.page ?? '1');
+  const query         = searchParams.q       ?? '';
+  const page          = Number(searchParams.page ?? '1');
+  const statusFilter  = searchParams.status  ?? 'all';
+  const channelFilter = searchParams.channel ?? 'all';
+  const paidFilter    = searchParams.paid    ?? 'all';
 
   const [{ ok, orders = [], totalPages = 1, total = 0 }, cancellableCount] = await Promise.all([
-    getPaginatedOrders({ page, query }),
+    getPaginatedOrders({ page, query, statusFilter, channelFilter, paidFilter }),
     getCancellableOrdersCount(),
   ]);
   if (!ok) redirect("/auth/login");
@@ -48,12 +59,9 @@ export default async function AdminOrdersPage(props: Props) {
         <CancelExpiredOrdersButton cancellableCount={cancellableCount} />
       </div>
 
-      {/* Buscador */}
-      <div className="flex items-center justify-between mb-6 gap-4">
-        <AdminSearchInput
-          defaultValue={query}
-          placeholder="Buscar por ID, cliente o email..."
-        />
+      {/* Buscador + contador */}
+      <div className="flex items-center justify-between mb-4 gap-4">
+        <AdminSearchInput defaultValue={query} placeholder="Buscar por ID, cliente, email o teléfono..." />
         {total > 0 && (
           <p className="text-[11px] text-kyzz-muted shrink-0">
             {total} pedido{total !== 1 ? 's' : ''}
@@ -61,18 +69,28 @@ export default async function AdminOrdersPage(props: Props) {
         )}
       </div>
 
+      {/* Filtros */}
+      <OrderFilters
+        statusFilter={statusFilter}
+        channelFilter={channelFilter}
+        paidFilter={paidFilter}
+        query={query}
+      />
+
       {orders.length === 0 ? (
         <div className="flex flex-col items-center py-24 gap-4 text-center border border-kyzz-secondary">
           <IoReceiptOutline className="w-8 h-8 text-kyzz-muted" />
           <p className="text-sm text-kyzz-muted">
-            {query ? `Sin resultados para "${query}"` : 'Sin pedidos registrados'}
+            {query || statusFilter !== 'all' || channelFilter !== 'all' || paidFilter !== 'all'
+              ? 'Sin resultados para los filtros aplicados'
+              : 'Sin pedidos registrados'}
           </p>
         </div>
       ) : (
         <>
           <div className="flex flex-col divide-y divide-kyzz-secondary border border-kyzz-secondary">
             {/* Header */}
-            <div className="hidden lg:grid grid-cols-[130px_1fr_170px_120px_110px_56px] gap-4 px-5 py-3 bg-kyzz-tertiary">
+            <div className="hidden lg:grid grid-cols-[150px_1fr_160px_130px_110px_56px] gap-4 px-5 py-3 bg-kyzz-tertiary">
               {['Pedido', 'Cliente', 'Importe', 'Pago', 'Envío', ''].map((h, i) => (
                 <p key={i} className="text-[10px] tracking-[0.2em] uppercase text-kyzz-muted">{h}</p>
               ))}
@@ -81,16 +99,16 @@ export default async function AdminOrdersPage(props: Props) {
             {orders.map((order) => {
               const shippingBadge = SHIPPING_BADGE[order.shippingStatus ?? 'pending'];
               const discount      = order.couponDiscount ?? 0;
-              const shippingCost  = order.total - order.subTotal + discount;
+              const shippingCost  = order.shippingCost ?? (order.total - order.subTotal + discount);
               const itemCount     = order._count.OrderItem;
               return (
                 <div
                   key={order.id}
-                  className={`grid grid-cols-[1fr_auto] lg:grid-cols-[130px_1fr_170px_120px_110px_56px] gap-4 items-center px-5 py-4 transition-colors ${
+                  className={`grid grid-cols-[1fr_auto] lg:grid-cols-[150px_1fr_160px_130px_110px_56px] gap-4 items-center px-5 py-4 transition-colors ${
                     order.cancelledAt ? 'opacity-50 bg-kyzz-tertiary/30' : 'hover:bg-kyzz-tertiary/50'
                   }`}
                 >
-                  {/* ID + fecha + items */}
+                  {/* ID + fecha + canal/método */}
                   <div>
                     <p className="text-[11px] tracking-widest font-medium text-kyzz-dark font-mono">
                       #{order.id.split('-').at(-1)?.toUpperCase()}
@@ -99,6 +117,9 @@ export default async function AdminOrdersPage(props: Props) {
                       {new Date(order.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', timeZone: 'America/Bogota' })}
                       {' · '}{itemCount} {itemCount === 1 ? 'producto' : 'productos'}
                     </p>
+                    <div className="mt-1">
+                      <SourceBadge channel={order.channel} paymentMethod={order.paymentMethod} />
+                    </div>
                   </div>
 
                   {/* Cliente */}
@@ -133,7 +154,7 @@ export default async function AdminOrdersPage(props: Props) {
                   </div>
 
                   {/* Badge pago */}
-                  <div className="hidden lg:flex">
+                  <div className="hidden lg:flex flex-col gap-1">
                     {order.cancelledAt ? (
                       <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-red-500 bg-red-50 border border-red-200 px-2 py-1">
                         <IoCloseCircleOutline size={11} /> Cancelada
@@ -147,6 +168,10 @@ export default async function AdminOrdersPage(props: Props) {
                         <IoTimeOutline size={11} /> Sin pagar
                       </span>
                     )}
+                    {/* Método de pago secundario */}
+                    <span className="text-[9px] tracking-widest uppercase text-kyzz-muted">
+                      {order.paymentMethod === 'cod' ? 'Contraentrega' : 'Pago online'}
+                    </span>
                   </div>
 
                   {/* Badge estado de envío */}
