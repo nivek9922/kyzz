@@ -83,7 +83,7 @@ export { subscribeNewsletter }            from './site/subscribe-newsletter';
 export { sendNewsletter }                 from './site/send-newsletter';
 export type { NewsletterProduct }         from './site/send-newsletter';
 
-// ─── Shipping ───────────────────────────────────────────────
+// ─── Shipping (modo manual: el admin registra la guía a mano) ──
 export { upsertShipment } from './shipping/upsert-shipment';
 
 // ─── Returns ────────────────────────────────────────────────

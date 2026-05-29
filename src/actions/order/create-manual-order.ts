@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_COST, COD_RESERVATION_HOURS } from '@/config/constants';
 import { reserveStock } from '@/lib/stock-ops';
 import { render } from '@react-email/components';
@@ -52,7 +52,7 @@ export const createManualOrder = async (input: ManualOrderInput) => {
       select: {
         id:      true,
         size:    true,
-        product: { select: { id: true, price: true, title: true } },
+        product: { select: { id: true, price: true, title: true, slug: true } },
         color:   { select: { paletteColor: { select: { name: true } } } },
       },
     });
@@ -63,6 +63,7 @@ export const createManualOrder = async (input: ManualOrderInput) => {
       return {
         variantId: v.id,
         productId: v.product.id,
+        slug:      v.product.slug,
         quantity:  it.quantity,
         size:      v.size,
         colorName: v.color?.paletteColor.name ?? null,
@@ -132,6 +133,12 @@ export const createManualOrder = async (input: ManualOrderInput) => {
     });
 
     revalidatePath('/admin/orders');
+
+    // Invalidar cache ISR de la PDP: la reserva redujo el disponible y la web
+    // debe dejar de ofrecer esas unidades de inmediato (evita oversell visible).
+    for (const slug of new Set(lines.map((l) => l.slug))) {
+      revalidateTag(`product:${slug}`);
+    }
 
     // Email de confirmación al cliente si se proporcionó un email
     if (email && process.env.RESEND_API_KEY) {

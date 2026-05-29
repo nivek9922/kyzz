@@ -5,8 +5,7 @@ import { getCustomerStats } from '@/actions/order/get-customer-stats';
 import { currencyFormat } from '@/utils';
 import { ProductImage } from '@/components';
 import { titleFont } from '@/config/fonts';
-import { ShippingPanel } from './ui/ShippingPanel';
-import { ShipmentPanel } from './ui/ShipmentPanel';
+import { ShippingManager } from './ui/ShippingManager';
 import { OrderTimeline } from './ui/OrderTimeline';
 import { AdminReturnButton } from './ui/AdminReturnButton';
 
@@ -232,28 +231,23 @@ export default async function AdminOrderDetailPage(props: Props) {
           </div>
         </div>
 
-        {/* Derecha: panel de envío */}
-        <div>
-          <ShippingPanel
+        {/* Derecha: gestión de envío */}
+        <div className="space-y-6">
+
+          {/* Panel unificado de envío (modo manual) */}
+          <ShippingManager
             orderId={id}
-            currentStatus={order.shippingStatus}
-            currentTracking={order.trackingCode ?? null}
-            currentNotes={order.shippingNotes ?? null}
+            channel={order.channel}
+            paymentMethod={order.paymentMethod}
             isPaid={order.isPaid}
             isCancelled={!!order.cancelledAt}
-            paymentMethod={order.paymentMethod}
             codConfirmed={!!order.codConfirmedAt}
-            channel={order.channel}
+            shippingStatus={order.shippingStatus}
+            currentCarrier={order.shipment?.carrier ?? null}
+            currentTracking={order.shipment?.trackingCode ?? order.trackingCode ?? null}
+            currentCost={order.shipment?.cost ?? order.shippingCost ?? null}
+            currentNotes={order.shippingNotes ?? null}
           />
-
-          {!order.cancelledAt && (
-            <ShipmentPanel
-              orderId={id}
-              currentCarrier={order.shipment?.carrier ?? null}
-              currentTracking={order.shipment?.trackingCode ?? order.trackingCode ?? null}
-              currentCost={order.shipment?.cost ?? order.shippingCost ?? null}
-            />
-          )}
 
           <OrderTimeline
             createdAt={order.createdAt}

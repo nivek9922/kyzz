@@ -50,14 +50,14 @@ export const AddToCart = ({ product, variants, availableSizes, stockBySize, colo
     return variants.find((v) => v.size === size) ?? null;
   }, [variants, size]);
 
-  const maxQty = currentVariant?.stock ?? 0;
+  const maxQty = currentVariant ? Math.max(0, currentVariant.stock - currentVariant.reserved) : 0;
 
   // Si el usuario pide más de lo disponible, recortamos.
   useEffect(() => {
-    if (currentVariant && quantity > currentVariant.stock) {
-      setQuantity(Math.max(1, currentVariant.stock));
+    if (currentVariant && quantity > maxQty) {
+      setQuantity(Math.max(1, maxQty));
     }
-  }, [currentVariant, quantity]);
+  }, [currentVariant, maxQty, quantity]);
 
   const allSoldOut = availableSizes.length > 0 && outOfStockSizes.length === availableSizes.length;
   const noSizesAvailable = availableSizes.length === 0;
@@ -80,7 +80,7 @@ export const AddToCart = ({ product, variants, availableSizes, stockBySize, colo
   const addToCart = () => {
     setPosted(true);
     if (!size) return;
-    if (!currentVariant || currentVariant.stock <= 0) {
+    if (!currentVariant || maxQty <= 0) {
       toast.error('Esta variante está agotada');
       return;
     }
@@ -104,7 +104,11 @@ export const AddToCart = ({ product, variants, availableSizes, stockBySize, colo
 
   const buyNow = () => {
     setPosted(true);
-    if (!size || !currentVariant || currentVariant.stock <= 0) return;
+    if (!size) return;
+    if (!currentVariant || maxQty <= 0) {
+      toast.error('Esta variante está agotada');
+      return;
+    }
     const cartProduct = buildCartProduct();
     if (!cartProduct) return;
     addProductToCart(cartProduct);
@@ -139,8 +143,8 @@ export const AddToCart = ({ product, variants, availableSizes, stockBySize, colo
 
       {size && currentVariant && (
         <p className="text-[11px] text-kyzz-muted">
-          {currentVariant.stock > 0
-            ? <>Disponibles: <span className="text-kyzz-dark">{currentVariant.stock}</span></>
+          {maxQty > 0
+            ? <>Disponibles: <span className="text-kyzz-dark">{maxQty}</span></>
             : <span className="text-red-500">Talla agotada</span>}
         </p>
       )}
@@ -148,14 +152,14 @@ export const AddToCart = ({ product, variants, availableSizes, stockBySize, colo
       <div className="flex flex-col gap-2 mt-3">
         <button
           onClick={addToCart}
-          disabled={allSoldOut || (size !== undefined && (!currentVariant || currentVariant.stock <= 0))}
+          disabled={allSoldOut || (size !== undefined && maxQty <= 0)}
           className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {allSoldOut ? 'Producto agotado' : 'Agregar al carrito'}
         </button>
         <button
           onClick={buyNow}
-          disabled={allSoldOut || (size !== undefined && (!currentVariant || currentVariant.stock <= 0))}
+          disabled={allSoldOut || (size !== undefined && maxQty <= 0)}
           className="w-full py-3 text-[11px] tracking-[0.2em] uppercase border border-kyzz-dark text-kyzz-dark hover:bg-kyzz-dark hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Comprar ahora

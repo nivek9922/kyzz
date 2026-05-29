@@ -49,8 +49,7 @@ enum ShippingStatus {
 
 // Transportadora del envío. `manual` = sin integración (admin pega la guía).
 enum Carrier {
-  heka
-  mipaquete
+  envia               // agregador Envia.com (Coordinadora, Servientrega, etc.)
   interrapidisimo
   servientrega
   coordinadora
@@ -60,8 +59,9 @@ enum Carrier {
   manual
 }
 
-// Estado del envío a nivel transportadora (más granular que ShippingStatus).
-// ShippingStatus (cara al cliente) se deriva de aquí.
+// [INTEGRACIÓN FUTURA] Estado granular del envío a nivel transportadora.
+// Hoy NO se usa (el modo manual usa Order.shippingStatus). Queda listo para
+// cuando se integre una API de transportadora con webhooks de tracking.
 enum ShipmentStatus {
   created           // guía generada
   picked_up         // recogida por la transportadora
@@ -283,24 +283,31 @@ model WhatsAppSession {
 // Envío de una orden. 1:1 con Order. Agnóstico de transportadora: el patrón
 // adapter (Fase 2) llena providerRef/labelUrl vía API; en Fase 1 el admin pega
 // la guía manualmente. ShippingStatus de la orden se deriva de `status`.
+// Guía de envío de una orden.
+// MODO MANUAL (actual): solo se usan carrier, trackingCode y cost — el admin
+// genera la guía en su transportadora y la registra a mano.
+// El resto de campos son [INTEGRACIÓN FUTURA]: los llenará una API/webhook el
+// día que se integre una transportadora. Hoy quedan vacíos.
 model Shipment {
   id                String          @id @default(uuid())
   order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId           String          @unique
-  carrier           Carrier         @default(manual)
-  providerRef       String?         // número de guía de la transportadora
-  trackingCode      String?
+  carrier           Carrier         @default(manual)  // [manual]
+  trackingCode      String?                            // [manual] número de guía
+  cost              Float?                             // [manual] costo del flete (COP)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // ── [INTEGRACIÓN FUTURA] campos que llenará la API de la transportadora ──
+  providerRef       String?         // número de guía que devuelve el proveedor
   labelUrl          String?         // PDF de la guía
   status            ShipmentStatus  @default(created)
-  cost              Float?          // costo del flete (COP)
   codAmount         Float?          // monto a recaudar (si COD)
   codCollected      Boolean         @default(false)
   codSettledAt      DateTime?       // cuándo el agregador consignó el recaudo
   estimatedDelivery DateTime?
   pickupAt          DateTime?
   rawPayload        Json?           // respuesta cruda del proveedor (auditoría)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
 
   trackingEvents    TrackingEvent[]
 
@@ -311,6 +318,8 @@ model Shipment {
 
 // Evento de tracking de un envío. En Fase 2 lo alimentan los webhooks del
 // agregador; en Fase 1 puede usarse para registrar hitos manuales.
+// [INTEGRACIÓN FUTURA] Bitácora de eventos de tracking que enviará el webhook
+// de la transportadora. Hoy NO se llena (el modo manual no genera eventos).
 model TrackingEvent {
   id          String         @id @default(uuid())
   shipment    Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Cascade)

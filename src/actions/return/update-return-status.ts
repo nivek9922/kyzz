@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { render } from '@react-email/components';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
@@ -52,16 +52,19 @@ export async function updateReturnStatus(input: {
             guestEmail:    true,
             shippingStatus: true,
             user:           { select: { name: true, email: true } },
-            OrderItem:      { select: { productId: true, quantity: true, variantId: true } },
+            OrderItem:      { select: { productId: true, quantity: true, variantId: true, product: { select: { slug: true } } } },
           },
         },
       },
     });
     if (!ret) return { ok: false, message: 'Solicitud no encontrada.' };
 
+    // ¿Esta transición restaura stock físico? (devolución completada por primera vez)
+    const didRestock = status === 'COMPLETED' && ret.status !== 'COMPLETED';
+
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Al completar: el producto volvió físicamente → restaurar stock
-      if (status === 'COMPLETED' && ret.status !== 'COMPLETED') {
+      if (didRestock) {
         const items = ret.order.OrderItem
           .filter((i): i is typeof i & { variantId: string } => i.variantId !== null)
           .map((i) => ({ variantId: i.variantId, quantity: i.quantity }));
@@ -110,6 +113,14 @@ export async function updateReturnStatus(input: {
 
     revalidatePath('/admin/devoluciones');
     revalidatePath(`/admin/orders/${ret.order.id}`);
+
+    // Si se restauró stock, refrescar la PDP para que el disponible suba al instante.
+    if (didRestock) {
+      for (const slug of new Set(ret.order.OrderItem.map((i) => i.product?.slug).filter(Boolean) as string[])) {
+        revalidateTag(`product:${slug}`);
+      }
+    }
+
     return { ok: true };
   } catch (err) {
     console.error('[updateReturnStatus]', err);

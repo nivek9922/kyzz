@@ -2,20 +2,25 @@ import type { Carrier } from '@prisma/client';
 
 /**
  * Catálogo de transportadoras. Fuente única de verdad para etiquetas y
- * construcción de URLs de rastreo (quick-win Fase 1, sin API).
+ * construcción de URLs de rastreo (sin API).
  *
- * NOTA: las URLs de rastreo de las transportadoras colombianas cambian con
- * frecuencia. Donde el deep-link directo no es fiable, se apunta a la página
- * de rastreo y el cliente pega/usa el código. Verificar/ajustar al integrar.
+ * `envia` = pedidos gestionados a través del agregador Envia.com; el tracking
+ * se hace en el portal de la transportadora subyacente que Envia asignó.
+ *
+ * NOTA: las URLs de rastreo cambian con frecuencia. Verificar/ajustar al integrar.
  */
 
 interface CarrierMeta {
-  label:        string;
+  label:       string;
   /** Construye la URL de rastreo para un código de guía. `null` = sin link (texto plano). */
   trackingUrl: ((code: string) => string) | null;
 }
 
 export const CARRIERS: Record<Carrier, CarrierMeta> = {
+  envia: {
+    label:       'Envia.com',
+    trackingUrl: (code) => `https://app.envia.com/tracking?guide=${encodeURIComponent(code)}`,
+  },
   interrapidisimo: {
     label:       'Interrapidísimo',
     trackingUrl: (code) => `https://www.interrapidisimo.com/Tracking/Guias?guia=${encodeURIComponent(code)}`,
@@ -32,17 +37,9 @@ export const CARRIERS: Record<Carrier, CarrierMeta> = {
     label:       'TCC',
     trackingUrl: (code) => `https://www.tcc.com.co/rastreo-de-mercancia/?guia=${encodeURIComponent(code)}`,
   },
-  heka: {
-    label:       'Heka',
-    trackingUrl: (code) => `https://app.heka.com.co/rastreo?guia=${encodeURIComponent(code)}`,
-  },
-  mipaquete: {
-    label:       'Mipaquete',
-    trackingUrl: (code) => `https://app.mipaquete.com/rastreo?guia=${encodeURIComponent(code)}`,
-  },
   mensajeros_urbanos: {
     label:       'Mensajeros Urbanos',
-    trackingUrl: null, // rastreo vía app, sin deep-link público fiable
+    trackingUrl: null,
   },
   noventa_y_nueve: {
     label:       '99minutos',
@@ -50,7 +47,7 @@ export const CARRIERS: Record<Carrier, CarrierMeta> = {
   },
   manual: {
     label:       'Otra / manual',
-    trackingUrl: null, // sin transportadora con link → se muestra como texto
+    trackingUrl: null,
   },
 };
 
@@ -69,6 +66,6 @@ export function carrierTrackingUrl(carrier: Carrier | null | undefined, code: st
   return builder ? builder(code) : null;
 }
 
-/** Opciones para selects del admin (excluye o incluye `manual` según se necesite). */
+/** Opciones para selects del admin. */
 export const CARRIER_OPTIONS: { value: Carrier; label: string }[] =
   (Object.keys(CARRIERS) as Carrier[]).map((value) => ({ value, label: CARRIERS[value].label }));

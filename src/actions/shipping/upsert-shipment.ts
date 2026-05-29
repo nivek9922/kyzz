@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 const schema = z.object({
   orderId:      z.string().uuid(),
   carrier:      z.enum([
-    'heka', 'mipaquete', 'interrapidisimo', 'servientrega',
+    'envia', 'interrapidisimo', 'servientrega',
     'coordinadora', 'tcc', 'mensajeros_urbanos', 'noventa_y_nueve', 'manual',
   ]),
   trackingCode: z.string().trim().max(120).optional(),
