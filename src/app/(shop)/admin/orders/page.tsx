@@ -56,7 +56,13 @@ export default async function AdminOrdersPage(props: Props) {
           </h1>
           <div className="w-6 h-px bg-kyzz-secondary mt-3" />
         </div>
-        <CancelExpiredOrdersButton cancellableCount={cancellableCount} />
+        <div className="flex items-center gap-4">
+          <Link href="/admin/orders/analytics"
+            className="text-[10px] tracking-widests uppercase text-kyzz-muted hover:text-kyzz-primary transition-colors">
+            Analytics →
+          </Link>
+          <CancelExpiredOrdersButton cancellableCount={cancellableCount} />
+        </div>
       </div>
 
       {/* Buscador + contador */}

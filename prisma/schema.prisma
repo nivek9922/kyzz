@@ -75,14 +75,79 @@ enum ShipmentStatus {
 
 enum ReturnStatus {
   PENDING
-  APPROVED
-  REJECTED
+  EVIDENCE_REQUIRED      // Admin solicita fotos/pruebas al cliente
+  APPROVED               // Aprobado, clienta debe enviar de regreso
+  GUIDE_SENT             // Guía de devolución enviada al cliente (KYZZ paga)
+  IN_TRANSIT             // Producto en camino a bodega KYZZ
+  RECEIVED               // Recibido físicamente en bodega
+  INSPECTING             // En proceso de inspección
+  ACCEPTED               // Inspección OK → procesando resolución
+  PROCESSING             // Resolución en proceso (reembolso / nuevo despacho)
   COMPLETED
+  REJECTED
+  REJECTED_AFTER_INSPECT // Rechazado tras inspección (producto dañado/usado)
+  CLOSED                 // Archivado sin acción pendiente
 }
 
 enum ReturnType {
   EXCHANGE  // Cambio por talla correcta u otro producto
   REFUND    // Reembolso de dinero al cliente
+}
+
+// ── Tipo de solicitud post-venta ─────────────────────────────────────────────
+enum PostSaleType {
+  RETURN           // Devolución simple / retracto (Ley 1480)
+  SIZE_EXCHANGE    // Cambio de talla (mismo producto)
+  PRODUCT_EXCHANGE // Cambio por otro producto
+  DEFECTIVE        // Producto defectuoso de fábrica
+  WARRANTY         // Garantía (defecto surgido tras el uso)
+  KYZZ_ERROR       // Error de KYZZ: envío incorrecto
+}
+
+// ── Categoría estandarizada del motivo (para analytics) ─────────────────────
+enum ReturnReasonCategory {
+  WRONG_SIZE
+  CHANGED_MIND
+  NOT_AS_DESCRIBED
+  DEFECTIVE
+  DAMAGED_IN_TRANSIT
+  WRONG_ITEM_SENT
+  QUALITY_ISSUE
+  OTHER
+}
+
+// ── Condición física del producto al ser inspeccionado ───────────────────────
+enum ItemCondition {
+  PERFECT          // Sin uso, etiquetas intactas, como nuevo
+  ACCEPTABLE       // Marcas mínimas de prueba, vendible
+  USED             // Señales de uso, no aceptable para restock
+  DAMAGED          // Daño que justifica rechazo
+  DEFECTIVE_CONF   // Defecto de fabricación confirmado
+  INCOMPLETE       // Falta componente (botón, cinturón, etc.)
+}
+
+// ── Decisión de inventario tras inspección ───────────────────────────────────
+enum InventoryAction {
+  PENDING_INSPECTION // Aún sin decidir
+  RESTOCK            // Vuelve a stock disponible
+  QUARANTINE         // Bloqueado, decisión pendiente
+  LIQUIDATE          // Vender a precio especial
+  DONATE             // Donación
+  DESTROY            // Inutilizable, se da de baja
+}
+
+// ── Quién asume el flete de devolución ───────────────────────────────────────
+enum ShippingResponsibility {
+  KYZZ
+  CUSTOMER
+}
+
+// ── Estado del reembolso ─────────────────────────────────────────────────────
+enum RefundStatus {
+  PENDING    // Aprobado, sin procesar aún
+  PROCESSING // Transferencia en curso
+  PROCESSED  // Dinero enviado al cliente
+  FAILED     // Falló el procesamiento
 }
 
 enum PaymentGateway {
@@ -392,10 +457,12 @@ model ProductVariant {
   colorId String?
   color   ProductColor? @relation(fields: [colorId], references: [id], onDelete: Cascade)
 
-  size  Size
-  stock    Int     @default(0) // unidades físicas en bodega
-  reserved Int     @default(0) // comprometidas por órdenes activas (available = stock - reserved)
-  sku   String? @unique
+  size        Size
+  stock       Int  @default(0) // unidades físicas en bodega (vendibles o reservadas)
+  reserved    Int  @default(0) // comprometidas por órdenes activas  → available = stock - reserved
+  quarantined Int  @default(0) // recibidas de devolución, pendientes de inspección (NO afectan available)
+  damaged     Int  @default(0) // inspeccionadas y dadas de baja (no vendibles, registro contable)
+  sku         String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -521,6 +588,7 @@ model AbandonedCart {
 
 // ── Solicitudes de devolución / RMA ───────────────────────────────────────────
 model ReturnRequest {
+  // ─── Campos originales (sin cambiar) ─────────────────────────────────────
   id              String       @id @default(uuid())
   reason          String
   details         String?      @db.VarChar(1000)
@@ -529,10 +597,10 @@ model ReturnRequest {
   customerMessage String?      // se envía en el email al cliente
 
   // Resolución acordada (se define al APPROVED o COMPLETED)
-  returnType    ReturnType?  // EXCHANGE = cambio, REFUND = reembolso
-  refundAmount  Float?       // Monto a devolver (solo para REFUND)
-  refundMethod  String?      // Ej: "Nequi 3001234567", "Bancolombia TXN-xxx", "Efectivo"
-  proofImageUrl String?      // Foto del defecto/daño (sube el admin)
+  returnType    ReturnType?
+  refundAmount  Float?
+  refundMethod  String?
+  proofImageUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -540,5 +608,85 @@ model ReturnRequest {
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId String @unique
 
+  // ─── Campos Fase 1 (todos nullable — backward-compatible) ────────────────
+  rmaCode        String?  @unique  // Ej: RMA-20260601-0042
+  requestType    PostSaleType?
+  reasonCategory ReturnReasonCategory?
+
+  // Ventana temporal
+  returnWindowDays Int?      // Días hábiles/calendario según tipo
+  expiresAt        DateTime? // Vence el derecho a iniciar el envío
+
+  // Logística inversa
+  returnTrackingCode  String?
+  returnCarrier       String?
+  returnShippingCost  Float?
+  whoPayShipping      ShippingResponsibility?
+
+  // Inspección física
+  receivedAt     DateTime?
+  inspectedAt    DateTime?
+  inspectedBy    String?        // FK → User.id (sin relación Prisma: evita cascades)
+  itemCondition  ItemCondition?
+  conditionNotes String?
+
+  // Resolución de cambio
+  targetVariantId    String? // Para SIZE_EXCHANGE: variante destino reservada
+  targetProductId    String? // Para PRODUCT_EXCHANGE
+  replacementOrderId String? // FK → Order.id del pedido de reposición
+
+  // Reembolso extendido
+  refundStatus        RefundStatus?
+  refundProcessedAt   DateTime?
+  refundTransactionId String?
+
+  // Auditoría de aprobación/rechazo
+  approvedBy      String?   // FK → User.id
+  approvedAt      DateTime?
+  rejectedBy      String?   // FK → User.id
+  rejectedAt      DateTime?
+  rejectionReason String?
+
+  // Relaciones nuevas
+  events ReturnEvent[]
+  items  ReturnRequestItem[]
+
   @@index([status])
+  @@index([rmaCode])
+  @@index([requestType])
+  @@index([reasonCategory])
+}
+
+// Items individuales de la solicitud (permite devoluciones parciales)
+model ReturnRequestItem {
+  id              String        @id @default(uuid())
+  returnRequestId String
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+
+  orderItemId     String // referencia a OrderItem.id (sin FK explícita — evita migraciones complejas)
+  variantId       String // referencia a ProductVariant.id
+
+  quantity        Int
+  inventoryAction InventoryAction @default(PENDING_INSPECTION)
+  restockedAt     DateTime?
+  damagedQty      Int             @default(0)
+
+  @@index([returnRequestId])
+}
+
+// Log inmutable de eventos (auditoría completa, append-only)
+model ReturnEvent {
+  id              String        @id @default(uuid())
+  returnRequestId String
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+
+  actor     String  // 'admin:<uuid>' | 'customer:<uuid>' | 'system'
+  actorName String  // nombre legible para UI
+  fromStatus String?
+  toStatus   String
+  notes      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([returnRequestId])
 }

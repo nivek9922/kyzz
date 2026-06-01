@@ -88,9 +88,15 @@ export { upsertShipment } from './shipping/upsert-shipment';
 
 // ─── Returns ────────────────────────────────────────────────
 export { createReturnRequest,
-         createReturnRequestAdmin } from './return/create-return-request';
+         createReturnRequestAdmin }       from './return/create-return-request';
 export { updateReturnStatus,
-         getReturnRequests }        from './return/update-return-status';
+         getReturnRequests }              from './return/update-return-status';
+export { getReturnRequestById,
+         getReturnRequestsList }          from './return/get-return-request';
+export { getMyReturns,
+         getMyReturnById }                from './return/get-customer-returns';
+export { updateReturnTracking }          from './return/update-return-tracking';
+export { uploadReturnEvidence }          from './return/upload-return-evidence';
 
 // ─── User ───────────────────────────────────────────────────
 export { changeUserRole }      from './user/change-user-role';

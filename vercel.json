@@ -3,6 +3,14 @@
     {
       "path": "/api/cron/cancel-orders",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/return-sla",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/return-cleanup",
+      "schedule": "0 9 * * *"
     }
   ]
 }

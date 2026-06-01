@@ -12,6 +12,7 @@ import {
   IoShirtOutline,
   IoTicketOutline,
   IoStarOutline,
+  IoReturnUpBackOutline,
 } from "react-icons/io5";
 
 import { signOut } from "next-auth/react";
@@ -137,8 +138,9 @@ export const Sidebar = ({ showFeatured = false }: { showFeatured?: boolean }) =>
                   </p>
                 )}
 
-                <MobileLink href="/profile" label="Mi perfil"   icon={<IoPersonOutline size={16} />} onClick={closeMobileMenu} />
-                <MobileLink href="/orders"  label="Mis pedidos" icon={<IoTicketOutline size={16} />} onClick={closeMobileMenu} />
+                <MobileLink href="/profile"      label="Mi perfil"        icon={<IoPersonOutline size={16} />}         onClick={closeMobileMenu} />
+                <MobileLink href="/orders"       label="Mis pedidos"      icon={<IoTicketOutline size={16} />}         onClick={closeMobileMenu} />
+                <MobileLink href="/devoluciones" label="Mis devoluciones" icon={<IoReturnUpBackOutline size={16} />}   onClick={closeMobileMenu} />
 
                 {isAdmin && (
                   <>

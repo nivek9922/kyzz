@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma, InventoryAction } from '@prisma/client';
 
 /**
  * Operaciones centralizadas del modelo de stock reservado.
@@ -155,4 +155,87 @@ export async function releaseStock(tx: Prisma.TransactionClient, items: StockLin
   }
 
   await syncProductInStock(tx, variants.map((v) => v.productId));
+}
+
+export interface QuarantineLineItem {
+  variantId: string;
+  quantity:  number;
+}
+
+/**
+ * Mueve unidades a cuarentena al recibir físicamente una devolución.
+ * El producto está en bodega KYZZ pero aún no es vendible — la inspección
+ * decidirá si vuelve a stock o se da de baja como dañado.
+ * NO toca `stock` ni `reserved`: `available` no cambia.
+ */
+export async function quarantineStock(
+  tx: Prisma.TransactionClient,
+  items: QuarantineLineItem[],
+) {
+  const byVariant = aggregateByVariant(items);
+  if (byVariant.size === 0) return;
+
+  const variants = await tx.productVariant.findMany({
+    where:  { id: { in: Array.from(byVariant.keys()) } },
+    select: { id: true, productId: true },
+  });
+
+  for (const [variantId, qty] of byVariant) {
+    await tx.$executeRaw`
+      UPDATE "ProductVariant"
+      SET quarantined = quarantined + ${qty}
+      WHERE id = ${variantId}
+    `;
+  }
+
+  await syncProductInStock(tx, variants.map((v) => v.productId));
+}
+
+export interface ReleaseItem {
+  variantId: string;
+  quantity:  number;
+  action:    InventoryAction;
+}
+
+/**
+ * Libera unidades de cuarentena tras la inspección física.
+ *
+ * RESTOCK → quarantined -= qty, stock += qty   (vuelve a disponible)
+ * Todo lo demás → quarantined -= qty, damaged += qty (fuera del ciclo normal)
+ */
+export async function releaseFromQuarantine(
+  tx:    Prisma.TransactionClient,
+  items: ReleaseItem[],
+) {
+  if (items.length === 0) return;
+
+  const variantRows = await tx.productVariant.findMany({
+    where:  { id: { in: items.map((i) => i.variantId) } },
+    select: { id: true, productId: true },
+  });
+  const pidByVariant = new Map(variantRows.map((v) => [v.id, v.productId]));
+  const productIds   = Array.from(new Set(variantRows.map((v) => v.productId)));
+
+  for (const item of items) {
+    if (!pidByVariant.has(item.variantId)) continue;
+
+    if (item.action === 'RESTOCK') {
+      await tx.$executeRaw`
+        UPDATE "ProductVariant"
+        SET quarantined = GREATEST(quarantined - ${item.quantity}, 0),
+            stock       = stock + ${item.quantity}
+        WHERE id = ${item.variantId}
+      `;
+    } else {
+      // LIQUIDATE / DONATE / DESTROY / QUARANTINE → sale de cuarentena, se registra como dañado
+      await tx.$executeRaw`
+        UPDATE "ProductVariant"
+        SET quarantined = GREATEST(quarantined - ${item.quantity}, 0),
+            damaged     = damaged + ${item.quantity}
+        WHERE id = ${item.variantId}
+      `;
+    }
+  }
+
+  await syncProductInStock(tx, productIds);
 }
