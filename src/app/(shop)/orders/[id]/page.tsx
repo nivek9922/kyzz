@@ -296,7 +296,13 @@ export default async function OrdersByIdPage(props: Props) {
             orderId={id}
             canRequest={!!order!.isPaid && order!.shippingStatus === 'delivered' && !order!.cancelledAt}
             existingReturn={order!.returnRequest
-              ? { status: order!.returnRequest.status, reason: order!.returnRequest.reason, createdAt: order!.returnRequest.createdAt }
+              ? {
+                  id:        order!.returnRequest.id,
+                  status:    order!.returnRequest.status,
+                  reason:    order!.returnRequest.reason,
+                  createdAt: order!.returnRequest.createdAt,
+                  rmaCode:   order!.returnRequest.rmaCode,
+                }
               : null}
           />
         )}
