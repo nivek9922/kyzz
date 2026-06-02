@@ -133,9 +133,7 @@ export const NewsletterPopup = () => {
 
       {/* Panel */}
       <div
-        className="relative w-full md:max-w-[740px] flex flex-col md:flex-row overflow-hidden
-                   transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
-                   md:max-h-[90vh]"
+        className="relative w-full md:max-w-[740px] flex flex-col md:flex-row overflow-hidden transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:max-h-[90vh]"
         style={{
           opacity:   visible ? 1 : 0,
           transform: visible ? "translateY(0) scale(1)" : "translateY(20px) scale(0.97)",
@@ -196,9 +194,7 @@ export const NewsletterPopup = () => {
           {/* Botón cerrar */}
           <button
             onClick={dismiss}
-            className="absolute top-3.5 right-4 z-20 w-8 h-8 flex items-center justify-center
-                       text-white/70 md:text-kyzz-muted hover:text-white md:hover:text-kyzz-dark
-                       transition-colors"
+            className="absolute top-3.5 right-4 z-20 w-8 h-8 flex items-center justify-center text-white/70 md:text-kyzz-muted hover:text-white md:hover:text-kyzz-dark transition-colors"
             aria-label="Cerrar"
           >
             <IoCloseOutline className="w-5 h-5" />
@@ -268,8 +264,7 @@ export const NewsletterPopup = () => {
 
                 <button
                   onClick={dismiss}
-                  className="w-full mt-4 text-[10px] tracking-widest uppercase text-kyzz-muted
-                             hover:text-kyzz-dark transition-colors py-1"
+                  className="w-full mt-4 text-[10px] tracking-widest uppercase text-kyzz-muted hover:text-kyzz-dark transition-colors py-1"
                 >
                   No gracias
                 </button>
@@ -297,8 +292,7 @@ export const NewsletterPopup = () => {
                 {coupon ? (
                   <button
                     onClick={copyCode}
-                    className="w-full border border-kyzz-secondary py-5 px-6 flex flex-col items-center gap-2
-                               hover:border-kyzz-primary transition-colors group"
+                    className="w-full border border-kyzz-secondary py-5 px-6 flex flex-col items-center gap-2 hover:border-kyzz-primary transition-colors group"
                     aria-label={`Copiar código ${coupon.code}`}
                   >
                     <span className={`${titleFont.className} text-[32px] tracking-[0.4em] text-kyzz-dark`}>

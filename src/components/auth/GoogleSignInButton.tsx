@@ -21,14 +21,7 @@ export const GoogleSignInButton = ({ label = 'Continuar con Google' }: Props) =>
       type="button"
       onClick={handleClick}
       disabled={isPending}
-      className="
-        w-full flex items-center justify-center gap-3 py-3 px-4
-        border border-kyzz-secondary bg-white
-        text-[11px] tracking-[0.15em] uppercase text-kyzz-dark
-        hover:border-kyzz-primary hover:bg-kyzz-bg
-        transition-all duration-200
-        disabled:opacity-50 disabled:cursor-not-allowed
-      "
+      className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-kyzz-secondary bg-white text-[11px] tracking-[0.15em] uppercase text-kyzz-dark hover:border-kyzz-primary hover:bg-kyzz-bg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isPending ? (
         <span className="text-kyzz-muted">Redirigiendo...</span>
