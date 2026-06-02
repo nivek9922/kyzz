@@ -159,12 +159,7 @@ export const ProductGridItem = ({
 
           {/* Overlay de tallas — solo visible en hover desktop */}
           {!isSoldOut && product.sizes.length > 0 && (
-            <div
-              className="absolute inset-x-0 bottom-0 bg-white/90 backdrop-blur-[1px] px-3 py-2
-                         text-center text-[10px] tracking-[0.2em] uppercase text-kyzz-dark
-                         transition-opacity duration-300
-                         opacity-0 md:group-hover:opacity-100 pointer-events-none"
-            >
+            <div className="absolute inset-x-0 bottom-0 bg-white/90 backdrop-blur-[1px] px-3 py-2 text-center text-[10px] tracking-[0.2em] uppercase text-kyzz-dark transition-opacity duration-300 opacity-0 md:group-hover:opacity-100 pointer-events-none">
               {product.sizes.join(' · ')}
             </div>
           )}

@@ -46,9 +46,16 @@ function buildPaymentCsp(): string {
 }
 
 // v16: archivo renombrado de middleware.ts a proxy.ts.
-// Runtime: nodejs (edge ya no soportado en proxy). btoa y crypto.getRandomValues
-// están disponibles en nodejs 15+ vía Web Crypto API — sin cambios en el código.
+// Runtime: nodejs. btoa y crypto.getRandomValues disponibles en Node 15+ vía Web Crypto.
+//
+// CSP solo en producción: Turbopack en dev inyecta scripts HMR sin nonce,
+// y React dev mode necesita eval() para reconstruir call stacks — ambos se
+// bloquean si aplicamos el CSP estricto en desarrollo.
 export const proxy = auth((req) => {
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.next();
+  }
+
   const { pathname } = req.nextUrl;
 
   // /orders/[id] y /checkout/ cargan el widget de Wompi que inyecta scripts inline
