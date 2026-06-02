@@ -2,8 +2,6 @@ import { titleFont } from '@/config/fonts';
 import { getCountries } from '@/actions';
 import { ManualOrderForm } from './ui/ManualOrderForm';
 
-export const revalidate = 0;
-
 export default async function NuevoPedidoPage() {
   const countries = await getCountries();
 

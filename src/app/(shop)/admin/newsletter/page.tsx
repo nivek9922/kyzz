@@ -2,8 +2,6 @@ import { titleFont } from '@/config/fonts';
 import prisma from '@/lib/prisma';
 import { NewsletterComposer } from './ui/NewsletterComposer';
 
-export const revalidate = 0;
-
 export default async function AdminNewsletterPage() {
   const [subscribers, products] = await Promise.all([
     prisma.subscriber.findMany({

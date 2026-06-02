@@ -28,7 +28,6 @@ function buildStrictCsp(nonce: string): string {
 }
 
 // CSP permisivo para páginas de pago — Wompi inyecta scripts inline sin nonce.
-// Se quita unsafe-eval (Wompi no lo necesita) pero se mantiene unsafe-inline.
 function buildPaymentCsp(): string {
   return [
     "default-src 'self'",
@@ -46,10 +45,13 @@ function buildPaymentCsp(): string {
   ].join('; ');
 }
 
-export default auth((req) => {
+// v16: archivo renombrado de middleware.ts a proxy.ts.
+// Runtime: nodejs (edge ya no soportado en proxy). btoa y crypto.getRandomValues
+// están disponibles en nodejs 15+ vía Web Crypto API — sin cambios en el código.
+export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
 
-  // /orders/[id] y /checkout/ cargan widgets de pago que inyectan scripts inline
+  // /orders/[id] y /checkout/ cargan el widget de Wompi que inyecta scripts inline
   const isPaymentPage =
     (pathname.startsWith('/orders/') && pathname !== '/orders') ||
     pathname.startsWith('/checkout');

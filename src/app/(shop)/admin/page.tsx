@@ -9,8 +9,6 @@ import {
   IoAddCircleOutline, IoMailOutline, IoSettingsOutline,
 } from 'react-icons/io5';
 
-export const revalidate = 0;
-
 const TREND_DAYS = 14;
 
 // Clave de fecha YYYY-MM-DD en horario Colombia (evita corrimiento de día por UTC)

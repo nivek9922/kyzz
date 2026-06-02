@@ -1,6 +1,4 @@
-// Fallback ISR: 1h. Las mutaciones admin usan revalidateTag para invalidación inmediata.
-export const revalidate = 3600;
-
+// PDP cacheada 1h por slug. Las mutaciones admin usan updateTag para invalidación inmediata.
 import { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";

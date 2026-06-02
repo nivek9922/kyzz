@@ -1,6 +1,6 @@
 "use server";
 import prisma from "@/lib/prisma";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { auth } from "@/auth";
 import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_COST, COD_RESERVATION_HOURS } from "@/config/constants";
 import { notifyLowStock } from "@/lib/notify-low-stock";
@@ -177,7 +177,7 @@ export const placeOrder = async (
     // Invalidar cache ISR de los productos afectados para que la PDP
     // muestre las tallas agotadas inmediatamente sin esperar 1h.
     for (const product of products) {
-      revalidateTag(`product:${product.slug}`);
+      updateTag(`product:${product.slug}`);
     }
 
     // Alerta de stock bajo al admin (no afecta el resultado de la orden)

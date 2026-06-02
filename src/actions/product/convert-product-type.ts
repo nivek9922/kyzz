@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 
 /**
  * Convierte un producto de modo "con colores" a modo "sin color":
@@ -37,7 +37,7 @@ export async function convertProductToNoColor(productId: string) {
     revalidatePath(`/admin/product/${product.slug}`);
     revalidatePath(`/product/${product.slug}`);
     revalidatePath('/admin/products');
-    revalidateTag(`product:${product.slug}`);
+    updateTag(`product:${product.slug}`);
 
     return { ok: true };
   } catch (error) {

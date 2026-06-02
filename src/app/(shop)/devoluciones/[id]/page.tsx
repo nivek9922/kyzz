@@ -1,5 +1,3 @@
-export const revalidate = 0;
-
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { whatsappUrl } from '@/lib/whatsapp';

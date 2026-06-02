@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { render } from '@react-email/components';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
@@ -237,7 +237,7 @@ export async function updateReturnStatus(input: {
 
     if (legacyRestock || enteringAccepted) {
       for (const slug of new Set(ret.order.OrderItem.map((i) => i.product?.slug).filter(Boolean) as string[])) {
-        revalidateTag(`product:${slug}`);
+        updateTag(`product:${slug}`);
       }
     }
 

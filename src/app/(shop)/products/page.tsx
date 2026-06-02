@@ -1,5 +1,3 @@
-export const revalidate = 60;
-
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Size } from '@prisma/client';
