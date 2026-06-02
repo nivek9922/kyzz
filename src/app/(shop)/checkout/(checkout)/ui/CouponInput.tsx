@@ -72,8 +72,7 @@ export const CouponInput = ({ subtotal }: Props) => {
         <button
           onClick={handleApply}
           disabled={loading}
-          className="text-[10px] tracking-[0.18em] uppercase text-kyzz-dark hover:text-kyzz-primary
-                     disabled:text-kyzz-muted transition-colors shrink-0 py-2 px-1"
+          className="text-[10px] tracking-[0.18em] uppercase text-kyzz-dark hover:text-kyzz-primary disabled:text-kyzz-muted transition-colors shrink-0 py-2 px-1"
         >
           {loading ? "..." : "Aplicar"}
         </button>

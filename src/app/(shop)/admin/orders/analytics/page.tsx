@@ -1,5 +1,3 @@
-export const revalidate = 0;
-
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';

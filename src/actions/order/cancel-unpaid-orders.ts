@@ -92,7 +92,7 @@ export async function runCancelUnpaidOrders(): Promise<{ ok: boolean; cancelledC
         where:  { id: { in: Array.from(affectedProductIds) } },
         select: { slug: true },
       });
-      products.forEach((p) => revalidateTag(`product:${p.slug}`));
+      products.forEach((p) => revalidateTag(`product:${p.slug}`, 'max'));
     }
 
     // Emails de recuperación de carrito abandonado (>3h, sin email enviado aún)

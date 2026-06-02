@@ -1,8 +1,18 @@
 'use server';
 
 import { z } from 'zod';
+import { updateTag } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
+
+/** Invalida la PDP cacheada del producto (el bloque cachea también las reviews). */
+async function revalidateProductPage(productId: string) {
+  const product = await prisma.product.findUnique({
+    where:  { id: productId },
+    select: { slug: true },
+  });
+  if (product) updateTag(`product:${product.slug}`);
+}
 
 const schema = z.object({
   productId: z.string().uuid(),
@@ -35,6 +45,7 @@ export async function createOrUpdateReview(input: {
     update: { rating, comment: comment ?? null },
   });
 
+  await revalidateProductPage(productId);
   return { ok: true };
 }
 
@@ -50,5 +61,6 @@ export async function deleteReview(reviewId: string) {
   if (!isOwner && !isAdmin) return { ok: false, message: 'No autorizado.' };
 
   await prisma.review.delete({ where: { id: reviewId } });
+  await revalidateProductPage(review.productId);
   return { ok: true };
 }
