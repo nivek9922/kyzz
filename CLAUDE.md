@@ -14,12 +14,12 @@ El objetivo NO es crear desde cero, sino modernizar, reorganizar y optimizar el 
 
 ## Frontend
 
-- Framework: Next.js 15 (App Router)
-- React: 19
+- Framework: Next.js 16 (App Router, Turbopack)
+- React: 19.2
 - Lenguaje: TypeScript strict
 - Estilos: TailwindCSS + SCSS Modules
 - UI: Diseño custom KYZZ
-- Animaciones: Framer Motion
+- Animaciones: CSS transitions + Tailwind (NO se usa Framer Motion)
 - Estado: Server Actions + React hooks
 - Forms: React Hook Form + Zod
 - Testing: Vitest + React Testing Library

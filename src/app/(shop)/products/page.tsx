@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Size } from '@prisma/client';
@@ -16,6 +17,31 @@ interface Props {
     sort?:     string;
     color?:    string | string[];
   }>;
+}
+
+const CATEGORY_LABEL: Record<string, string> = {
+  jeans:     'Jeans',
+  blusas:    'Blusas',
+  enterizos: 'Enterizos',
+  chaquetas: 'Chaquetas',
+};
+
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const { category } = await props.searchParams;
+  const label = category ? CATEGORY_LABEL[category.toLowerCase()] : undefined;
+
+  const title = label ? `${label} — Catálogo` : 'Catálogo';
+  const description = label
+    ? `Descubre nuestra colección de ${label.toLowerCase()}. Calidad premium, diseño atemporal. KYZZ.`
+    : 'Explora todo el catálogo KYZZ: jeans, blusas, enterizos y chaquetas. Calidad premium, diseño atemporal.';
+
+  return {
+    title,
+    description,
+    // Canónica sin query para evitar duplicados indexados por filtro
+    alternates: { canonical: '/products' },
+    openGraph: { title: `${title} | KYZZ`, description, type: 'website' },
+  };
 }
 
 export default async function ProductsPage(props: Props) {

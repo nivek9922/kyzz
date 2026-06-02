@@ -36,7 +36,8 @@ export async function generateMetadata(props: Props, _parent: ResolvingMetadata)
   const data   = await getProductPageData(params.slug);
   const product = data?.product;
 
-  const rawImage = product?.images[0];
+  // Fallback: imagen legacy → imagen del primer color (productos solo-variante no tienen ProductImage)
+  const rawImage = product?.images[0] ?? data?.productColors?.[0]?.images?.[0]?.url;
   const ogImage  = rawImage?.startsWith('http') ? rawImage : rawImage ? `/products/${rawImage}` : undefined;
 
   return {
