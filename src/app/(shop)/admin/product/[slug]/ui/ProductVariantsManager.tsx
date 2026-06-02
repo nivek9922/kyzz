@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import { Size } from '@prisma/client';
+import type { Size } from '@prisma/client';
 import { updateProductVariants, type VariantInput } from '@/actions';
 import { IoSaveOutline, IoRefreshOutline } from 'react-icons/io5';
 

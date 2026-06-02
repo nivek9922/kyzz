@@ -1,7 +1,9 @@
 // PDP cacheada 1h por slug. Las mutaciones admin usan updateTag para invalidación inmediata.
+import { Suspense } from "react";
 import { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
+import prisma from "@/lib/prisma";
 import { getProductBySlug, getProductVariants } from "@/actions";
 import { getProductColors as fetchProductColors } from "@/actions/product/manage-product-color";
 import { getProductReviews } from "@/actions/review/get-product-reviews";
@@ -14,17 +16,28 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-/** Todos los datos de la PDP en un solo bloque cacheado por slug. */
+/**
+ * Datos del shell de la PDP, cacheados por slug. Incluye el resumen de reseñas
+ * (promedio + conteo) que el shell necesita para las estrellas — barato y se
+ * invalida con updateTag('product:{slug}') al crear/borrar reseñas.
+ * El listado completo de reseñas se carga aparte (streaming, ver ReviewsSection).
+ */
 function getProductPageData(slug: string) {
   return unstable_cache(
     async () => {
       const product = await getProductBySlug(slug);
       if (!product) return null;
-      const [productColors, variants] = await Promise.all([
+      const [productColors, variants, reviewAgg] = await Promise.all([
         fetchProductColors(product.id),
         getProductVariants(product.id),
+        prisma.review.aggregate({ where: { productId: product.id }, _avg: { rating: true }, _count: true }),
       ]);
-      return { product, productColors, variants };
+      return {
+        product,
+        productColors,
+        variants,
+        reviewSummary: { average: reviewAgg._avg.rating ?? 0, count: reviewAgg._count },
+      };
     },
     [`product-page:${slug}`],
     { tags: [`product:${slug}`], revalidate: 3600 },
@@ -58,11 +71,7 @@ export default async function ProductBySlugPage(props: Props) {
 
   if (!data) notFound();
 
-  const { product, productColors, variants } = data;
-  const [session, reviewData] = await Promise.all([
-    auth(),
-    getProductReviews(product.id),
-  ]);
+  const { product, productColors, variants, reviewSummary } = data;
 
   const colors = productColors.map((pc) => ({
     id:             pc.id,
@@ -82,24 +91,52 @@ export default async function ProductBySlugPage(props: Props) {
   return (
     <>
       <div className="max-w-7xl mx-auto px-6 py-8 mb-16">
+        {/* Shell: imagen, precio, tallas, add-to-cart — renderiza de inmediato desde caché */}
         <ProductDetailClient
           product={product}
           colors={colors}
           variants={variantList}
-          reviewSummary={{ average: reviewData.summary.average, count: reviewData.summary.count }}
+          reviewSummary={reviewSummary}
         />
+        {/* Reseñas: se streamean aparte (auth + listado completo no bloquean el shell) */}
         <div id="reseñas">
-          <ProductReviews
-            productId={product.id}
-            reviews={reviewData.reviews}
-            summary={reviewData.summary}
-            userReview={reviewData.userReview}
-            hasPurchased={reviewData.hasPurchased}
-            isLoggedIn={!!session?.user?.id}
-          />
+          <Suspense fallback={<ReviewsSkeleton />}>
+            <ReviewsSection productId={product.id} />
+          </Suspense>
         </div>
       </div>
       <HomeRecentlyViewed />
     </>
+  );
+}
+
+/** Sección de reseñas — dinámica (auth + listado). Se streamea bajo un Suspense. */
+async function ReviewsSection({ productId }: { productId: string }) {
+  const [session, reviewData] = await Promise.all([
+    auth(),
+    getProductReviews(productId),
+  ]);
+
+  return (
+    <ProductReviews
+      productId={productId}
+      reviews={reviewData.reviews}
+      summary={reviewData.summary}
+      userReview={reviewData.userReview}
+      hasPurchased={reviewData.hasPurchased}
+      isLoggedIn={!!session?.user?.id}
+    />
+  );
+}
+
+/** Placeholder mientras las reseñas cargan en streaming. */
+function ReviewsSkeleton() {
+  return (
+    <div className="mt-16 animate-pulse space-y-4" aria-hidden>
+      <div className="h-5 w-44 bg-kyzz-tertiary rounded" />
+      <div className="h-px w-full bg-kyzz-secondary" />
+      <div className="h-20 bg-kyzz-tertiary rounded" />
+      <div className="h-20 bg-kyzz-tertiary rounded" />
+    </div>
   );
 }

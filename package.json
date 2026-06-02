@@ -7,6 +7,7 @@
     "build": "npm run prisma:deploy && next build",
     "start": "next start",
     "lint": "eslint .",
+    "analyze": "next experimental-analyze",
     "prisma:deploy": "npx prisma migrate deploy && npx prisma generate",
     "seed": "dotenv -e .env -- ts-node src/seed/seed-database.ts"
   },
