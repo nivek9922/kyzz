@@ -31,7 +31,7 @@ const colsClass: Record<Columns, string> = {
 
 // Indica al browser qué tamaño ocupará cada imagen según las columnas activas,
 // para que Next.js sirva el srcset correcto (evita imágenes sub-dimensionadas estiradas).
-const imageSizesMap: Record<Columns, string> = {
+export const imageSizesMap: Record<Columns, string> = {
   0: '100vw',
   1: '128px',
   2: '(max-width: 640px) 50vw, 50vw',

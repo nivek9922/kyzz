@@ -1,8 +1,7 @@
 /**
- * auth.config.ts — Edge-compatible configuration
- * No Node.js-only imports (bcryptjs, prisma, etc.)
- * Used by: middleware.ts (Edge Runtime)
- * For full auth with providers: see auth.ts
+ * auth.config.ts — configuración liviana sin imports Node.js-only (bcryptjs, prisma, etc.)
+ * Usada por: proxy.ts (Node.js runtime — Next.js 16)
+ * Para auth completa con providers: ver auth.ts
  */
 import type { NextAuthConfig } from 'next-auth';
 

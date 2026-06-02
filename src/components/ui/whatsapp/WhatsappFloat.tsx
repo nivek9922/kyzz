@@ -17,8 +17,7 @@ export const WhatsappFloat = () => {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Escríbenos por WhatsApp"
-      className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-[#25D366] text-white
-                 flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+      className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
     >
       <IoLogoWhatsapp size={26} />
     </a>

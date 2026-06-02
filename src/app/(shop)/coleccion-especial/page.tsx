@@ -1,6 +1,19 @@
 export const revalidate = 60;
 
+import type { Metadata } from 'next';
 import { getFeaturedProductsPaginated } from '@/actions';
+
+export const metadata: Metadata = {
+  title: 'Colección Especial',
+  description:
+    'Piezas seleccionadas con intención. Lo mejor de KYZZ, curado para ti.',
+  alternates: { canonical: '/coleccion-especial' },
+  openGraph: {
+    title:       'Colección Especial | KYZZ',
+    description: 'Piezas seleccionadas con intención. Lo mejor de KYZZ, curado para ti.',
+    type:        'website',
+  },
+};
 import { InfiniteProductGrid } from '@/components';
 import { titleFont } from '@/config/fonts';
 

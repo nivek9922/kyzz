@@ -8,7 +8,7 @@ import { useWishlistStore } from '@/store';
 import { getWishlistProducts } from '@/actions/product/get-wishlist-products';
 import { GridLayoutSelector, ProductGridItem } from '@/components';
 import { useGridLayout } from '@/hooks/useGridLayout';
-import type { Columns } from '@/components/products/product-grid/ProductGrid';
+import { imageSizesMap, type Columns } from '@/components/products/product-grid/ProductGrid';
 import type { ProductColorEntry } from '@/actions/product/product-pagination';
 import { currencyFormat } from '@/utils';
 import { titleFont } from '@/config/fonts';
@@ -120,20 +120,22 @@ export const WishlistContent = () => {
 
       {isListView ? (
         <div className="divide-y divide-kyzz-secondary">
-          {displayed.map(({ product }) => (
-            <WishlistListItem key={product.id} product={product} />
+          {displayed.map(({ product, colors }) => (
+            <WishlistListItem key={product.id} product={product} colors={colors} />
           ))}
         </div>
       ) : (
         <div className={`grid ${colsMap[effectiveCols]} gap-x-4 gap-y-8`}>
-          {displayed.map(({ product, colors }, idx) => (
+          {displayed.map(({ product, colors }) => (
             <ProductGridItem
               key={product.id}
               product={product}
               colorVariants={colors}
               listName="wishlist"
-              imageSizes="(max-width: 640px) 50vw, 25vw"
-              priority={idx < 2}
+              // sizes según las columnas activas (evita servir imágenes sub-dimensionadas)
+              imageSizes={imageSizesMap[effectiveCols]}
+              // sin priority: las columnas vienen de localStorage y la data se carga async,
+              // los preloads SSR quedarían obsoletos → "preloaded but not used"
             />
           ))}
         </div>
@@ -142,9 +144,16 @@ export const WishlistContent = () => {
   );
 };
 
-// ── Vista lista: simple, sin sizes/colors (la lista compacta no los necesita) ──
-const WishlistListItem = ({ product }: { product: Product }) => {
-  const imgUrl = product.images[0];
+// ── Vista lista compacta ──
+const WishlistListItem = ({
+  product,
+  colors,
+}: {
+  product: Product;
+  colors?: ProductColorEntry[];
+}) => {
+  // Misma cadena de fallback que el grid: imagen legacy → imagen del primer color/variante
+  const imgUrl = product.images[0] ?? colors?.[0]?.image ?? undefined;
   const src = !imgUrl
     ? '/imgs/placeholder.jpg'
     : imgUrl.startsWith('http') || imgUrl.startsWith('/')

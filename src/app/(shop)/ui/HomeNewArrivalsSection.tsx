@@ -32,7 +32,9 @@ export function HomeNewArrivalsSection({ products, variantColors }: Props) {
       </div>
 
       <ViewItemListTracker listName="recien_llegadas" products={products} />
-      <ProductScrollRow products={products} variantColors={variantColors} listName="recien_llegadas" priorityCount={2} />
+      {/* priorityCount=0: esta sección está debajo del hero (82vh), no es LCP.
+          Poner priority aquí precargaba imágenes no visibles y competía con el hero. */}
+      <ProductScrollRow products={products} variantColors={variantColors} listName="recien_llegadas" />
 
     </section>
   );

@@ -1,53 +1,49 @@
+// @ts-check
 /** @type {import('next').NextConfig} */
 
 const securityHeaders = [
-  // Prevenir clickjacking
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-  // Prevenir MIME sniffing
   { key: 'X-Content-Type-Options', value: 'nosniff' },
-  // Forzar HTTPS en producción
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-  // Controlar referrer
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  // Permisos de APIs del navegador (cámara, micrófono, etc.)
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-  // CSP se genera por petición en src/middleware.ts (nonce-based, no unsafe-inline para scripts)
+  // CSP se genera por petición en src/proxy.ts (nonce-based, no unsafe-inline para scripts)
 ];
 
 const nextConfig = {
   outputFileTracingRoot: require('path').join(__dirname),
+
+  // v16: React Compiler estable — auto-memoización de componentes sin useMemo/useCallback manual.
+  // Aumenta el tiempo de build (usa Babel internamente).
+  reactCompiler: true,
+
   experimental: {
+    // bodySizeLimit necesario para uploads de imágenes a Cloudinary (hasta 4mb)
     serverActions: {
       bodySizeLimit: '4mb',
     },
+    // Cache de disco para Turbopack en dev — reinicios casi instantáneos tras el primer arranque
+    turbopackFileSystemCacheForDev: true,
   },
 
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
-    // Tamaños optimizados para grid de productos y PDP
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    // Incluir 16px explícitamente (v16 lo quitó del default, pero KYZZ lo usa en iconos admin)
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 500],
+    // v16 sube el default a 14400 (4h); mantener explícito para no depender del default
+    minimumCacheTTL: 14400,
+    // v16 restringe qualities a [75] por default; fijar explícitamente para futuro
+    qualities: [75],
   },
 
   async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: securityHeaders,
-      },
-    ];
+    return [{ source: '/(.*)', headers: securityHeaders }];
   },
 
-  // Reducir información expuesta en headers
   poweredByHeader: false,
 };
 

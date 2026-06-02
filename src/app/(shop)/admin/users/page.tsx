@@ -1,5 +1,3 @@
-export const revalidate = 0;
-
 import { redirect } from "next/navigation";
 import { getPaginatedUsers } from "@/actions";
 import { titleFont } from "@/config/fonts";

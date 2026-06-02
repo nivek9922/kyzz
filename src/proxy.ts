@@ -28,7 +28,6 @@ function buildStrictCsp(nonce: string): string {
 }
 
 // CSP permisivo para páginas de pago — Wompi inyecta scripts inline sin nonce.
-// Se quita unsafe-eval (Wompi no lo necesita) pero se mantiene unsafe-inline.
 function buildPaymentCsp(): string {
   return [
     "default-src 'self'",
@@ -46,10 +45,20 @@ function buildPaymentCsp(): string {
   ].join('; ');
 }
 
-export default auth((req) => {
+// v16: archivo renombrado de middleware.ts a proxy.ts.
+// Runtime: nodejs. btoa y crypto.getRandomValues disponibles en Node 15+ vía Web Crypto.
+//
+// CSP solo en producción: Turbopack en dev inyecta scripts HMR sin nonce,
+// y React dev mode necesita eval() para reconstruir call stacks — ambos se
+// bloquean si aplicamos el CSP estricto en desarrollo.
+export const proxy = auth((req) => {
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.next();
+  }
+
   const { pathname } = req.nextUrl;
 
-  // /orders/[id] y /checkout/ cargan widgets de pago que inyectan scripts inline
+  // /orders/[id] y /checkout/ cargan el widget de Wompi que inyecta scripts inline
   const isPaymentPage =
     (pathname.startsWith('/orders/') && pathname !== '/orders') ||
     pathname.startsWith('/checkout');

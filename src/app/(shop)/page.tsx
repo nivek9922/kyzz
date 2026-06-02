@@ -1,8 +1,21 @@
 export const revalidate = 60;
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getFeaturedProducts, getSiteConfig, getCategories, getNewArrivals, getBestSellers } from '@/actions';
+
+export const metadata: Metadata = {
+  title: 'KYZZ — Moda femenina premium',
+  description:
+    'Jeans, blusas, enterizos y chaquetas. Piezas atemporales de calidad premium, diseñadas para acompañarte todos los días.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title:       'KYZZ — Moda femenina premium',
+    description: 'Piezas atemporales de calidad premium, diseñadas para acompañarte todos los días.',
+    type:        'website',
+  },
+};
 import { HomeCategorySection } from './ui/HomeCategorySection';
 import { HomeNewArrivalsSection } from './ui/HomeNewArrivalsSection';
 import { HomeFeaturedSection } from './ui/HomeFeaturedSection';
