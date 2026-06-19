@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notoSerif, manrope } from "@/config/fonts";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
 import { Providers } from "@/components";
@@ -40,6 +41,7 @@ export default async function RootLayout({
         <Providers>{children}</Providers>
         {GA_ID && <GoogleAnalytics gaId={GA_ID} nonce={nonce} />}
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
