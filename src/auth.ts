@@ -60,7 +60,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const userEmail = user.email?.toLowerCase();
 
         if (account?.provider === 'google') {
-          const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
+          // Solo campos públicos: nunca incluir `password` en el token/sesión
+          const dbUser = await prisma.user.findUnique({
+            where:  { email: user.email! },
+            select: { id: true, name: true, email: true, emailVerified: true, role: true, image: true },
+          });
           token.data = dbUser ?? user;
           dbUserId   = dbUser?.id;
         } else {
@@ -75,6 +79,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             data:  { userId: dbUserId, guestEmail: null },
           });
         }
+      }
+
+      // Tokens emitidos antes de este fix pueden traer el hash: se elimina al refrescar
+      if (token.data && typeof token.data === 'object' && 'password' in token.data) {
+        const { password: _, ...safeData } = token.data as Record<string, unknown>;
+        token.data = safeData;
       }
       return token;
     },
